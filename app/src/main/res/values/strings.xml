@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">StreetAssist</string>
+    <string name="cnsc_logo">CNSC Logo</string>
+    <string name="camarines_norte_state_college">CAMARINES NORTE STATE COLLEGE</string>
+    <string name="student">Student</string>
+    <string name="admin">Admin</string>
+    <string name="student_id">Student ID</string>
+    <string name="account_login">Account Login</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="sign_in">Sign In</string>
+    <string name="don_t_have_an_account_sign_up">Don\'t have an account? Sign Up</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
