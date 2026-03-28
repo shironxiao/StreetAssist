@@ -15,7 +15,7 @@
     <!-- Report Destination -->
     <fragment
         android:id="@+id/report"
-        android:name="com.mobileapplication.streetassist.ui.resident.fragment.ReportFragment"
+        android:name="com.mobileapplication.streetassist.ui.resident.Reports.ReportFragment"
         android:label="Report"
         tools:layout="@layout/fragment_report" />
 

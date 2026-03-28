@@ -1,4 +1,4 @@
-package com.mobileapplication.streetassist.ui.resident.fragment;
+package com.mobileapplication.streetassist.ui.resident.Reports;
 
 import android.os.Bundle;
 
