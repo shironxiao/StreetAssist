@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StreetAssist">
         <activity
-            android:name=".ui.shared.SplashActivity"
+            android:name=".ui.auth.IntroductionUserLevel"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,6 +26,9 @@
 
         <activity
             android:name=".ui.auth.RegisterActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.shared.SplashActivity"
             android:exported="false" />
         <activity
             android:name=".ui.auth.AppIntroduction"

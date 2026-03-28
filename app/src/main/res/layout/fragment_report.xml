@@ -88,7 +88,6 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="All"
-                        app:chipBackgroundColor="@color/chip_bg_state"
                         app:chipCornerRadius="12dp"
                         app:chipStrokeWidth="0dp"
                         app:showMotionSpec="@null" />
@@ -98,7 +97,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Pending"
-                        app:chipBackgroundColor="@color/chip_bg_state"
                         app:chipCornerRadius="12dp" />
 
                     <com.google.android.material.chip.Chip
@@ -106,7 +104,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Verified"
-                        app:chipBackgroundColor="@color/chip_bg_state"
                         app:chipCornerRadius="12dp" />
 
                     <com.google.android.material.chip.Chip
@@ -114,7 +111,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Resolved"
-                        app:chipBackgroundColor="@color/chip_bg_state"
                         app:chipCornerRadius="12dp" />
 
                 </com.google.android.material.chip.ChipGroup>

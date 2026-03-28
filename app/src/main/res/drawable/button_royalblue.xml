@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?><!-- A Ripple drawable provides touch feedback -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#40FFFFFF"> <!-- White ripple looks better on dark blue -->
+
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Royal Blue Color -->
+            <solid android:color="#4169E1" />
+
+            <!-- 28dp radius for the pill shape -->
+            <corners android:radius="28dp" />
+
+            <!-- A slightly darker blue border -->
+            <stroke
+                android:width="1dp"
+                android:color="#2B4491" />
+        </shape>
+    </item>
+</ripple>
