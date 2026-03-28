@@ -19,6 +19,7 @@ public class SplashActivity extends AppCompatActivity {
 
         SessionManager sessionManager = new SessionManager(this);
 
+
         // ✅ CHECK FIRST BEFORE SHOWING UI
         if (sessionManager.isIntroSeen()) {
             // Skip everything → go directly to Login
