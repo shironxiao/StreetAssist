@@ -138,6 +138,36 @@
                     android:hint="Select region"
                     android:inputType="none" />
             </com.google.android.material.textfield.TextInputLayout>
+            <!-- Province -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="PROVINCE"
+                android:textColor="#333333"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:hintEnabled="false"
+                app:startIconDrawable="@android:drawable/ic_dialog_map"
+                app:startIconTint="#757575">
+
+                <AutoCompleteTextView
+                    android:id="@+id/spinnerProvince"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Select province"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- City / Municipality -->
             <TextView

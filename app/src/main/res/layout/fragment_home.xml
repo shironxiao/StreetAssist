@@ -7,323 +7,267 @@
     android:background="#F5F7FA"
     tools:context=".ui.resident.fragment.HomeFragment">
 
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="20dp">
+        android:orientation="vertical">
 
-        <LinearLayout
+        <!-- ROYAL BLUE HEADER PANEL -->
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="220dp"
+            android:background="#4169E1"
+            android:padding="24dp">
 
-            <!-- Welcome Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#E0E0E0"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp">
-
-                    <TextView
-                        android:id="@+id/tvWelcomeName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-black"
-                        android:text="Welcome, sdsd!"
-                        android:textColor="#1A1A1A"
-                        android:textSize="26sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Help make our community better by reporting homeless cases"
-                        android:textColor="#666666"
-                        android:textSize="14sp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Submit New Report (Action Card) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardSubmitReport"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:clickable="true"
-                android:focusable="true"
-                app:cardBackgroundColor="#4169E1"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="8dp"
-                app:rippleColor="#20FFFFFF">
+                android:orientation="vertical">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/tvWelcomeName"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="20dp">
+                    android:fontFamily="sans-serif-black"
+                    android:text="Welcome, User!"
+                    android:textColor="@android:color/white"
+                    android:textSize="28sp"
+                    android:textStyle="bold" />
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/iconContainer"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        app:cardBackgroundColor="#30FFFFFF"
-                        app:cardCornerRadius="28dp"
-                        app:cardElevation="0dp">
+                <TextView
+                    android:layout_width="250dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Help make our community better by reporting homeless cases today."
+                    android:textColor="#D1D9FF"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_gravity="center"
-                            android:src="@android:drawable/ic_input_add"
-                            app:tint="@android:color/white" />
-                    </com.google.android.material.card.MaterialCardView>
+            <!-- Optional: Background Decorative Circle for the "Landscape" look -->
+            <View
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="-40dp"
+                android:layout_marginEnd="-40dp"
+                android:background="@drawable/circle_bg_light_blue"
+                android:backgroundTint="#30FFFFFF" />
+        </RelativeLayout>
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginStart="16dp"
-                        android:layout_toEndOf="@id/iconContainer"
-                        android:orientation="vertical">
+        <!-- SCROLLABLE CONTENT AREA -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="-40dp"
+            android:background="@drawable/rounded_top_corners"
+            android:padding="20dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Submit New Report"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Report a homeless case"
-                            android:textColor="#D1D9FF"
-                            android:textSize="13sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:src="@android:drawable/ic_menu_mylocation"
-                        app:tint="@android:color/white" />
-                </RelativeLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Stats Row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal"
-                android:weightSum="3">
+                android:orientation="vertical">
 
-                <!-- Total Reports -->
+                <!-- Action Card: Submit New Report -->
                 <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/white"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@android:drawable/ic_menu_sort_by_size"
-                            app:tint="#4169E1" />
-
-                        <TextView
-                            android:id="@+id/tvTotalCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="0"
-                            android:textColor="#1A1A1A"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Total Reports"
-                            android:textColor="#757575"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Pending -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="4dp"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/white"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@android:drawable/presence_online"
-                            app:tint="#FFC107" />
-
-                        <TextView
-                            android:id="@+id/tvPendingCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="0"
-                            android:textColor="#1A1A1A"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Pending"
-                            android:textColor="#757575"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Resolved -->
-                <com.google.android.material.card.MaterialCardView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    app:cardBackgroundColor="@android:color/white"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="2dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@android:drawable/checkbox_on_background"
-                            app:tint="#4CAF50" />
-
-                        <TextView
-                            android:id="@+id/tvResolvedCount"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="0"
-                            android:textColor="#1A1A1A"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Resolved"
-                            android:textColor="#757575"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-
-            <!-- Recent Reports Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
+                    android:id="@+id/cardSubmitReport"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:strokeColor="#E0E0E0"
+                    app:strokeWidth="1dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Recent Reports"
-                            android:textColor="#1A1A1A"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvViewAll"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentEnd="true"
-                            android:text="View All"
-                            android:textColor="#4169E1"
-                            android:textStyle="bold" />
-                    </RelativeLayout>
-
-                    <!-- Empty State Inside Card -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="32dp"
-                        android:layout_marginBottom="16dp"
-                        android:gravity="center"
-                        android:orientation="vertical">
+                        android:padding="20dp">
 
-                        <TextView
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/iconContainer"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            app:cardBackgroundColor="#EDF2FF"
+                            app:cardCornerRadius="28dp"
+                            app:cardElevation="0dp">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
+                                android:src="@android:drawable/ic_input_add"
+                                app:tint="#4169E1" />
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="No reports submitted yet"
-                            android:textColor="#757575" />
+                            android:layout_centerVertical="true"
+                            android:layout_marginStart="16dp"
+                            android:layout_toEndOf="@id/iconContainer"
+                            android:orientation="vertical">
 
-                        <TextView
-                            android:id="@+id/btnFirstReport"
-                            android:layout_width="wrap_content"
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Submit New Report"
+                                android:textColor="#1A1A1A"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Click here to report a case"
+                                android:textColor="#666666"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:src="@android:drawable/ic_media_play"
+                            app:tint="#4169E1" />
+                    </RelativeLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Statistics Section Header -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginStart="4dp"
+                    android:text="YOUR ACTIVITY"
+                    android:textStyle="bold"
+                    android:textColor="#555555"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.1" />
+
+                <!-- Stats Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <!-- Total -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Submit your first report"
-                            android:textColor="#4169E1"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/tvTotalCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textColor="#4169E1"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Total"
+                                android:textColor="#757575"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Pending -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="3dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/tvPendingCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textColor="#FFC107"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Pending"
+                                android:textColor="#757575"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Resolved -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="@android:color/white"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/tvResolvedCount"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="0"
+                                android:textColor="#4CAF50"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Resolved"
+                                android:textColor="#757575"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+                <!-- Bottom space for scrolling -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
