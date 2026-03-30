@@ -23,7 +23,8 @@
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="false" />
-
+        <activity android:name=".ui.resident.Home.NotificationActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />

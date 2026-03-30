@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7FA"
-    tools:context=".ui.resident.fragment.HomeFragment">
+    tools:context=".ui.resident.Home.HomeFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,32 +19,105 @@
             android:background="#4169E1"
             android:padding="24dp">
 
+            <!-- Left: Avatar + Welcome text -->
             <LinearLayout
+                android:id="@+id/layoutUserInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvWelcomeName"
+                <!-- Avatar frame -->
+                <FrameLayout
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="14dp">
+
+                    <!-- Photo (Cloudinary) -->
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/ivAvatar"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/circle_bg_light_blue"
+                        app:civ_border_color="#FFFFFF"
+                        app:civ_border_width="2dp" />
+
+                    <!-- Initials fallback -->
+                    <TextView
+                        android:id="@+id/tvInitialsAvatar"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/circle_bg_light_blue"
+                        android:gravity="center"
+                        android:text="U"
+                        android:textColor="@android:color/white"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <!-- Welcome text -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="Welcome, User!"
-                    android:textColor="@android:color/white"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
+                    android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="250dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Help make our community better by reporting homeless cases today."
-                    android:textColor="#D1D9FF"
-                    android:textSize="14sp" />
+                    <TextView
+                        android:id="@+id/tvWelcomeName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Welcome, User!"
+                        android:textColor="@android:color/white"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="220dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Help make our community better by reporting homeless cases today."
+                        android:textColor="#D1D9FF"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
 
-            <!-- Optional: Background Decorative Circle for the "Landscape" look -->
+            <!-- Right: Notification bell -->
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="20dp">
+
+                <ImageView
+                    android:id="@+id/ivNotification"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/circle_bg_light_blue"
+                    android:backgroundTint="#30FFFFFF"
+                    android:padding="10dp"
+                    android:src="@android:drawable/ic_dialog_info"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:tint="#FFFFFF" />
+
+                <!-- Badge -->
+                <TextView
+                    android:id="@+id/tvNotificationBadge"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/badge_background"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="#FFFFFF"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </FrameLayout>
+
+            <!-- Decorative circle -->
             <View
                 android:layout_width="150dp"
                 android:layout_height="150dp"
@@ -53,6 +126,7 @@
                 android:layout_marginEnd="-40dp"
                 android:background="@drawable/circle_bg_light_blue"
                 android:backgroundTint="#30FFFFFF" />
+
         </RelativeLayout>
 
         <!-- SCROLLABLE CONTENT AREA -->
