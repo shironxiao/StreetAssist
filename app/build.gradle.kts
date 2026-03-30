@@ -53,4 +53,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    // Circle image view for profile photo
+    implementation("de.hdodenhof:circleimageview:3.1.0")
+// Glide for image loading
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }
