@@ -76,6 +76,12 @@ public class HomeFragment extends Fragment {
         });
 
         loadUserProfile();
+
+        // Inside HomeFragment.java - onViewCreated method
+        cardSubmitReport.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), com.mobileapplication.streetassist.ui.resident.Reports.submit_report_step1.class);
+            startActivity(intent);
+        });
     }
 
     // =========================================================================

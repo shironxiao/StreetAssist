@@ -28,6 +28,12 @@
         <activity
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />
+        <activity android:name=".ui.resident.Reports.submit_report_step1"
+            android:exported="false" />
+        <activity android:name=".ui.resident.Reports.submit_report_step2"
+            android:exported="false" />
+        <activity android:name=".ui.resident.Reports.submit_report_step3"
+            android:exported="false" />
         <activity
             android:name=".ui.shared.SplashActivity"
             android:exported="false" />

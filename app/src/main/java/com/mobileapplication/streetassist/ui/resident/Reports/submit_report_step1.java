@@ -1,16 +1,23 @@
-    package com.mobileapplication.streetassist.ui.resident.Reports;
+package com.mobileapplication.streetassist.ui.resident.Reports;
 
-    import android.os.Bundle;
+import android.content.Intent;
+import android.os.Bundle;
+import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
+import com.mobileapplication.streetassist.R;
 
-    import androidx.appcompat.app.AppCompatActivity;
+public class submit_report_step1 extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.submit_report_step1);
 
-    import com.mobileapplication.streetassist.R;
+        MaterialButton btnNext = findViewById(R.id.btnNext);
+        btnNext.setOnClickListener(v -> {
+            Intent intent = new Intent(submit_report_step1.this, submit_report_step2.class);
+            startActivity(intent);
+        });
 
-    public class submit_report_step1 extends AppCompatActivity {
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.submit_report_step1);
-
-
-        }
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
+}
