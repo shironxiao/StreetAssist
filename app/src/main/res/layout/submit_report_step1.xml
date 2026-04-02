@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -66,13 +67,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <!-- STEP INDICATOR (Simplified) -->
+                <!-- STEP INDICATOR -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="16dp">
-                    <!-- Step 1 Circle -->
+
                     <TextView
                         android:layout_width="30dp"
                         android:layout_height="30dp"
@@ -86,8 +87,8 @@
                     <View
                         android:layout_width="40dp"
                         android:layout_height="2dp"
-                        android:background="#D1D9FF"
-                        android:layout_marginHorizontal="8dp" />
+                        android:layout_marginHorizontal="8dp"
+                        android:background="#D1D9FF" />
 
                     <TextView
                         android:layout_width="30dp"
@@ -101,8 +102,8 @@
                     <View
                         android:layout_width="40dp"
                         android:layout_height="2dp"
-                        android:background="#D1D9FF"
-                        android:layout_marginHorizontal="8dp" />
+                        android:layout_marginHorizontal="8dp"
+                        android:background="#D1D9FF" />
 
                     <TextView
                         android:layout_width="30dp"
@@ -114,7 +115,7 @@
                         android:textColor="#757575" />
                 </LinearLayout>
 
-                <!-- MAP PLACEHOLDER -->
+                <!-- MAP SECTION LABEL -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -124,34 +125,129 @@
                     android:textSize="12sp"
                     android:letterSpacing="0.1" />
 
-                <com.google.android.material.card.MaterialCardView
+                <!-- SEARCH BAR -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
-                    android:layout_height="180dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    app:cardCornerRadius="16dp"
-                    app:strokeColor="#E0E0E0"
-                    app:strokeWidth="1dp">
+                    android:layout_marginBottom="8dp"
+                    app:boxStrokeColor="#4169E1"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:startIconDrawable="@android:drawable/ic_menu_search"
+                    app:endIconMode="clear_text"
+                    app:hintEnabled="false">
 
-                    <!-- Placeholder for Map API -->
-                    <FrameLayout
-                        android:id="@+id/mapContainer"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSearch"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="#EDF2FF">
+                        android:layout_height="48dp"
+                        android:hint="Search a location..."
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:singleLine="true"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <Button
+                <!-- MAP CARD — tappable to expand -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/mapCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    app:cardCornerRadius="16dp"
+                    app:strokeColor="#D1D9FF"
+                    app:strokeWidth="1dp"
+                    app:cardElevation="2dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- OSMDroid MapView -->
+                        <org.osmdroid.views.MapView
+                            android:id="@+id/mapView"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+
+                        <!-- Expand/collapse button -->
+                        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                            android:id="@+id/btnExpandMap"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="bottom|end"
-                            android:layout_margin="12dp"
-                            android:text="Use my location"
-                            android:textAllCaps="false"
-                            app:backgroundTint="#4169E1"
-                            app:icon="@android:drawable/ic_menu_mylocation" />
+                            android:layout_gravity="top|end"
+                            android:layout_margin="8dp"
+                            android:contentDescription="Expand map"
+                            app:backgroundTint="#FFFFFF"
+                            app:tint="#4169E1"
+                            app:fabSize="mini"
+                            app:srcCompat="@android:drawable/ic_menu_zoom" />
+
+                        <!-- Tap hint overlay (shown initially) -->
+                        <TextView
+                            android:id="@+id/tvMapHint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:background="#CC4169E1"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="6dp"
+                            android:text="Tap map to pin location"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp"
+                            android:fontFamily="sans-serif-medium"
+                            android:visibility="visible" />
+
                     </FrameLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- INPUT FIELDS -->
+                <!-- SELECTED LOCATION DISPLAY -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/rounded_top_corners"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="12dp"
+                    android:backgroundTint="#EDF2FF">
+
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@android:drawable/ic_menu_mylocation"
+                        app:tint="#4169E1" />
+
+                    <TextView
+                        android:id="@+id/tvSelectedLocation"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="No location selected yet"
+                        android:textColor="#555555"
+                        android:textSize="12sp"
+                        android:ellipsize="end"
+                        android:maxLines="2" />
+                </LinearLayout>
+
+                <!-- USE LOCATION BUTTON -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnUseMyLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Use my location"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    app:backgroundTint="#4169E1"
+                    app:cornerRadius="12dp"
+                    app:icon="@android:drawable/ic_menu_mylocation"
+                    app:iconGravity="textStart" />
+
+                <!-- APPROXIMATE AGE -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -170,11 +266,13 @@
                     app:startIconDrawable="@android:drawable/ic_menu_search">
 
                     <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAge"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="e.g. 40-50 years old" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- SEX -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -185,6 +283,7 @@
                     android:textSize="12sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilSex"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -192,12 +291,14 @@
                     app:boxStrokeColor="#4169E1">
 
                     <AutoCompleteTextView
+                        android:id="@+id/actvSex"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Select sex"
                         android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- DESCRIPTION -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -215,12 +316,14 @@
                     app:boxStrokeColor="#4169E1">
 
                     <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etDescription"
                         android:layout_width="match_parent"
                         android:layout_height="120dp"
                         android:gravity="top"
                         android:hint="Describe the individual's appearance, clothing, etc..." />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- NEXT BUTTON -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnNext"
                     android:layout_width="match_parent"

@@ -64,8 +64,7 @@ public class ReportFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View root = inflater.inflate(R.layout.fragment_report, container, false);
-        
-        // Find your button (assuming ID is btnSubmitReport)
+
         Button btnSubmitReport = root.findViewById(R.id.btnSubmitReport);
         if (btnSubmitReport != null) {
             btnSubmitReport.setOnClickListener(v -> {

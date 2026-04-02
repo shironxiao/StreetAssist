@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.navigation.ui)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -57,4 +58,9 @@ dependencies {
     implementation("de.hdodenhof:circleimageview:3.1.0")
 // Glide for image loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // OSMDroid - Free OpenStreetMap (no API key needed)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+
 }
