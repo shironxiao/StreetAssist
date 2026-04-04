@@ -34,7 +34,6 @@
                     android:layout_height="56dp"
                     android:layout_marginEnd="14dp">
 
-                    <!-- Photo (Cloudinary) -->
                     <de.hdodenhof.circleimageview.CircleImageView
                         android:id="@+id/ivAvatar"
                         android:layout_width="56dp"
@@ -43,7 +42,6 @@
                         app:civ_border_color="#FFFFFF"
                         app:civ_border_width="2dp" />
 
-                    <!-- Initials fallback -->
                     <TextView
                         android:id="@+id/tvInitialsAvatar"
                         android:layout_width="56dp"
@@ -96,13 +94,12 @@
                     android:layout_height="44dp"
                     android:background="@drawable/circle_bg_light_blue"
                     android:backgroundTint="#30FFFFFF"
-                    android:padding="10dp"
-                    android:src="@android:drawable/ic_dialog_info"
                     android:clickable="true"
                     android:focusable="true"
+                    android:padding="10dp"
+                    android:src="@android:drawable/ic_dialog_info"
                     app:tint="#FFFFFF" />
 
-                <!-- Badge -->
                 <TextView
                     android:id="@+id/tvNotificationBadge"
                     android:layout_width="18dp"
@@ -210,7 +207,7 @@
                     </RelativeLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Statistics Section Header -->
+                <!-- YOUR ACTIVITY Section -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -336,7 +333,74 @@
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
-                <!-- Bottom space for scrolling -->
+                <!-- ── RECENT REPORTS SECTION ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="28dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="RECENT REPORTS"
+                        android:textStyle="bold"
+                        android:textColor="#555555"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.1" />
+
+                    <TextView
+                        android:id="@+id/tvSeeAll"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="See all →"
+                        android:textColor="#4169E1"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="4dp" />
+                </LinearLayout>
+
+                <!-- Empty state for recent reports -->
+                <LinearLayout
+                    android:id="@+id/layoutRecentEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@android:color/white"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_menu_mylocation"
+                        app:tint="#CCCCCC" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="No reports submitted yet."
+                        android:textColor="#AAAAAA"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <!-- Recent Reports List (up to 3 items) -->
+                <LinearLayout
+                    android:id="@+id/layoutRecentReports"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical" />
+
+                <!-- Bottom space -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="40dp" />

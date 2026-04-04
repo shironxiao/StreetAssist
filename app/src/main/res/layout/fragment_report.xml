@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- HEADER SECTION (Royal Blue) -->
+        <!-- HEADER SECTION -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -68,7 +68,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Filter Tabs -->
+            <!-- Filter Chips -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -89,10 +89,10 @@
                         android:checked="true"
                         android:text="All"
                         app:chipCornerRadius="12dp"
-                        app:chipStrokeWidth="0dp"
-                        app:showMotionSpec="@null" />
+                        app:chipStrokeWidth="0dp" />
 
                     <com.google.android.material.chip.Chip
+                        android:id="@+id/chipPending"
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -100,6 +100,7 @@
                         app:chipCornerRadius="12dp" />
 
                     <com.google.android.material.chip.Chip
+                        android:id="@+id/chipVerified"
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -107,6 +108,15 @@
                         app:chipCornerRadius="12dp" />
 
                     <com.google.android.material.chip.Chip
+                        android:id="@+id/chipInProgress"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="In Progress"
+                        app:chipCornerRadius="12dp" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipResolved"
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -116,7 +126,7 @@
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
 
-            <!-- EMPTY STATE CONTAINER -->
+            <!-- EMPTY STATE -->
             <LinearLayout
                 android:id="@+id/emptyState"
                 android:layout_width="match_parent"
@@ -124,7 +134,8 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:paddingBottom="50dp">
+                android:paddingBottom="50dp"
+                android:visibility="gone">
 
                 <ImageView
                     android:layout_width="80dp"
@@ -161,8 +172,19 @@
                     android:textColor="#4169E1"
                     android:textStyle="bold"
                     app:rippleColor="#204169E1" />
-
             </LinearLayout>
+
+            <!-- REPORTS LIST -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerReports"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="12dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_report_card" />
 
         </LinearLayout>
     </LinearLayout>

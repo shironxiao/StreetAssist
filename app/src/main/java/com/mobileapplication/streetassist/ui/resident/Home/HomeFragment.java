@@ -1,10 +1,12 @@
 package com.mobileapplication.streetassist.ui.resident.Home;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,25 +18,42 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.mobileapplication.streetassist.R;
+import com.mobileapplication.streetassist.ui.resident.Reports.submit_report_step1;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class HomeFragment extends Fragment {
 
-    // ── Views ────────────────────────────────────────────────────────────────
+    private static final String TAG = "HomeFragment";
+    private static final int MAX_RECENT = 3; // show only latest 3
+
+    // ── Views ──────────────────────────────────────────────────────────────────
     private TextView tvWelcomeName;
     private TextView tvInitialsAvatar;
     private CircleImageView ivAvatar;
     private TextView tvNotificationBadge;
     private TextView tvTotalCount, tvPendingCount, tvResolvedCount;
+    private TextView tvSeeAll;
+    private LinearLayout layoutRecentReports;
+    private LinearLayout layoutRecentEmpty;
     private com.google.android.material.card.MaterialCardView cardSubmitReport;
 
-    // ── Firebase ─────────────────────────────────────────────────────────────
+    // ── Firebase ───────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private ListenerRegistration reportsListener;
+    private ListenerRegistration notifListener;
 
     public HomeFragment() {}
 
@@ -53,50 +72,48 @@ public class HomeFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         db    = FirebaseFirestore.getInstance();
 
-        // Bind views
-        tvWelcomeName        = view.findViewById(R.id.tvWelcomeName);
-        ivAvatar             = view.findViewById(R.id.ivAvatar);
-        tvInitialsAvatar     = view.findViewById(R.id.tvInitialsAvatar);
-        tvNotificationBadge  = view.findViewById(R.id.tvNotificationBadge);
-        tvTotalCount         = view.findViewById(R.id.tvTotalCount);
-        tvPendingCount       = view.findViewById(R.id.tvPendingCount);
-        tvResolvedCount      = view.findViewById(R.id.tvResolvedCount);
-        cardSubmitReport     = view.findViewById(R.id.cardSubmitReport);
+        // ── Bind views ────────────────────────────────────────────────────────
+        tvWelcomeName       = view.findViewById(R.id.tvWelcomeName);
+        ivAvatar            = view.findViewById(R.id.ivAvatar);
+        tvInitialsAvatar    = view.findViewById(R.id.tvInitialsAvatar);
+        tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge);
+        tvTotalCount        = view.findViewById(R.id.tvTotalCount);
+        tvPendingCount      = view.findViewById(R.id.tvPendingCount);
+        tvResolvedCount     = view.findViewById(R.id.tvResolvedCount);
+        tvSeeAll            = view.findViewById(R.id.tvSeeAll);
+        layoutRecentReports = view.findViewById(R.id.layoutRecentReports);
+        layoutRecentEmpty   = view.findViewById(R.id.layoutRecentEmpty);
+        cardSubmitReport    = view.findViewById(R.id.cardSubmitReport);
 
-        // Notification bell click
-        view.findViewById(R.id.ivNotification).setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), NotificationActivity.class);
-            startActivity(intent);
-        });
+        // ── Submit report card ────────────────────────────────────────────────
+        cardSubmitReport.setOnClickListener(v ->
+                startActivity(new Intent(getActivity(), submit_report_step1.class)));
 
-        // Submit report card click
-        cardSubmitReport.setOnClickListener(v -> {
-            // TODO: navigate to your submit report screen
-            Toast.makeText(getContext(), "Open Submit Report", Toast.LENGTH_SHORT).show();
+        // ── Notification bell ─────────────────────────────────────────────────
+        view.findViewById(R.id.ivNotification).setOnClickListener(v ->
+                startActivity(new Intent(getActivity(), NotificationActivity.class)));
+
+        // ── See all → navigates to Reports tab ───────────────────────────────
+        tvSeeAll.setOnClickListener(v -> {
+            // Trigger bottom nav to switch to Reports tab
+            if (getActivity() != null) {
+                getActivity().findViewById(R.id.report).performClick();
+            }
         });
 
         loadUserProfile();
-
-        // Inside HomeFragment.java - onViewCreated method
-        cardSubmitReport.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), com.mobileapplication.streetassist.ui.resident.Reports.submit_report_step1.class);
-            startActivity(intent);
-        });
+        listenToReports();
+        listenToNotifications();
     }
 
-    // =========================================================================
-    //  Firestore – load user profile + report stats
-    // =========================================================================
+    // ── Load user profile from Firestore ──────────────────────────────────────
 
     private void loadUserProfile() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
-        String uid = user.getUid();
-
-        // ── Load user document ───────────────────────────────────────────────
         db.collection("users")
-                .document(uid)
+                .document(user.getUid())
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists() || getContext() == null) return;
@@ -104,10 +121,9 @@ public class HomeFragment extends Fragment {
                     String fullName = doc.getString("fullName");
                     String photoUrl = doc.getString("profilePhotoUrl");
 
-                    // Welcome text — first name only
+                    // First name only for welcome
                     String firstName = fullName != null
-                            ? fullName.trim().split("\\s+")[0]
-                            : "User";
+                            ? fullName.trim().split("\\s+")[0] : "User";
                     tvWelcomeName.setText("Welcome, " + firstName + "!");
 
                     // Avatar
@@ -119,7 +135,6 @@ public class HomeFragment extends Fragment {
                                 .placeholder(R.drawable.circle_bg_light_blue)
                                 .into(ivAvatar);
                     } else {
-                        // Initials fallback
                         ivAvatar.setVisibility(View.GONE);
                         tvInitialsAvatar.setVisibility(View.VISIBLE);
                         if (fullName != null && !fullName.isEmpty()) {
@@ -134,40 +149,122 @@ public class HomeFragment extends Fragment {
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(getContext(),
-                                "Failed to load profile: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show());
+                                "Failed to load profile.", Toast.LENGTH_SHORT).show());
+    }
 
-        // ── Load report stats for this user ──────────────────────────────────
-        db.collection("reports")
-                .whereEqualTo("reporterId", uid)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    int total    = 0;
-                    int pending  = 0;
-                    int resolved = 0;
+    // ── Real-time listener: reports → stats + recent list ─────────────────────
 
-                    for (QueryDocumentSnapshot doc : snapshots) {
+    private void listenToReports() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+
+        reportsListener = db.collection("reports")
+                .whereEqualTo("userId", user.getUid())
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null || getContext() == null) return;
+
+                    int total = 0, pending = 0, resolved = 0;
+
+                    // Sort newest first
+                    List<DocumentSnapshot> docs = snapshots.getDocuments();
+                    docs.sort((a, b) -> {
+                        Object tsA = a.get("timestamp");
+                        Object tsB = b.get("timestamp");
+                        if (tsA instanceof com.google.firebase.Timestamp
+                                && tsB instanceof com.google.firebase.Timestamp) {
+                            return ((com.google.firebase.Timestamp) tsB)
+                                    .compareTo((com.google.firebase.Timestamp) tsA);
+                        }
+                        return 0;
+                    });
+
+                    // Count stats
+                    for (DocumentSnapshot doc : docs) {
                         total++;
                         String status = doc.getString("status");
-                        if ("pending".equalsIgnoreCase(status))  pending++;
-                        if ("resolved".equalsIgnoreCase(status)) resolved++;
+                        if ("Pending".equalsIgnoreCase(status))  pending++;
+                        if ("Resolved".equalsIgnoreCase(status)) resolved++;
                     }
 
                     tvTotalCount.setText(String.valueOf(total));
                     tvPendingCount.setText(String.valueOf(pending));
                     tvResolvedCount.setText(String.valueOf(resolved));
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(),
-                                "Failed to load stats: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show());
 
-        // ── Load unread notification count ───────────────────────────────────
-        db.collection("notifications")
-                .whereEqualTo("userId", uid)
+                    // Build recent reports list (max 3)
+                    buildRecentReports(docs);
+                });
+    }
+
+    // ── Build recent report cards dynamically ─────────────────────────────────
+
+    private void buildRecentReports(List<DocumentSnapshot> docs) {
+        if (layoutRecentReports == null || getContext() == null) return;
+        layoutRecentReports.removeAllViews();
+
+        if (docs.isEmpty()) {
+            layoutRecentEmpty.setVisibility(View.VISIBLE);
+            layoutRecentReports.setVisibility(View.GONE);
+            return;
+        }
+
+        layoutRecentEmpty.setVisibility(View.GONE);
+        layoutRecentReports.setVisibility(View.VISIBLE);
+
+        int count = Math.min(docs.size(), MAX_RECENT);
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy · hh:mm a", Locale.getDefault());
+
+        for (int i = 0; i < count; i++) {
+            DocumentSnapshot doc  = docs.get(i);
+            Map<String, Object> d = doc.getData();
+            if (d == null) continue;
+
+            View card = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_recent_report, layoutRecentReports, false);
+
+            // Report ID
+            TextView tvId = card.findViewById(R.id.tvRecentReportId);
+            tvId.setText(getString(d, "reportId", doc.getId()));
+
+            // Description
+            TextView tvDesc = card.findViewById(R.id.tvRecentDescription);
+            tvDesc.setText(getString(d, "description", "No description"));
+
+            // Location
+            TextView tvLoc = card.findViewById(R.id.tvRecentLocation);
+            tvLoc.setText(getString(d, "locationAddress", "Location not set"));
+
+            // Timestamp
+            TextView tvTs = card.findViewById(R.id.tvRecentTimestamp);
+            Object ts = d.get("timestamp");
+            if (ts instanceof com.google.firebase.Timestamp) {
+                tvTs.setText(sdf.format(((com.google.firebase.Timestamp) ts).toDate()));
+            } else {
+                tvTs.setText("—");
+            }
+
+            // Status badge + left color bar
+            String status   = getString(d, "status", "Pending");
+            TextView tvStat = card.findViewById(R.id.tvRecentStatus);
+            View statusBar  = card.findViewById(R.id.statusBar);
+            tvStat.setText(status);
+            applyStatusStyle(tvStat, statusBar, status);
+
+            layoutRecentReports.addView(card);
+        }
+    }
+
+    // ── Real-time notification badge listener ─────────────────────────────────
+
+    private void listenToNotifications() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+
+        notifListener = db.collection("notifications")
+                .whereEqualTo("userId", user.getUid())
                 .whereEqualTo("isRead", false)
-                .get()
-                .addOnSuccessListener(snapshots -> {
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null || getContext() == null) return;
+
                     int unread = snapshots.size();
                     if (unread > 0) {
                         tvNotificationBadge.setVisibility(View.VISIBLE);
@@ -176,5 +273,52 @@ public class HomeFragment extends Fragment {
                         tvNotificationBadge.setVisibility(View.GONE);
                     }
                 });
+    }
+
+    // ── Status styling ─────────────────────────────────────────────────────────
+
+    private void applyStatusStyle(TextView badge, View bar, String status) {
+        switch (status) {
+            case "Pending":
+                badge.setBackgroundResource(R.drawable.badge_pending);
+                badge.setTextColor(Color.parseColor("#BA7517"));
+                bar.setBackgroundColor(Color.parseColor("#FFC107"));
+                break;
+            case "Verified":
+                badge.setBackgroundResource(R.drawable.badge_verified);
+                badge.setTextColor(Color.parseColor("#0F6E56"));
+                bar.setBackgroundColor(Color.parseColor("#1D9E75"));
+                break;
+            case "In Progress":
+                badge.setBackgroundResource(R.drawable.badge_in_progress);
+                badge.setTextColor(Color.parseColor("#185FA5"));
+                bar.setBackgroundColor(Color.parseColor("#4169E1"));
+                break;
+            case "Resolved":
+                badge.setBackgroundResource(R.drawable.badge_resolved);
+                badge.setTextColor(Color.parseColor("#3B6D11"));
+                bar.setBackgroundColor(Color.parseColor("#4CAF50"));
+                break;
+            default:
+                badge.setBackgroundResource(R.drawable.badge_pending);
+                badge.setTextColor(Color.parseColor("#BA7517"));
+                bar.setBackgroundColor(Color.parseColor("#FFC107"));
+        }
+    }
+
+    // ── Helper ─────────────────────────────────────────────────────────────────
+
+    private String getString(Map<String, Object> map, String key, String fallback) {
+        Object val = map.get(key);
+        return val != null && !val.toString().isEmpty() ? val.toString() : fallback;
+    }
+
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (reportsListener != null) reportsListener.remove();
+        if (notifListener  != null) notifListener.remove();
     }
 }

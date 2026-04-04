@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- badge_pending.xml — save in res/drawable/ -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FAEEDA" />
+    <corners android:radius="8dp" />
+</shape>
