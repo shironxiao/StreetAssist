@@ -1,6 +1,8 @@
 package com.mobileapplication.streetassist.ui.resident.Reports;
 
 import android.Manifest;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
@@ -21,8 +23,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -38,8 +38,14 @@ import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 public class submit_report_step1 extends AppCompatActivity {
 
@@ -48,18 +54,21 @@ public class submit_report_step1 extends AppCompatActivity {
     private Marker selectedMarker;
     private GeoPoint selectedPoint;
     private boolean isMapExpanded = false;
-    private static final int MAP_HEIGHT_NORMAL  = 200; // dp
-    private static final int MAP_HEIGHT_EXPANDED = 400; // dp
+    private static final int MAP_HEIGHT_NORMAL   = 200;
+    private static final int MAP_HEIGHT_EXPANDED = 400;
 
     // Location
     private FusedLocationProviderClient fusedLocationClient;
     private static final int LOCATION_PERMISSION_REQUEST = 1001;
     private boolean isManualPin = false;
 
+    // Date & Time
+    private Calendar selectedDateTime = null;
+
     // Views
     private MaterialButton btnUseMyLocation;
     private TextView tvSelectedLocation;
-    private TextInputEditText etSearch, etAge, etDescription;
+    private TextInputEditText etSearch, etAge, etDescription, etDateTimePicker;
     private AutoCompleteTextView actvSex;
     private MaterialCardView mapCard;
 
@@ -67,7 +76,6 @@ public class submit_report_step1 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // OSMDroid must be configured before setContentView
         Configuration.getInstance().load(this,
                 PreferenceManager.getDefaultSharedPreferences(this));
         Configuration.getInstance().setUserAgentValue(getPackageName());
@@ -83,13 +91,63 @@ public class submit_report_step1 extends AppCompatActivity {
         etAge              = findViewById(R.id.etAge);
         etDescription      = findViewById(R.id.etDescription);
         actvSex            = findViewById(R.id.actvSex);
+        etDateTimePicker   = findViewById(R.id.etDateTimePicker);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         setupMap();
         setupSexDropdown();
         setupSearch();
+        setupDateTimePicker();
         setupButtons();
+    }
+
+    // ─── DATE & TIME ──────────────────────────────────────────────────────────
+
+    private void setupDateTimePicker() {
+        // Tapping the field opens date picker → then time picker
+        etDateTimePicker.setOnClickListener(v -> openDatePicker());
+        etDateTimePicker.setFocusable(false);
+
+        // "Use current date & time" button
+        MaterialButton btnUseNow = findViewById(R.id.btnUseCurrentDateTime);
+        btnUseNow.setOnClickListener(v -> {
+            selectedDateTime = Calendar.getInstance();
+            updateDateTimeDisplay();
+        });
+    }
+
+    private void openDatePicker() {
+        Calendar cal = selectedDateTime != null ? selectedDateTime : Calendar.getInstance();
+        new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            if (selectedDateTime == null) selectedDateTime = Calendar.getInstance();
+            selectedDateTime.set(Calendar.YEAR, year);
+            selectedDateTime.set(Calendar.MONTH, month);
+            selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            openTimePicker(); // Chain into time picker after date is set
+        },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private void openTimePicker() {
+        Calendar cal = selectedDateTime != null ? selectedDateTime : Calendar.getInstance();
+        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+            selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            selectedDateTime.set(Calendar.MINUTE, minute);
+            selectedDateTime.set(Calendar.SECOND, 0);
+            updateDateTimeDisplay();
+        },
+                cal.get(Calendar.HOUR_OF_DAY),
+                cal.get(Calendar.MINUTE),
+                false).show();
+    }
+
+    private void updateDateTimeDisplay() {
+        if (selectedDateTime == null) return;
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy  ·  hh:mm a", Locale.getDefault());
+        etDateTimePicker.setText(sdf.format(selectedDateTime.getTime()));
     }
 
     // ─── MAP SETUP ────────────────────────────────────────────────────────────
@@ -98,49 +156,37 @@ public class submit_report_step1 extends AppCompatActivity {
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
 
-        // Default center: Quezon City
         GeoPoint defaultPoint = new GeoPoint(14.6760, 121.0437);
         mapView.getController().setZoom(15.0);
         mapView.getController().setCenter(defaultPoint);
 
-        // Tap on map → drop red marker
         mapView.getOverlays().add(new MapEventsOverlay(new MapEventsReceiver() {
             @Override
             public boolean singleTapConfirmedHelper(GeoPoint p) {
                 dropMarker(p, true);
                 return true;
             }
-
             @Override
-            public boolean longPressHelper(GeoPoint p) {
-                return false;
-            }
+            public boolean longPressHelper(GeoPoint p) { return false; }
         }));
 
-        // Expand/collapse button
         FloatingActionButton btnExpand = findViewById(R.id.btnExpandMap);
         btnExpand.setOnClickListener(v -> toggleMapExpand());
 
-        // Auto-get location on load
         getCurrentLocation(false);
     }
 
     private void dropMarker(GeoPoint point, boolean isManual) {
-        // Remove old marker
-        if (selectedMarker != null) {
-            mapView.getOverlays().remove(selectedMarker);
-        }
+        if (selectedMarker != null) mapView.getOverlays().remove(selectedMarker);
 
         selectedPoint = point;
         isManualPin   = isManual;
 
-        // Create red marker
         selectedMarker = new Marker(mapView);
         selectedMarker.setPosition(point);
         selectedMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         selectedMarker.setTitle(isManual ? "Pinned Location" : "Your Location");
 
-        // Use a red tinted default marker
         Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_location_pin_red);
         if (icon != null) selectedMarker.setIcon(icon);
 
@@ -148,10 +194,8 @@ public class submit_report_step1 extends AppCompatActivity {
         mapView.getController().animateTo(point);
         mapView.invalidate();
 
-        // Hide hint
         findViewById(R.id.tvMapHint).setVisibility(android.view.View.GONE);
 
-        // Update button label
         if (isManual) {
             btnUseMyLocation.setText("Use this location");
             btnUseMyLocation.setIcon(
@@ -162,7 +206,6 @@ public class submit_report_step1 extends AppCompatActivity {
                     ContextCompat.getDrawable(this, android.R.drawable.ic_menu_mylocation));
         }
 
-        // Reverse geocode to get address text
         reverseGeocode(point);
     }
 
@@ -195,18 +238,15 @@ public class submit_report_step1 extends AppCompatActivity {
                         sb.append(address.getAddressLine(i));
                         if (i < address.getMaxAddressLineIndex()) sb.append(", ");
                     }
-                    String result = sb.toString();
-                    runOnUiThread(() -> tvSelectedLocation.setText(result));
+                    runOnUiThread(() -> tvSelectedLocation.setText(sb.toString()));
                 } else {
                     runOnUiThread(() -> tvSelectedLocation.setText(
-                            String.format(Locale.getDefault(),
-                                    "Lat: %.5f, Lng: %.5f",
+                            String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
                                     point.getLatitude(), point.getLongitude())));
                 }
             } catch (IOException e) {
                 runOnUiThread(() -> tvSelectedLocation.setText(
-                        String.format(Locale.getDefault(),
-                                "Lat: %.5f, Lng: %.5f",
+                        String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
                                 point.getLatitude(), point.getLongitude())));
             }
         }).start();
@@ -227,8 +267,7 @@ public class submit_report_step1 extends AppCompatActivity {
                     });
                 } else {
                     runOnUiThread(() ->
-                            Toast.makeText(this, "Location not found. Try a different search.",
-                                    Toast.LENGTH_SHORT).show());
+                            Toast.makeText(this, "Location not found.", Toast.LENGTH_SHORT).show());
                 }
             } catch (IOException e) {
                 runOnUiThread(() ->
@@ -283,24 +322,20 @@ public class submit_report_step1 extends AppCompatActivity {
     }
 
     private void setupButtons() {
-        // Use my location / Use this location
         btnUseMyLocation.setOnClickListener(v -> {
             if (isManualPin && selectedPoint != null) {
-                // User already manually pinned — confirm and proceed to save
                 saveAndProceed();
             } else {
                 getCurrentLocation(true);
             }
         });
 
-        // Next
         MaterialButton btnNext = findViewById(R.id.btnNext);
         btnNext.setOnClickListener(v -> {
             if (!validateForm()) return;
             saveAndProceed();
         });
 
-        // Back
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
@@ -325,6 +360,11 @@ public class submit_report_step1 extends AppCompatActivity {
             etDescription.requestFocus();
             return false;
         }
+        if (selectedDateTime == null) {
+            Toast.makeText(this, "Please select the date and time when the individual was seen.",
+                    Toast.LENGTH_SHORT).show();
+            return false;
+        }
         return true;
     }
 
@@ -333,13 +373,15 @@ public class submit_report_step1 extends AppCompatActivity {
 
         String locationText = tvSelectedLocation.getText().toString();
 
+        // Pass date/time as a long (milliseconds) to Step 2 → Step 3
         Intent intent = new Intent(this, submit_report_step2.class);
-        intent.putExtra("latitude",     selectedPoint.getLatitude());
-        intent.putExtra("longitude",    selectedPoint.getLongitude());
-        intent.putExtra("locationText", locationText);
-        intent.putExtra("age",          etAge.getText().toString().trim());
-        intent.putExtra("sex",          actvSex.getText().toString().trim());
-        intent.putExtra("description",  etDescription.getText().toString().trim());
+        intent.putExtra("latitude",        selectedPoint.getLatitude());
+        intent.putExtra("longitude",       selectedPoint.getLongitude());
+        intent.putExtra("locationText",    locationText);
+        intent.putExtra("age",             etAge.getText().toString().trim());
+        intent.putExtra("sex",             actvSex.getText().toString().trim());
+        intent.putExtra("description",     etDescription.getText().toString().trim());
+        intent.putExtra("seenAt",          selectedDateTime.getTimeInMillis());
         startActivity(intent);
     }
 
@@ -360,21 +402,14 @@ public class submit_report_step1 extends AppCompatActivity {
     // ─── OSMDroid LIFECYCLE ───────────────────────────────────────────────────
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        mapView.onResume();
-    }
+    protected void onResume() { super.onResume(); mapView.onResume(); }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        mapView.onPause();
-    }
+    protected void onPause() { super.onPause(); mapView.onPause(); }
 
     // ─── UTILITY ──────────────────────────────────────────────────────────────
 
     private int dpToPx(int dp) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 }

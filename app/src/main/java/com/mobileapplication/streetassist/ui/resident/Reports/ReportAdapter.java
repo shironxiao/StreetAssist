@@ -47,9 +47,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
     public void onBindViewHolder(@NonNull ReportViewHolder holder, int position) {
         Map<String, Object> report = reportList.get(position);
 
-        // ── Bind card fields ──────────────────────────────────────────────────
-        String reportId = getString(report, "reportId", "—");
-        holder.tvReportId.setText(reportId);
+        holder.tvReportId.setText(getString(report, "reportId", "—"));
 
         String status = getString(report, "status", "Pending");
         holder.tvStatus.setText(status);
@@ -64,10 +62,12 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         holder.tvAssistance.setText("Assistance: " +
                 (assistance.length() > 40 ? assistance.substring(0, 40) + "…" : assistance));
 
-        String formattedTime = formatTimestamp(report.get("timestamp"));
-        holder.tvTimestamp.setText("Submitted: " + formattedTime);
+        holder.tvTimestamp.setText("Submitted: " + formatTimestamp(report.get("timestamp")));
 
-        // ── View Details click → BottomSheet ──────────────────────────────────
+        // Show seenAt on the card
+        String seenAtFormatted = formatTimestamp(report.get("seenAt"));
+        holder.tvSeenAt.setText("Seen: " + seenAtFormatted);
+
         holder.tvViewDetails.setOnClickListener(v -> showDetailsBottomSheet(report));
         holder.itemView.setOnClickListener(v -> showDetailsBottomSheet(report));
     }
@@ -77,7 +77,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         return reportList == null ? 0 : reportList.size();
     }
 
-    // ── Bottom Sheet Dialog ────────────────────────────────────────────────────
+    // ── Bottom Sheet ──────────────────────────────────────────────────────────
 
     private void showDetailsBottomSheet(Map<String, Object> report) {
         BottomSheetDialog dialog = new BottomSheetDialog(context,
@@ -87,31 +87,18 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 .inflate(R.layout.dialog_report_details, null);
         dialog.setContentView(sheetView);
 
-        // ── Populate all fields ───────────────────────────────────────────────
+        setText(sheetView, R.id.dialogReportId,    getString(report, "reportId", "—"));
 
-        // Report ID
-        setText(sheetView, R.id.dialogReportId,
-                getString(report, "reportId", "—"));
-
-        // Status
         String status = getString(report, "status", "Pending");
         TextView tvStatus = sheetView.findViewById(R.id.dialogStatus);
         tvStatus.setText(status);
         applyStatusStyle(tvStatus, status);
 
-        // Individual info
-        setText(sheetView, R.id.dialogAge,
-                getString(report, "approximateAge", "—"));
-        setText(sheetView, R.id.dialogSex,
-                getString(report, "sex", "—"));
-        setText(sheetView, R.id.dialogDescription,
-                getString(report, "description", "No description provided."));
+        setText(sheetView, R.id.dialogAge,         getString(report, "approximateAge", "—"));
+        setText(sheetView, R.id.dialogSex,         getString(report, "sex", "—"));
+        setText(sheetView, R.id.dialogDescription, getString(report, "description", "No description provided."));
+        setText(sheetView, R.id.dialogLocation,    getString(report, "locationAddress", "No address available."));
 
-        // Location
-        setText(sheetView, R.id.dialogLocation,
-                getString(report, "locationAddress", "No address available."));
-
-        // Coordinates
         Object lat = report.get("latitude");
         Object lng = report.get("longitude");
         setText(sheetView, R.id.dialogLatitude,
@@ -119,20 +106,17 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         setText(sheetView, R.id.dialogLongitude,
                 lng != null ? String.format(Locale.getDefault(), "%.5f", toDouble(lng)) : "—");
 
-        // Assistance
-        setText(sheetView, R.id.dialogAssistance,
-                getString(report, "assistanceDescription", "Not specified."));
+        setText(sheetView, R.id.dialogAssistance,  getString(report, "assistanceDescription", "Not specified."));
 
-        // Reporter
         String contact = getString(report, "contactNumber", "").trim();
-        setText(sheetView, R.id.dialogContact,
-                contact.isEmpty() ? "Not provided" : contact);
+        setText(sheetView, R.id.dialogContact, contact.isEmpty() ? "Not provided" : contact);
 
-        // Timestamp
-        setText(sheetView, R.id.dialogTimestamp,
-                formatTimestamp(report.get("timestamp")));
+        // Seen at date/time
+        setText(sheetView, R.id.dialogSeenAt,      formatTimestamp(report.get("seenAt")));
 
-        // Close button
+        // Submitted timestamp
+        setText(sheetView, R.id.dialogTimestamp,   formatTimestamp(report.get("timestamp")));
+
         MaterialButton btnClose = sheetView.findViewById(R.id.dialogBtnClose);
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
@@ -195,11 +179,10 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         return 0.0;
     }
 
-    // ── ViewHolder ─────────────────────────────────────────────────────────────
-
     static class ReportViewHolder extends RecyclerView.ViewHolder {
         TextView tvReportId, tvStatus, tvDescription, tvAge,
-                tvSex, tvLocation, tvAssistance, tvTimestamp, tvViewDetails;
+                tvSex, tvLocation, tvAssistance, tvTimestamp,
+                tvSeenAt, tvViewDetails;
 
         ReportViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -211,6 +194,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             tvLocation    = itemView.findViewById(R.id.tvLocation);
             tvAssistance  = itemView.findViewById(R.id.tvAssistance);
             tvTimestamp   = itemView.findViewById(R.id.tvTimestamp);
+            tvSeenAt      = itemView.findViewById(R.id.tvSeenAt);      // new
             tvViewDetails = itemView.findViewById(R.id.tvViewDetails);
         }
     }

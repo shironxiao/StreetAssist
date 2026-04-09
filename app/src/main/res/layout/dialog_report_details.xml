@@ -394,6 +394,18 @@
                         android:textColor="#222222"
                         android:textSize="12sp"
                         android:layout_marginTop="2dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Date &amp; Time Seen"
+                        android:textStyle="bold"
+                        android:textColor="#333333" />
+
+                    <TextView
+                        android:id="@+id/dialogSeenAt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#555555" />
                 </LinearLayout>
             </LinearLayout>
 
