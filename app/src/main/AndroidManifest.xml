@@ -27,6 +27,10 @@
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.auth.AdminLoginActivity"
+            android:exported="false"
+            android:label="Admin Login" />
         <activity android:name=".ui.resident.Home.NotificationActivity"
             android:exported="false" />
         <activity
@@ -53,6 +57,10 @@
         <activity android:name=".ui.resident.ResidentMainActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
+        <activity
+            android:name=".ui.admin.AdminDashboardActivity"
+            android:exported="false"
+            android:label="Admin Dashboard" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
