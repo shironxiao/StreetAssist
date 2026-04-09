@@ -7,137 +7,139 @@
     android:background="#F5F7FA"
     tools:context=".ui.resident.Home.HomeFragment">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:fillViewport="true">
 
-        <!-- ROYAL BLUE HEADER PANEL -->
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:background="#4169E1"
-            android:padding="24dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <!-- Left: Avatar + Welcome text -->
-            <LinearLayout
-                android:id="@+id/layoutUserInfo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+            <!-- ROYAL BLUE HEADER PANEL -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:background="#4169E1"
+                android:padding="24dp">
 
-                <!-- Avatar frame -->
-                <FrameLayout
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="14dp">
+                <!-- Left: Avatar + Welcome text -->
+                <LinearLayout
+                    android:id="@+id/layoutUserInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/ivAvatar"
+                    <!-- Avatar frame -->
+                    <FrameLayout
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:src="@drawable/circle_bg_light_blue"
-                        app:civ_border_color="#FFFFFF"
-                        app:civ_border_width="2dp" />
+                        android:layout_marginEnd="14dp">
+
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:id="@+id/ivAvatar"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:src="@drawable/circle_bg_light_blue"
+                            app:civ_border_color="#FFFFFF"
+                            app:civ_border_width="2dp" />
+
+                        <TextView
+                            android:id="@+id/tvInitialsAvatar"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/circle_bg_light_blue"
+                            android:gravity="center"
+                            android:text="U"
+                            android:textColor="@android:color/white"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <!-- Welcome text -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvWelcomeName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="Welcome, User!"
+                            android:textColor="@android:color/white"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="220dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Help make our community better by reporting homeless cases today."
+                            android:textColor="#D1D9FF"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Right: Notification bell -->
+                <FrameLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginTop="20dp">
+
+                    <ImageView
+                        android:id="@+id/ivNotification"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/circle_bg_light_blue"
+                        android:backgroundTint="#30FFFFFF"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="10dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        app:tint="#FFFFFF" />
 
                     <TextView
-                        android:id="@+id/tvInitialsAvatar"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:background="@drawable/circle_bg_light_blue"
+                        android:id="@+id/tvNotificationBadge"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="top|end"
+                        android:background="@drawable/badge_background"
                         android:gravity="center"
-                        android:text="U"
-                        android:textColor="@android:color/white"
-                        android:textSize="20sp"
+                        android:text="0"
+                        android:textColor="#FFFFFF"
+                        android:textSize="9sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
                 </FrameLayout>
 
-                <!-- Welcome text -->
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvWelcomeName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif-black"
-                        android:text="Welcome, User!"
-                        android:textColor="@android:color/white"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="220dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Help make our community better by reporting homeless cases today."
-                        android:textColor="#D1D9FF"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Right: Notification bell -->
-            <FrameLayout
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="20dp">
-
-                <ImageView
-                    android:id="@+id/ivNotification"
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
+                <!-- Decorative circle -->
+                <View
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginTop="-40dp"
+                    android:layout_marginEnd="-40dp"
                     android:background="@drawable/circle_bg_light_blue"
-                    android:backgroundTint="#30FFFFFF"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:padding="10dp"
-                    android:src="@android:drawable/ic_dialog_info"
-                    app:tint="#FFFFFF" />
+                    android:backgroundTint="#30FFFFFF" />
 
-                <TextView
-                    android:id="@+id/tvNotificationBadge"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="top|end"
-                    android:background="@drawable/badge_background"
-                    android:gravity="center"
-                    android:text="0"
-                    android:textColor="#FFFFFF"
-                    android:textSize="9sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
-            </FrameLayout>
+            </RelativeLayout>
 
-            <!-- Decorative circle -->
-            <View
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="-40dp"
-                android:layout_marginEnd="-40dp"
-                android:background="@drawable/circle_bg_light_blue"
-                android:backgroundTint="#30FFFFFF" />
-
-        </RelativeLayout>
-
-        <!-- SCROLLABLE CONTENT AREA -->
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="-40dp"
-            android:background="@drawable/rounded_top_corners"
-            android:padding="20dp">
-
+            <!-- CONTENT AREA -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginTop="-40dp"
+                android:background="@drawable/rounded_top_corners"
+                android:backgroundTint="#F5F7FA"
+                android:orientation="vertical"
+                android:padding="20dp">
 
                 <!-- Action Card: Submit New Report -->
                 <com.google.android.material.card.MaterialCardView
@@ -301,8 +303,8 @@
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
+                        android:layout_marginStart="6dp"
                         app:cardBackgroundColor="@android:color/white"
                         app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
@@ -333,7 +335,7 @@
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
 
-                <!-- ── RECENT REPORTS SECTION ── -->
+                <!-- RECENT REPORTS SECTION -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -392,7 +394,7 @@
                         android:textSize="13sp" />
                 </LinearLayout>
 
-                <!-- Recent Reports List (up to 3 items) -->
+                <!-- Recent Reports List -->
                 <LinearLayout
                     android:id="@+id/layoutRecentReports"
                     android:layout_width="match_parent"
@@ -400,12 +402,12 @@
                     android:layout_marginTop="12dp"
                     android:orientation="vertical" />
 
-                <!-- Bottom space -->
+                <!-- Padding for bottom of scroll -->
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="40dp" />
+                    android:layout_height="80dp" />
 
             </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-    </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

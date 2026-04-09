@@ -5,13 +5,17 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
 
 import java.text.SimpleDateFormat;
@@ -24,10 +28,12 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
 
     private final Context context;
     private List<Map<String, Object>> reportList;
+    private final FirebaseFirestore db;
 
     public ReportAdapter(Context context, List<Map<String, Object>> reportList) {
         this.context    = context;
         this.reportList = reportList;
+        this.db         = FirebaseFirestore.getInstance();
     }
 
     public void updateList(List<Map<String, Object>> newList) {
@@ -55,20 +61,27 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         holder.tvStatus.setText(status);
         applyStatusStyle(holder.tvStatus, status);
 
-        holder.tvDescription.setText(getString(report, "description", "No description."));
-        holder.tvAge.setText("Age: " + getString(report, "approximateAge", "—"));
-        holder.tvSex.setText("Sex: " + getString(report, "sex", "—"));
-        holder.tvLocation.setText(getString(report, "locationAddress", "Location not set"));
+        // Check if IDs exist in item_report_card.xml
+        if (holder.tvDescription != null) holder.tvDescription.setText(getString(report, "description", "No description."));
+        if (holder.tvAge != null) holder.tvAge.setText("Age: " + getString(report, "approximateAge", "—"));
+        if (holder.tvSex != null) holder.tvSex.setText("Sex: " + getString(report, "sex", "—"));
+        if (holder.tvLocation != null) holder.tvLocation.setText(getString(report, "locationAddress", "Location not set"));
 
-        String assistance = getString(report, "assistanceDescription", "—");
-        holder.tvAssistance.setText("Assistance: " +
-                (assistance.length() > 40 ? assistance.substring(0, 40) + "…" : assistance));
+        if (holder.tvAssistance != null) {
+            String assistance = getString(report, "assistanceDescription", "—");
+            holder.tvAssistance.setText("Assistance: " +
+                    (assistance.length() > 40 ? assistance.substring(0, 40) + "…" : assistance));
+        }
 
-        String formattedTime = formatTimestamp(report.get("timestamp"));
-        holder.tvTimestamp.setText("Submitted: " + formattedTime);
+        if (holder.tvTimestamp != null) {
+            String formattedTime = formatTimestamp(report.get("timestamp"));
+            holder.tvTimestamp.setText("Submitted: " + formattedTime);
+        }
 
         // ── View Details click → BottomSheet ──────────────────────────────────
-        holder.tvViewDetails.setOnClickListener(v -> showDetailsBottomSheet(report));
+        if (holder.tvViewDetails != null) {
+            holder.tvViewDetails.setOnClickListener(v -> showDetailsBottomSheet(report));
+        }
         holder.itemView.setOnClickListener(v -> showDetailsBottomSheet(report));
     }
 
@@ -89,54 +102,81 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
 
         // ── Populate all fields ───────────────────────────────────────────────
 
-        // Report ID
-        setText(sheetView, R.id.dialogReportId,
-                getString(report, "reportId", "—"));
+        // Image
+        ImageView ivDetail = sheetView.findViewById(R.id.dialogImage);
+        if (ivDetail != null) {
+            String imageUrl = getString(report, "imageUrl", "");
+            if (!imageUrl.isEmpty()) {
+                Glide.with(context).load(imageUrl).placeholder(R.drawable.logo).into(ivDetail);
+            }
+        }
+
+        // Report ID & Timestamp
+        setText(sheetView, R.id.dialogReportId, getString(report, "reportId", "—"));
+        setText(sheetView, R.id.dialogTimestamp, formatTimestamp(report.get("timestamp")));
 
         // Status
         String status = getString(report, "status", "Pending");
         TextView tvStatus = sheetView.findViewById(R.id.dialogStatus);
-        tvStatus.setText(status);
-        applyStatusStyle(tvStatus, status);
+        if (tvStatus != null) {
+            tvStatus.setText(status);
+            applyStatusStyle(tvStatus, status);
+        }
 
         // Individual info
-        setText(sheetView, R.id.dialogAge,
-                getString(report, "approximateAge", "—"));
-        setText(sheetView, R.id.dialogSex,
-                getString(report, "sex", "—"));
-        setText(sheetView, R.id.dialogDescription,
-                getString(report, "description", "No description provided."));
+        setText(sheetView, R.id.dialogAge, getString(report, "approximateAge", "—"));
+        setText(sheetView, R.id.dialogSex, getString(report, "sex", "—"));
+        setText(sheetView, R.id.dialogDescription, getString(report, "description", "No description provided."));
+        setText(sheetView, R.id.dialogReporterName, getString(report, "reporterName", "Anonymous"));
 
         // Location
-        setText(sheetView, R.id.dialogLocation,
-                getString(report, "locationAddress", "No address available."));
+        setText(sheetView, R.id.dialogLocation, getString(report, "locationAddress", "No address available."));
 
         // Coordinates
         Object lat = report.get("latitude");
         Object lng = report.get("longitude");
         setText(sheetView, R.id.dialogLatitude,
-                lat != null ? String.format(Locale.getDefault(), "%.5f", toDouble(lat)) : "—");
+                lat != null ? String.format(Locale.getDefault(), "Lat: %.5f", toDouble(lat)) : "Lat: —");
         setText(sheetView, R.id.dialogLongitude,
-                lng != null ? String.format(Locale.getDefault(), "%.5f", toDouble(lng)) : "—");
+                lng != null ? String.format(Locale.getDefault(), "Lng: %.5f", toDouble(lng)) : "Lng: —");
 
         // Assistance
-        setText(sheetView, R.id.dialogAssistance,
-                getString(report, "assistanceDescription", "Not specified."));
+        setText(sheetView, R.id.dialogAssistance, getString(report, "assistanceDescription", "Not specified."));
 
-        // Reporter
-        String contact = getString(report, "contactNumber", "").trim();
-        setText(sheetView, R.id.dialogContact,
-                contact.isEmpty() ? "Not provided" : contact);
+        // Reporter Contact
+        setText(sheetView, R.id.dialogContact, getString(report, "contactNumber", "Not provided"));
 
-        // Timestamp
-        setText(sheetView, R.id.dialogTimestamp,
-                formatTimestamp(report.get("timestamp")));
+        // ── Status Update Buttons (ADMIN ONLY) ──────────────────────────────
+        String docId = (String) report.get("documentId");
+        if (docId != null) {
+            setupStatusButton(sheetView, R.id.btnStatusPending, docId, "Pending", dialog);
+            setupStatusButton(sheetView, R.id.btnStatusInProgress, docId, "In Progress", dialog);
+            setupStatusButton(sheetView, R.id.btnStatusVerified, docId, "Verified", dialog);
+            setupStatusButton(sheetView, R.id.btnStatusResolved, docId, "Resolved", dialog);
+        }
 
         // Close button
-        MaterialButton btnClose = sheetView.findViewById(R.id.dialogBtnClose);
-        btnClose.setOnClickListener(v -> dialog.dismiss());
+        View btnClose = sheetView.findViewById(R.id.dialogBtnClose);
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
+    }
+
+    private void setupStatusButton(View parent, int btnId, String docId, String newStatus, BottomSheetDialog dialog) {
+        View btn = parent.findViewById(btnId);
+        if (btn != null) {
+            btn.setOnClickListener(v -> {
+                db.collection("reports").document(docId)
+                        .update("status", newStatus)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(context, "Status updated to " + newStatus, Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(context, "Failed to update status", Toast.LENGTH_SHORT).show();
+                        });
+            });
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -199,7 +239,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
 
     static class ReportViewHolder extends RecyclerView.ViewHolder {
         TextView tvReportId, tvStatus, tvDescription, tvAge,
-                tvSex, tvLocation, tvAssistance, tvTimestamp, tvViewDetails;
+                tvSex, tvLocation, tvAssistance, tvTimestamp, tvViewDetails, tvReportTitle, tvReporterName;
 
         ReportViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -212,6 +252,8 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             tvAssistance  = itemView.findViewById(R.id.tvAssistance);
             tvTimestamp   = itemView.findViewById(R.id.tvTimestamp);
             tvViewDetails = itemView.findViewById(R.id.tvViewDetails);
+            tvReportTitle = itemView.findViewById(R.id.tvReportTitle);
+            tvReporterName = itemView.findViewById(R.id.tvReporterName);
         }
     }
 }
