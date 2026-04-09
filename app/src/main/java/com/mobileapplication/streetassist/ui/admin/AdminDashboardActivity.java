@@ -2,8 +2,10 @@ package com.mobileapplication.streetassist.ui.admin;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,6 +22,7 @@ import java.util.Map;
 
 public class AdminDashboardActivity extends AppCompatActivity {
 
+    private static final String TAG = "AdminDashboard";
     private RecyclerView rvReports;
     private ReportAdapter adapter;
     private List<Map<String, Object>> reportList = new ArrayList<>();
@@ -49,13 +52,25 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         // Exit / Logout button
         Button btnExit = findViewById(R.id.btnExitAdmin);
-        btnExit.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(AdminDashboardActivity.this, IntroductionUserLevel.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
+        Log.d(TAG, "btnExitAdmin found: " + (btnExit != null));
+        if (btnExit != null) {
+            btnExit.setOnClickListener(v -> {
+                Log.d(TAG, "Logout button clicked!");
+                try {
+                    FirebaseAuth.getInstance().signOut();
+                    Log.d(TAG, "Firebase sign out successful");
+                    Intent intent = new Intent(AdminDashboardActivity.this, IntroductionUserLevel.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error during logout: " + e.getMessage(), e);
+                    Toast.makeText(AdminDashboardActivity.this, "Logout error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            Log.e(TAG, "btnExitAdmin is NULL! Check layout XML.");
+        }
 
         fetchReports();
     }
