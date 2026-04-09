@@ -28,42 +28,179 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import com.mobileapplication.streetassist.R;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // ── Views ────────────────────────────────────────────────────────────────
+    // ── Views ─────────────────────────────────────────────────────────────────
     private CheckBox cbTerms;
     private Button btnRegister;
     private TextView tvTermsLink, tvLoginPrompt;
     private ImageButton btnBack;
-    private TextInputEditText etFullName, etEmail, etPassword, etConfirmPassword;
-    private AutoCompleteTextView spinnerRegion, spinnerProvince, spinnerCity, spinnerBarangay;
+    private TextInputEditText etFullName, etEmail, etContactNumber, etPassword, etConfirmPassword;
+    private AutoCompleteTextView spinnerCity, spinnerBarangay;
 
-    // ── Firebase ─────────────────────────────────────────────────────────────
+    // ── Firebase ──────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // ── PSGC state ───────────────────────────────────────────────────────────
-    private final Map<String, String> regionCodeMap   = new HashMap<>();
-    private final Map<String, String> provinceCodeMap = new HashMap<>();
-    private final Map<String, String> cityCodeMap     = new HashMap<>();
+    // ── Fixed values ──────────────────────────────────────────────────────────
+    private static final String FIXED_REGION   = "REGION V (Bicol Region)";
+    private static final String FIXED_PROVINCE = "Camarines Norte";
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    // ── Hardcoded PSGC data for Camarines Norte ───────────────────────────────
+    private static final Map<String, List<String>> CITY_BARANGAY_MAP = new HashMap<>();
 
-    private static final String BASE_URL = "https://psgc.cloud/api";
+    static {
+        CITY_BARANGAY_MAP.put("Basud", Arrays.asList(
+                "Aguit-it", "Backong", "Bagaobawan", "Calangcawan Norte", "Calangcawan Sur",
+                "Culayculay", "Dagang", "Gahonon", "Gubat Norte", "Gubat Sur",
+                "Ignit", "Kaibigan", "Langa-langa", "Laniton", "Lastic",
+                "Mabini", "Manlimonsito", "Matango", "Mocong", "Oloapaen",
+                "Ombao Heights", "Ombao Tibang", "Omboy", "Pagsangahan", "Pambuhan",
+                "Pinagwarasan", "Plaridel", "Poblacion", "Salvacion", "San Isidro",
+                "San Roque", "Santa Rosa Norte", "Santa Rosa Sur", "Taba-taba",
+                "Tacad", "Taisan", "Tambongon", "Tenerife", "Yapak"
+        ));
+
+        CITY_BARANGAY_MAP.put("Capalonga", Arrays.asList(
+                "Alayao", "Binawangan", "Calabaca", "Calagbagang", "Catabaguangan",
+                "Catioan", "Del Pilar", "Gilong", "Guayabo", "Ligñon",
+                "Mabini", "Magsaysay", "Mantalongon", "Milagrosa", "Plaridel",
+                "Poblacion", "Quirino", "Roosevelt", "Salvacion", "San Antonio",
+                "San Francisco", "San Isidro", "Santa Cruz", "Santa Elena",
+                "Santa Maria", "Santo Niño", "Sinagapos", "Vista Hermosa"
+        ));
+
+        CITY_BARANGAY_MAP.put("Daet", Arrays.asList(
+                "Alawihao", "Awitan", "Bagasbas", "Barangay I (Pob.)", "Barangay II (Pob.)",
+                "Barangay III (Pob.)", "Barangay IV (Pob.)", "Barangay V (Pob.)",
+                "Barangay VI (Pob.)", "Barangay VII (Pob.)", "Barangay VIII (Pob.)",
+                "Bibirao", "Borabod", "Calasgasan", "Camambugan", "Cobangbang (Sto. Niño)",
+                "Dogongan", "Garcia", "Gahonon", "Gubat", "Lag-on",
+                "Lucrecia", "Lag-on", "Magang", "Mancruz (San Juan)",
+                "Pamorangon", "San Isidro"
+        ));
+
+        CITY_BARANGAY_MAP.put("San Lorenzo Ruiz", Arrays.asList(
+                "Alegria", "Anahawan", "Anonang", "Bagong Silang", "Calangcawan",
+                "Guinabonan", "Iligan", "Inductan", "Km. 891 Pob. (Tulay)",
+                "Lamon", "Mabilo I", "Mabilo II", "Nakalaya", "Northern Poblacion",
+                "Placer", "Salvacion", "San Antonio", "San Francisco", "San Isidro",
+                "San Jose", "San Martin", "San Pedro", "Santa Cruz",
+                "Santa Elena", "Santiago", "Southern Poblacion", "Talahib",
+                "Talisay", "Tamban", "Tambo", "Tandoc", "Tison"
+        ));
+
+        CITY_BARANGAY_MAP.put("San Vicente", Arrays.asList(
+                "Bugtong na Pulo", "Calwit", "Labnig", "Mabini", "Madlawon",
+                "Pag-asa", "Poblacion", "San Antonio", "San Francisco",
+                "San Isidro", "San Ramon", "Santa Cruz", "Santa Elena",
+                "Santo Niño", "Taguilid"
+        ));
+
+        CITY_BARANGAY_MAP.put("Santa Elena", Arrays.asList(
+                "Angga", "Bactas", "Binanwaanan", "Bulhao", "Busak",
+                "Caawigan", "Caayunan", "Calabaca", "Calagbagang", "Calaocan",
+                "Camambugan", "Candawan", "Catabaguangan", "Cataroan", "Caugmayan",
+                "Cayucay", "Del Pilar", "Guadalupe", "Hawak", "Itulan",
+                "Laniton", "Lastic", "Mabini", "Magsaysay",
+                "Manlimonsito", "Matango", "Mocong", "Oloapaen",
+                "Pagsangahan", "Pambuhan", "Pinagwarasan", "Plaridel",
+                "Poblacion", "Puro", "Salvacion", "San Antonio",
+                "San Francisco", "San Isidro", "San Jose", "San Martin",
+                "San Miguel", "San Pedro", "San Ramon", "San Roque",
+                "Santa Cruz", "Santa Elena", "Santo Niño", "Tacad",
+                "Taisan", "Talisay", "Tambongon", "Tenerife"
+        ));
+
+        CITY_BARANGAY_MAP.put("Jose Panganiban", Arrays.asList(
+                "Bagong Bayan", "Calero", "Dahican", "Dayhagan", "Estacion",
+                "Lag-on", "Larap", "Loreña", "Luyos", "Mabini",
+                "Mabungabon", "Managpi", "Manaringon", "Mercedes", "Napaod",
+                "Parang", "Placer", "Poblacion I", "Poblacion II", "Poblacion III",
+                "Port Junction Norte", "Port Junction Sur", "Santa Milagrosa",
+                "Tacay", "Tambo", "Trinidad", "Viñas", "Wawa"
+        ));
+
+        CITY_BARANGAY_MAP.put("Labo", Arrays.asList(
+                "Abella", "Agusigin", "Balangcawan Norte", "Balangcawan Sur", "Balite",
+                "Bautista", "Bayabas", "Bena", "Binanuahan East", "Binanuahan West",
+                "Bulacan", "Caayunan", "Calibunan", "Camambugan", "Candawan",
+                "Capalogan", "Catabaguangan", "Catioan", "Codon", "Colacling",
+                "Colomio", "Corucao", "Del Pilar", "Gahonon", "Guadalupe",
+                "Guinabonan", "Herrera", "Hoyohoy", "Imelda", "Inauayan",
+                "J. Milan (Catanggalan)", "Kaibigan", "Lag-on", "Lictingtung",
+                "Ligñon", "Lumbangan", "Luna Norte", "Luna Sur", "Mabini",
+                "Mabolo", "Macabug", "Magang", "Magsaysay", "Manuangan",
+                "Maria", "Masalong Norte", "Masalong Sur", "Mataque", "Mercedes",
+                "Napaod", "Niabonan", "Obaliw Recto", "Ocampo", "Ola Norte",
+                "Ola Sur", "Osmeña", "Oyon", "Pag-asa", "Palong",
+                "Pancucuran", "Pawili", "Plaridel", "Poblacion", "Pola",
+                "Pood", "Quezon", "Quirino", "Roosevelt", "Rosario",
+                "Salvacion", "San Antonio Norte", "San Antonio Sur", "San Isidro",
+                "San Lorenzo", "San Miguel", "San Pablo Norte", "San Pablo Sur",
+                "San Patricio Norte", "San Patricio Sur", "San Ramon",
+                "San Vicente", "Santa Cruz", "Sapang Palay", "Sumaoy",
+                "Tamban", "Tulay", "Tungmalaong", "Vega", "Villasol"
+        ));
+
+        CITY_BARANGAY_MAP.put("Mercedes", Arrays.asList(
+                "Apuao", "Barangay I (Pob.)", "Barangay II (Pob.)", "Barangay III (Pob.)",
+                "Barangay IV (Pob.)", "Barangay V (Pob.)", "Barangay VI (Pob.)",
+                "Barangay VII (Pob.)", "Boot", "Casagsagan", "Comadaycaday",
+                "Comadogcadog", "Daculang Bolo", "Daguit", "Danao",
+                "Guayabo", "Himanag", "Lagha", "Lanot", "Lañgon",
+                "Lañgon", "Libas", "Mabini", "Macolabo Island", "Malinis",
+                "Maot", "Masikla", "Matnog", "Mobo", "Nacawit",
+                "Pambuhan", "Patag", "Patrol", "Quinapaguian", "Salingogon",
+                "Sirangan", "Taba", "Tawig", "Tugos", "Yabo"
+        ));
+
+        CITY_BARANGAY_MAP.put("Paracale", Arrays.asList(
+                "Awitan", "Bagumbayan", "Bakal Norte", "Bakal Sur", "Batobalani",
+                "Calaburnay", "Capacuan", "Casagsagan", "Caypandan", "Colasi",
+                "Gahonon", "Guinabonan", "Jose Panganiban", "Lag-on", "Larap",
+                "Luklukan Norte", "Luklukan Sur", "Mabini", "Madlawon",
+                "Mananao", "Mancuartira", "Mangkasuy", "Maot", "Masalong",
+                "Minalabac", "Nakalaya", "Norte", "Obo", "Pag-asa",
+                "Pangarairan", "Peñafrancia", "Poblacion", "Tabugon",
+                "Tagas", "Talisay", "Tambong", "Tigbinan", "Tulay Na Lupa"
+        ));
+
+        CITY_BARANGAY_MAP.put("Talisay", Arrays.asList(
+                "Bagong Bayan", "Bautista", "Calasag", "Catagbacan", "Codon",
+                "Hampas", "Laniton", "Limaong", "Mabini", "Magang",
+                "Mataque", "Maugat East", "Maugat West", "Pag-asa", "Poblacion",
+                "Salvacion", "San Antonio", "San Isidro", "San Jose",
+                "San Miguel", "San Pablo", "San Roque", "Santa Cruz",
+                "Santo Niño", "Tapihan", "Tulatula"
+        ));
+
+        CITY_BARANGAY_MAP.put("Vinzons", Arrays.asList(
+                "Alaban", "Algaran", "Balagba", "Binobong", "Burabod",
+                "Cagbanaba", "Calabagas", "Calangcawan Norte", "Calangcawan Sur",
+                "Cawayan Pola", "Cawayan Sapa", "Colasi", "Del Pilar",
+                "Gubat Norte", "Gubat Sur", "Himaao", "Indangan",
+                "La Purisima", "Labo", "Laga", "Mabini", "Masalong",
+                "Maulawin", "Nakalaya", "Pag-asa", "Pambuhan", "Pinit",
+                "Pob. I (Barangay I)", "Pob. II (Barangay II)", "Pob. III (Barangay III)",
+                "Pob. IV (Barangay IV)", "Potot", "Sabang", "Salvacion",
+                "San Antonio", "San Francisco", "San Isidro", "San Jose",
+                "San Pascual", "Santa Cruz", "Santo Niño", "Taisan",
+                "Tambongon", "Tulay Na Lupa"
+        ));
+
+        CITY_BARANGAY_MAP.put("Tulay Na Lupa", Arrays.asList(
+                "Calabasa", "Mabini", "Pag-asa (Pob.)", "Poblacion",
+                "San Antonio", "San Francisco", "San Isidro", "San Jose",
+                "Santa Cruz", "Santa Elena", "Santo Niño", "Villa Aurora",
+                "Villa Hermosa"
+        ));
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -72,11 +209,10 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.register_activity);
 
-        // Firebase
         mAuth = FirebaseAuth.getInstance();
         db    = FirebaseFirestore.getInstance();
 
-        // Views
+        // Bind views
         cbTerms           = findViewById(R.id.cbTerms);
         btnRegister       = findViewById(R.id.btnRegister);
         tvTermsLink       = findViewById(R.id.tvTermsLink);
@@ -84,201 +220,46 @@ public class RegisterActivity extends AppCompatActivity {
         btnBack           = findViewById(R.id.btnBack);
         etFullName        = findViewById(R.id.etFullName);
         etEmail           = findViewById(R.id.etEmail);
+        etContactNumber   = findViewById(R.id.etContactNumber);
         etPassword        = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
-        spinnerRegion     = findViewById(R.id.spinnerRegion);
-        spinnerProvince   = findViewById(R.id.spinnerProvince);
         spinnerCity       = findViewById(R.id.spinnerCity);
         spinnerBarangay   = findViewById(R.id.spinnerBarangay);
 
-        // Disable dependent dropdowns until parent is selected
-        spinnerProvince.setEnabled(false);
-        spinnerCity.setEnabled(false);
         spinnerBarangay.setEnabled(false);
 
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
 
         setupTermsSpannable();
         setupLoginSpannable();
-        loadRegions();
 
-        // ── Cascade: Region → Province ───────────────────────────────────────
-        spinnerRegion.setOnItemClickListener((parent, view, position, id) -> {
-            String selectedRegion = (String) parent.getItemAtPosition(position);
-            String regionCode     = regionCodeMap.get(selectedRegion);
+        // Populate cities immediately — no network call needed
+        List<String> cities = Arrays.asList(
+                "Basud", "Capalonga", "Daet", "Jose Panganiban", "Labo",
+                "Mercedes", "Paracale", "San Lorenzo Ruiz", "San Vicente",
+                "Santa Elena", "Talisay", "Tulay Na Lupa", "Vinzons"
+        );
+        setAdapter(spinnerCity, cities, true);
+        spinnerCity.setEnabled(true);
 
-            // Reset all dependent fields
-            spinnerProvince.setText("", false);
-            spinnerCity.setText("", false);
-            spinnerBarangay.setText("", false);
-            spinnerProvince.setEnabled(false);
-            spinnerCity.setEnabled(false);
-            spinnerBarangay.setEnabled(false);
-            provinceCodeMap.clear();
-            cityCodeMap.clear();
-
-            if (regionCode != null) loadProvinces(regionCode);
-        });
-
-        // ── Cascade: Province → City ─────────────────────────────────────────
-        spinnerProvince.setOnItemClickListener((parent, view, position, id) -> {
-            String selectedProvince = (String) parent.getItemAtPosition(position);
-            String provinceCode     = provinceCodeMap.get(selectedProvince);
-
-            spinnerCity.setText("", false);
-            spinnerBarangay.setText("", false);
-            spinnerCity.setEnabled(false);
-            spinnerBarangay.setEnabled(false);
-            cityCodeMap.clear();
-
-            if (provinceCode != null) loadCities(provinceCode);
-        });
-
-        // ── Cascade: City → Barangay ─────────────────────────────────────────
+        // City → Barangay cascade
         spinnerCity.setOnItemClickListener((parent, view, position, id) -> {
             String selectedCity = (String) parent.getItemAtPosition(position);
-            String cityCode     = cityCodeMap.get(selectedCity);
 
             spinnerBarangay.setText("", false);
             spinnerBarangay.setEnabled(false);
 
-            if (cityCode != null) loadBarangays(cityCode);
+            List<String> barangays = CITY_BARANGAY_MAP.get(selectedCity);
+            if (barangays != null) {
+                setAdapter(spinnerBarangay, barangays, false);
+                spinnerBarangay.setEnabled(true);
+                spinnerBarangay.setHint("Select barangay");
+            }
         });
 
-        // ── Register ─────────────────────────────────────────────────────────
+        // Register button
         btnRegister.setOnClickListener(v -> {
             if (validateInputs()) registerUser();
-        });
-    }
-
-    // =========================================================================
-    //  PSGC API calls
-    // =========================================================================
-
-    /** Step 1 – load all regions */
-    private void loadRegions() {
-        executor.execute(() -> {
-            try {
-                JSONArray arr      = fetchJsonArray(BASE_URL + "/regions");
-                List<String> names = new ArrayList<>();
-
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i);
-                    String name    = obj.getString("name");
-                    String code    = obj.getString("code");
-                    names.add(name);
-                    regionCodeMap.put(name, code);
-                }
-
-                runOnUiThread(() -> setAdapter(spinnerRegion, names, true));
-
-            } catch (Exception e) {
-                runOnUiThread(() ->
-                        Toast.makeText(this,
-                                "Failed to load regions: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show());
-            }
-        });
-    }
-
-    /** Step 2 – load provinces for the chosen region */
-    private void loadProvinces(String regionCode) {
-        runOnUiThread(() -> spinnerProvince.setHint("Loading…"));
-
-        executor.execute(() -> {
-            try {
-                JSONArray arr      = fetchJsonArray(
-                        BASE_URL + "/regions/" + regionCode + "/provinces");
-                List<String> names = new ArrayList<>();
-
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i);
-                    String name    = obj.getString("name");
-                    String code    = obj.getString("code");
-                    names.add(name);
-                    provinceCodeMap.put(name, code);
-                }
-
-                runOnUiThread(() -> {
-                    setAdapter(spinnerProvince, names, true);
-                    spinnerProvince.setEnabled(true);
-                    spinnerProvince.setHint("Select province");
-                });
-
-            } catch (Exception e) {
-                runOnUiThread(() -> {
-                    spinnerProvince.setHint("Select province");
-                    Toast.makeText(this,
-                            "Failed to load provinces: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-            }
-        });
-    }
-
-    /** Step 3 – load cities/municipalities for the chosen province */
-    private void loadCities(String provinceCode) {
-        runOnUiThread(() -> spinnerCity.setHint("Loading…"));
-
-        executor.execute(() -> {
-            try {
-                JSONArray arr      = fetchJsonArray(
-                        BASE_URL + "/provinces/" + provinceCode + "/cities-municipalities");
-                List<String> names = new ArrayList<>();
-
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i);
-                    String name    = obj.getString("name");
-                    String code    = obj.getString("code");
-                    names.add(name);
-                    cityCodeMap.put(name, code);
-                }
-
-                runOnUiThread(() -> {
-                    setAdapter(spinnerCity, names, true);
-                    spinnerCity.setEnabled(true);
-                    spinnerCity.setHint("Select city / municipality");
-                });
-
-            } catch (Exception e) {
-                runOnUiThread(() -> {
-                    spinnerCity.setHint("Select city / municipality");
-                    Toast.makeText(this,
-                            "Failed to load cities: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-            }
-        });
-    }
-
-    /** Step 4 – load barangays for the chosen city/municipality */
-    private void loadBarangays(String cityCode) {
-        runOnUiThread(() -> spinnerBarangay.setHint("Loading…"));
-
-        executor.execute(() -> {
-            try {
-                JSONArray arr      = fetchJsonArray(
-                        BASE_URL + "/cities-municipalities/" + cityCode + "/barangays");
-                List<String> names = new ArrayList<>();
-
-                for (int i = 0; i < arr.length(); i++) {
-                    names.add(arr.getJSONObject(i).getString("name"));
-                }
-
-                runOnUiThread(() -> {
-                    setAdapter(spinnerBarangay, names, false);
-                    spinnerBarangay.setEnabled(true);
-                    spinnerBarangay.setHint("Select barangay");
-                });
-
-            } catch (Exception e) {
-                runOnUiThread(() -> {
-                    spinnerBarangay.setHint("Select barangay");
-                    Toast.makeText(this,
-                            "Failed to load barangays: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-            }
         });
     }
 
@@ -286,32 +267,7 @@ public class RegisterActivity extends AppCompatActivity {
     //  Utility
     // =========================================================================
 
-    private JSONArray fetchJsonArray(String urlString) throws Exception {
-        URL url = new URL(urlString);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setConnectTimeout(10_000);
-        conn.setReadTimeout(10_000);
-
-        int status = conn.getResponseCode();
-        if (status != HttpURLConnection.HTTP_OK) {
-            throw new Exception("HTTP " + status);
-        }
-
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(conn.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) sb.append(line);
-        reader.close();
-        conn.disconnect();
-
-        return new JSONArray(sb.toString());
-    }
-
-    private void setAdapter(AutoCompleteTextView view,
-                            List<String> items,
-                            boolean filter) {
+    private void setAdapter(AutoCompleteTextView view, List<String> items, boolean filter) {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_dropdown_item_1line, items);
         view.setAdapter(adapter);
@@ -323,14 +279,13 @@ public class RegisterActivity extends AppCompatActivity {
     // =========================================================================
 
     private boolean validateInputs() {
-        String fullName        = etFullName.getText().toString().trim();
-        String email           = etEmail.getText().toString().trim();
-        String password        = etPassword.getText().toString();
-        String confirmPassword = etConfirmPassword.getText().toString();
-        String region          = spinnerRegion.getText().toString().trim();
-        String province        = spinnerProvince.getText().toString().trim();
-        String city            = spinnerCity.getText().toString().trim();
-        String barangay        = spinnerBarangay.getText().toString().trim();
+        String fullName      = etFullName.getText().toString().trim();
+        String email         = etEmail.getText().toString().trim();
+        String contactNumber = etContactNumber.getText().toString().trim();
+        String password      = etPassword.getText().toString();
+        String confirmPass   = etConfirmPassword.getText().toString();
+        String city          = spinnerCity.getText().toString().trim();
+        String barangay      = spinnerBarangay.getText().toString().trim();
 
         if (fullName.isEmpty()) {
             etFullName.setError("Full name is required");
@@ -347,14 +302,14 @@ public class RegisterActivity extends AppCompatActivity {
             etEmail.requestFocus();
             return false;
         }
-        if (region.isEmpty()) {
-            spinnerRegion.setError("Please select a region");
-            spinnerRegion.requestFocus();
+        if (contactNumber.isEmpty()) {
+            etContactNumber.setError("Contact number is required");
+            etContactNumber.requestFocus();
             return false;
         }
-        if (province.isEmpty()) {
-            spinnerProvince.setError("Please select a province");
-            spinnerProvince.requestFocus();
+        if (!contactNumber.matches("^(\\+63|0)9\\d{9}$")) {
+            etContactNumber.setError("Enter a valid PH number (e.g. 09XXXXXXXXX)");
+            etContactNumber.requestFocus();
             return false;
         }
         if (city.isEmpty()) {
@@ -377,14 +332,14 @@ public class RegisterActivity extends AppCompatActivity {
             etPassword.requestFocus();
             return false;
         }
-        if (!password.equals(confirmPassword)) {
+        if (!password.equals(confirmPass)) {
             etConfirmPassword.setError("Passwords do not match");
             etConfirmPassword.requestFocus();
             return false;
         }
         if (!cbTerms.isChecked()) {
             Toast.makeText(this,
-                    "You must accept the Terms and Privacy Policy to continue",
+                    "You must accept the Terms and Privacy Policy to continue.",
                     Toast.LENGTH_LONG).show();
             return false;
         }
@@ -392,7 +347,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    //  Firebase – Auth + Firestore
+    //  Firebase — Auth + Firestore
     // =========================================================================
 
     private void registerUser() {
@@ -419,30 +374,23 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void saveUserToFirestore(String uid) {
-        String fullName = etFullName.getText().toString().trim();
-        String email    = etEmail.getText().toString().trim();
-        String region   = spinnerRegion.getText().toString().trim();
-        String province = spinnerProvince.getText().toString().trim();
-        String city     = spinnerCity.getText().toString().trim();
-        String barangay = spinnerBarangay.getText().toString().trim();
-
-        String regionCode   = regionCodeMap.get(region);
-        String provinceCode = provinceCodeMap.get(province);
-        String cityCode     = cityCodeMap.get(city);
+        String fullName      = etFullName.getText().toString().trim();
+        String email         = etEmail.getText().toString().trim();
+        String contactNumber = etContactNumber.getText().toString().trim();
+        String city          = spinnerCity.getText().toString().trim();
+        String barangay      = spinnerBarangay.getText().toString().trim();
 
         Map<String, Object> address = new HashMap<>();
-        address.put("region",       region);
-        address.put("regionCode",   regionCode);
-        address.put("province",     province);
-        address.put("provinceCode", provinceCode);
-        address.put("city",         city);
-        address.put("cityCode",     cityCode);
-        address.put("barangay",     barangay);
+        address.put("region",   FIXED_REGION);
+        address.put("province", FIXED_PROVINCE);
+        address.put("city",     city);
+        address.put("barangay", barangay);
 
         Map<String, Object> userDoc = new HashMap<>();
         userDoc.put("uid",             uid);
         userDoc.put("fullName",        fullName);
         userDoc.put("email",           email);
+        userDoc.put("contactNumber",   contactNumber);
         userDoc.put("address",         address);
         userDoc.put("role",            "resident");
         userDoc.put("isVerified",      false);
@@ -458,11 +406,9 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(this,
                             "Account created successfully!",
                             Toast.LENGTH_SHORT).show();
-                    // TODO: navigate to MainActivity
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    // Roll back auth account so the user can retry cleanly
                     FirebaseUser current = mAuth.getCurrentUser();
                     if (current != null) current.delete();
 
@@ -531,11 +477,5 @@ public class RegisterActivity extends AppCompatActivity {
                                 "5. Questions? streetassist.support@example.com")
                 .setPositiveButton("I Understand", (d, w) -> d.dismiss())
                 .show();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        executor.shutdown();
     }
 }
