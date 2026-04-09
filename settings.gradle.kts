@@ -12,7 +12,7 @@ pluginManagement {
     }
 }
 plugins {
-    // Removed foojay resolver as it was picking up broken JDKs from extension folders
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "StreetAssist"
 include(":app")
+ 

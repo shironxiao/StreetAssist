@@ -21,8 +21,7 @@ public class IntroductionUserLevel extends AppCompatActivity {
 
         if (btnResident != null) {
             btnResident.setOnClickListener(v -> {
-                // Resident goes to Login first (or Splash if already handled)
-                Intent intent = new Intent(IntroductionUserLevel.this, LoginActivity.class);
+                Intent intent = new Intent(IntroductionUserLevel.this, SplashActivity.class);
                 startActivity(intent);
                 finish();
             });
@@ -30,10 +29,9 @@ public class IntroductionUserLevel extends AppCompatActivity {
 
         if (btnAdmin != null) {
             btnAdmin.setOnClickListener(v -> {
-                // Admin goes to Admin Login screen
-                Intent intent = new Intent(IntroductionUserLevel.this, AdminLoginActivity.class);
-                startActivity(intent);
-                finish();
+                // Add your admin navigation here later
+                // Intent intent = new Intent(IntroductionUserLevel.this, AdminActivity.class);
+                // startActivity(intent);
             });
         }
     }

@@ -1,449 +1,413 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/rounded_top_corners"
-    android:backgroundTint="#FAFBFF"
-    android:paddingBottom="24dp">
+    android:paddingBottom="32dp">
 
-    <!-- Bottom Sheet Drag Handle -->
+    <!-- Drag Handle -->
     <View
-        android:layout_width="32dp"
+        android:layout_width="40dp"
         android:layout_height="4dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp"
-        android:background="#DDE1EE" />
+        android:layout_marginBottom="8dp"
+        android:background="#DDDDDD" />
 
-    <!-- Header Section -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!-- Header: Report ID + Status -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="24dp"
-        android:paddingBottom="20dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp">
 
-        <TextView
-            android:id="@+id/tvDetailTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:fontFamily="sans-serif-black"
-            android:text="Emergency Assistance"
-            android:textColor="#1A1C1E"
-            android:textSize="22sp"
-            app:layout_constraintEnd_toStartOf="@+id/dialogStatus"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/dialogReportId"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:fontFamily="monospace"
-            android:text="RPT-2024-001"
-            android:textColor="#4169E1"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvDetailTitle" />
+            android:layout_centerVertical="true"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/dialogTimestamp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="Oct 24, 2023 • 10:30 AM"
-            android:textColor="#74777F"
-            android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/dialogReportId" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Report Details"
+                android:textColor="#222222"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black" />
 
+            <!-- EXACT ID: dialogReportId -->
+            <TextView
+                android:id="@+id/dialogReportId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RPT-—"
+                android:textColor="#4169E1"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- EXACT ID: dialogStatus -->
         <TextView
             android:id="@+id/dialogStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/badge_pending"
-            android:paddingHorizontal="14dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="6dp"
-            android:text="PENDING"
-            android:textColor="#BA7517"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.05"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvDetailTitle"
-            app:layout_constraintBottom_toBottomOf="@id/tvDetailTitle"/>
+            android:text="Pending"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#F0F0F0"
+        android:layout_marginHorizontal="20dp" />
 
+    <!-- Scrollable Content -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp">
+            android:orientation="vertical">
 
-            <!-- EVIDENCE PHOTO -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="240dp"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="#E0E2EC">
-                <ImageView
-                    android:id="@+id/dialogImage"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/logo"
-                    tools:ignore="ContentDescription" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ACTION: UPDATE STATUS -->
+            <!-- ── INDIVIDUAL INFORMATION ── -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="UPDATE STATUS"
+                android:text="INDIVIDUAL INFORMATION"
                 android:textColor="#4169E1"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.1"
-                android:layout_marginBottom="12dp"
-                android:layout_marginStart="4dp"/>
+                android:layout_marginBottom="10dp" />
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/statusToggleGroup"
+            <!-- Age + Sex side by side -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="28dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                android:orientation="horizontal"
+                android:layout_marginBottom="10dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStatusPending"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Pending"
-                    android:textSize="10sp"
-                    android:textAllCaps="false"
-                    app:strokeColor="#E0E2EC" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStatusInProgress"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:text="In Progress"
-                    android:textSize="10sp"
-                    android:textAllCaps="false"
-                    app:strokeColor="#E0E2EC" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStatusVerified"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Verified"
-                    android:textSize="10sp"
-                    android:textAllCaps="false"
-                    app:strokeColor="#E0E2EC" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnStatusResolved"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Resolved"
-                    android:textSize="10sp"
-                    android:textAllCaps="false"
-                    app:strokeColor="#E0E2EC" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            <!-- URGENT / ASSISTANCE NEEDED -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="#FFF1F1"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeColor="#FFDAD6"
-                app:strokeWidth="1dp">
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#F4F6FF"
+                    android:padding="12dp"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_marginEnd="6dp">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="ASSISTANCE NEEDED"
-                        android:textColor="#BA1A1A"
-                        android:textStyle="bold"
-                        android:textSize="11sp"
-                        android:letterSpacing="0.05"
-                        android:layout_marginBottom="8dp" />
+                        android:text="Approx. Age"
+                        android:textColor="#888888"
+                        android:textSize="10sp" />
+
+                    <!-- EXACT ID: dialogAge -->
                     <TextView
-                        android:id="@+id/dialogAssistance"
-                        android:layout_width="match_parent"
+                        android:id="@+id/dialogAge"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Medical emergency - ambulance required."
-                        android:textColor="#410002"
-                        android:textSize="15sp"
-                        android:lineSpacingMultiplier="1.2" />
+                        android:text="—"
+                        android:textColor="#222222"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <!-- REPORTER INFORMATION -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#F4F6FF"
+                    android:padding="12dp"
+                    android:orientation="vertical"
+                    android:layout_marginStart="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sex"
+                        android:textColor="#888888"
+                        android:textSize="10sp" />
+
+                    <!-- EXACT ID: dialogSex -->
+                    <TextView
+                        android:id="@+id/dialogSex"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="#222222"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Description label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="REPORTER DETAILS"
+                android:text="Description"
+                android:textColor="#888888"
+                android:textSize="10sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- EXACT ID: dialogDescription -->
+            <TextView
+                android:id="@+id/dialogDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F4F6FF"
+                android:padding="12dp"
+                android:text="—"
+                android:textColor="#333333"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.4"
+                android:layout_marginBottom="16dp" />
+
+            <!-- ── LAST SEEN LOCATION ── -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="14dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LAST SEEN LOCATION"
                 android:textColor="#4169E1"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.1"
-                android:layout_marginBottom="12dp"
-                android:layout_marginStart="4dp"/>
+                android:layout_marginBottom="10dp" />
 
-            <com.google.android.material.card.MaterialCardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp">
-                <LinearLayout
-                    android:layout_width="match_parent"
+                android:background="#F4F6FF"
+                android:padding="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@android:drawable/ic_menu_mylocation"
+                    app:tint="#E53935"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- EXACT ID: dialogLocation -->
+                <TextView
+                    android:id="@+id/dialogLocation"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="—"
+                    android:textColor="#333333"
+                    android:textSize="13sp"
+                    android:lineSpacingMultiplier="1.3" />
+            </LinearLayout>
+
+            <!-- Lat + Lng side by side -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#F4F6FF"
+                    android:padding="10dp"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:layout_marginEnd="6dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="NAME"
-                        android:textColor="#74777F"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:text="Latitude"
+                        android:textColor="#888888"
+                        android:textSize="10sp" />
+
+                    <!-- EXACT ID: dialogLatitude -->
                     <TextView
-                        android:id="@+id/dialogReporterName"
+                        android:id="@+id/dialogLatitude"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="John Smith"
-                        android:textColor="#1A1C1E"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="12dp"/>
+                        android:text="—"
+                        android:textColor="#222222"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="AGE"
-                                android:textColor="#74777F"
-                                android:textSize="10sp"
-                                android:textStyle="bold" />
-                            <TextView
-                                android:id="@+id/dialogAge"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="34"
-                                android:textColor="#1A1C1E"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="SEX"
-                                android:textColor="#74777F"
-                                android:textSize="10sp"
-                                android:textStyle="bold" />
-                            <TextView
-                                android:id="@+id/dialogSex"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Male"
-                                android:textColor="#1A1C1E"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-                    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#F4F6FF"
+                    android:padding="10dp"
+                    android:orientation="vertical"
+                    android:layout_marginStart="6dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="CONTACT"
-                        android:textColor="#74777F"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:text="Longitude"
+                        android:textColor="#888888"
+                        android:textSize="10sp" />
+
+                    <!-- EXACT ID: dialogLongitude -->
+                    <TextView
+                        android:id="@+id/dialogLongitude"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="#222222"
+                        android:textSize="12sp"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ── ASSISTANCE NEEDED ── -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="14dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ASSISTANCE NEEDED"
+                android:textColor="#4169E1"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="10dp" />
+
+            <!-- EXACT ID: dialogAssistance -->
+            <TextView
+                android:id="@+id/dialogAssistance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F4F6FF"
+                android:padding="12dp"
+                android:text="—"
+                android:textColor="#333333"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.4"
+                android:layout_marginBottom="16dp" />
+
+            <!-- ── REPORTER INFORMATION ── -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="14dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="REPORTER INFORMATION"
+                android:textColor="#4169E1"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="#F4F6FF"
+                    android:padding="12dp"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Contact"
+                        android:textColor="#888888"
+                        android:textSize="10sp" />
+
+                    <!-- EXACT ID: dialogContact -->
                     <TextView
                         android:id="@+id/dialogContact"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="09123456789"
-                        android:textColor="#1A1C1E"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:text="Not provided"
+                        android:textColor="#222222"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
 
-            <!-- DESCRIPTION -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DESCRIPTION"
-                android:textColor="#4169E1"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.1"
-                android:layout_marginBottom="12dp"
-                android:layout_marginStart="4dp"/>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="#E0E2EC">
-                <TextView
-                    android:id="@+id/dialogDescription"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="Report description goes here..."
-                    android:textColor="#44474E"
-                    android:textSize="15sp"
-                    android:lineSpacingMultiplier="1.3" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- LOCATION -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LOCATION"
-                android:textColor="#4169E1"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.1"
-                android:layout_marginBottom="12dp"
-                android:layout_marginStart="4dp"/>
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="32dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="#E0E2EC">
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_weight="1"
+                    android:background="#F4F6FF"
+                    android:padding="12dp"
+                    android:orientation="vertical"
+                    android:layout_marginStart="6dp">
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@android:drawable/ic_menu_mylocation"
-                            app:tint="#4169E1"
-                            android:layout_marginEnd="12dp" />
-                        <TextView
-                            android:id="@+id/dialogLocation"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="123 Street Name, City"
-                            android:textColor="#1A1C1E"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                        android:text="Submitted"
+                        android:textColor="#888888"
+                        android:textSize="10sp" />
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- EXACT ID: dialogTimestamp -->
+                    <TextView
+                        android:id="@+id/dialogTimestamp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp"
-                        android:paddingBottom="16dp">
-                        <TextView
-                            android:id="@+id/dialogLatitude"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Lat: 12.3456"
-                            android:textColor="#74777F"
-                            android:textSize="12sp"
-                            android:fontFamily="monospace" />
-                        <TextView
-                            android:id="@+id/dialogLongitude"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Lng: 121.3456"
-                            android:textColor="#74777F"
-                            android:textSize="12sp"
-                            android:fontFamily="monospace" />
-                    </LinearLayout>
-
-                    <!-- Map Placeholder -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="160dp"
-                        android:background="#F1F3F9" />
+                        android:text="—"
+                        android:textColor="#222222"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp" />
                 </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
-            <!-- CLOSE BUTTON -->
+            <!-- Close Button -->
+            <!-- EXACT ID: dialogBtnClose -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dialogBtnClose"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:text="Dismiss"
+                android:layout_height="52dp"
+                android:text="Close"
                 android:textAllCaps="false"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:backgroundTint="#1A1C1E"
-                app:cornerRadius="16dp"
-                app:elevation="4dp" />
+                android:textSize="15sp"
+                app:backgroundTint="#4169E1"
+                app:cornerRadius="14dp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

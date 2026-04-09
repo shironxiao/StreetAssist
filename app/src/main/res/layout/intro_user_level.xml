@@ -18,18 +18,23 @@
 
         <ImageView
             android:id="@+id/iv_logo"
-            android:layout_width="313dp"
-            android:layout_height="302dp"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
             android:adjustViewBounds="true"
-            android:contentDescription="App Logo"
+            android:contentDescription="@string/cnsc_logo"
             android:scaleType="fitCenter"
-            android:src="@drawable/logo"
             app:layout_constraintBottom_toTopOf="@id/tv_institution_name"
+            app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="250dp"
+            app:layout_constraintHeight_min="150dp"
+            app:layout_constraintHorizontal_bias="0.495"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.3"
-            app:layout_constraintVertical_chainStyle="packed" />
+            app:layout_constraintVertical_bias="0.4"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintWidth_max="250dp"
+            app:layout_constraintWidth_min="150dp" />
 
         <TextView
             android:id="@+id/tv_institution_name"
@@ -37,15 +42,20 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="32dp"
+            android:autoSizeMinTextSize="12sp"
+            android:autoSizeTextType="uniform"
+            android:fontFamily="sans-serif-medium"
             android:gravity="center"
             android:textColor="#000000"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:text="StreetAssist"
             app:layout_constraintBottom_toTopOf="@id/btn_resident"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/iv_logo" />
+            app:layout_constraintTop_toBottomOf="@id/iv_logo"
+            tools:targetApi="26"
+            tools:ignore="ObsoleteSdkInt" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_resident"
@@ -63,7 +73,8 @@
             app:layout_constraintBottom_toTopOf="@id/btn_admin"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_institution_name" />
+            app:layout_constraintTop_toBottomOf="@id/tv_institution_name"
+            app:layout_constraintWidth_max="400dp" />
 
         <!-- Admin Button -->
         <androidx.appcompat.widget.AppCompatButton
@@ -81,7 +92,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/btn_resident" />
+            app:layout_constraintTop_toBottomOf="@id/btn_resident"
+            app:layout_constraintWidth_max="400dp" />
+
+        <!-- Guideline for vertical center alignment -->
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_begin="365dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

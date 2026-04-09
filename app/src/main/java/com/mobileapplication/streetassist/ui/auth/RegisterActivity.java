@@ -44,27 +44,26 @@ import java.util.concurrent.Executors;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    // ── Views ─────────────────────────────────────────────────────────────────
+    // ── Views ────────────────────────────────────────────────────────────────
     private CheckBox cbTerms;
     private Button btnRegister;
     private TextView tvTermsLink, tvLoginPrompt;
     private ImageButton btnBack;
     private TextInputEditText etFullName, etEmail, etPassword, etConfirmPassword;
-    private AutoCompleteTextView spinnerCity, spinnerBarangay;
+    private AutoCompleteTextView spinnerRegion, spinnerProvince, spinnerCity, spinnerBarangay;
 
-    // ── Firebase ──────────────────────────────────────────────────────────────
+    // ── Firebase ─────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // ── PSGC state ────────────────────────────────────────────────────────────
-    // Camarines Norte PSGC province code
-    private static final String CAMARINES_NORTE_CODE = "051600000";
-    private static final String FIXED_REGION         = "REGION V (Bicol Region)";
-    private static final String FIXED_PROVINCE       = "Camarines Norte";
+    // ── PSGC state ───────────────────────────────────────────────────────────
+    private final Map<String, String> regionCodeMap   = new HashMap<>();
+    private final Map<String, String> provinceCodeMap = new HashMap<>();
+    private final Map<String, String> cityCodeMap     = new HashMap<>();
 
-    private final Map<String, String> cityCodeMap = new HashMap<>();
-    private final ExecutorService executor        = Executors.newSingleThreadExecutor();
-    private static final String BASE_URL          = "https://psgc.cloud/api";
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private static final String BASE_URL = "https://psgc.cloud/api";
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -73,10 +72,11 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.register_activity);
 
+        // Firebase
         mAuth = FirebaseAuth.getInstance();
         db    = FirebaseFirestore.getInstance();
 
-        // Bind views
+        // Views
         cbTerms           = findViewById(R.id.cbTerms);
         btnRegister       = findViewById(R.id.btnRegister);
         tvTermsLink       = findViewById(R.id.tvTermsLink);
@@ -86,21 +86,55 @@ public class RegisterActivity extends AppCompatActivity {
         etEmail           = findViewById(R.id.etEmail);
         etPassword        = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
+        spinnerRegion     = findViewById(R.id.spinnerRegion);
+        spinnerProvince   = findViewById(R.id.spinnerProvince);
         spinnerCity       = findViewById(R.id.spinnerCity);
         spinnerBarangay   = findViewById(R.id.spinnerBarangay);
 
-        // Barangay disabled until city is chosen
+        // Disable dependent dropdowns until parent is selected
+        spinnerProvince.setEnabled(false);
+        spinnerCity.setEnabled(false);
         spinnerBarangay.setEnabled(false);
 
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
 
         setupTermsSpannable();
         setupLoginSpannable();
+        loadRegions();
 
-        // Load cities of Camarines Norte immediately on open
-        loadCities(CAMARINES_NORTE_CODE);
+        // ── Cascade: Region → Province ───────────────────────────────────────
+        spinnerRegion.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedRegion = (String) parent.getItemAtPosition(position);
+            String regionCode     = regionCodeMap.get(selectedRegion);
 
-        // City → Barangay cascade
+            // Reset all dependent fields
+            spinnerProvince.setText("", false);
+            spinnerCity.setText("", false);
+            spinnerBarangay.setText("", false);
+            spinnerProvince.setEnabled(false);
+            spinnerCity.setEnabled(false);
+            spinnerBarangay.setEnabled(false);
+            provinceCodeMap.clear();
+            cityCodeMap.clear();
+
+            if (regionCode != null) loadProvinces(regionCode);
+        });
+
+        // ── Cascade: Province → City ─────────────────────────────────────────
+        spinnerProvince.setOnItemClickListener((parent, view, position, id) -> {
+            String selectedProvince = (String) parent.getItemAtPosition(position);
+            String provinceCode     = provinceCodeMap.get(selectedProvince);
+
+            spinnerCity.setText("", false);
+            spinnerBarangay.setText("", false);
+            spinnerCity.setEnabled(false);
+            spinnerBarangay.setEnabled(false);
+            cityCodeMap.clear();
+
+            if (provinceCode != null) loadCities(provinceCode);
+        });
+
+        // ── Cascade: City → Barangay ─────────────────────────────────────────
         spinnerCity.setOnItemClickListener((parent, view, position, id) -> {
             String selectedCity = (String) parent.getItemAtPosition(position);
             String cityCode     = cityCodeMap.get(selectedCity);
@@ -111,20 +145,80 @@ public class RegisterActivity extends AppCompatActivity {
             if (cityCode != null) loadBarangays(cityCode);
         });
 
-        // Register button
+        // ── Register ─────────────────────────────────────────────────────────
         btnRegister.setOnClickListener(v -> {
             if (validateInputs()) registerUser();
         });
     }
 
     // =========================================================================
-    //  PSGC API — only city and barangay needed
+    //  PSGC API calls
     // =========================================================================
 
-    /** Load all cities/municipalities of Camarines Norte directly */
+    /** Step 1 – load all regions */
+    private void loadRegions() {
+        executor.execute(() -> {
+            try {
+                JSONArray arr      = fetchJsonArray(BASE_URL + "/regions");
+                List<String> names = new ArrayList<>();
+
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String name    = obj.getString("name");
+                    String code    = obj.getString("code");
+                    names.add(name);
+                    regionCodeMap.put(name, code);
+                }
+
+                runOnUiThread(() -> setAdapter(spinnerRegion, names, true));
+
+            } catch (Exception e) {
+                runOnUiThread(() ->
+                        Toast.makeText(this,
+                                "Failed to load regions: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    /** Step 2 – load provinces for the chosen region */
+    private void loadProvinces(String regionCode) {
+        runOnUiThread(() -> spinnerProvince.setHint("Loading…"));
+
+        executor.execute(() -> {
+            try {
+                JSONArray arr      = fetchJsonArray(
+                        BASE_URL + "/regions/" + regionCode + "/provinces");
+                List<String> names = new ArrayList<>();
+
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.getJSONObject(i);
+                    String name    = obj.getString("name");
+                    String code    = obj.getString("code");
+                    names.add(name);
+                    provinceCodeMap.put(name, code);
+                }
+
+                runOnUiThread(() -> {
+                    setAdapter(spinnerProvince, names, true);
+                    spinnerProvince.setEnabled(true);
+                    spinnerProvince.setHint("Select province");
+                });
+
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    spinnerProvince.setHint("Select province");
+                    Toast.makeText(this,
+                            "Failed to load provinces: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    /** Step 3 – load cities/municipalities for the chosen province */
     private void loadCities(String provinceCode) {
-        spinnerCity.setHint("Loading cities…");
-        spinnerCity.setEnabled(false);
+        runOnUiThread(() -> spinnerCity.setHint("Loading…"));
 
         executor.execute(() -> {
             try {
@@ -149,7 +243,6 @@ public class RegisterActivity extends AppCompatActivity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     spinnerCity.setHint("Select city / municipality");
-                    spinnerCity.setEnabled(true);
                     Toast.makeText(this,
                             "Failed to load cities: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
@@ -158,9 +251,9 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    /** Load barangays for the selected city */
+    /** Step 4 – load barangays for the chosen city/municipality */
     private void loadBarangays(String cityCode) {
-        spinnerBarangay.setHint("Loading barangays…");
+        runOnUiThread(() -> spinnerBarangay.setHint("Loading…"));
 
         executor.execute(() -> {
             try {
@@ -201,8 +294,9 @@ public class RegisterActivity extends AppCompatActivity {
         conn.setReadTimeout(10_000);
 
         int status = conn.getResponseCode();
-        if (status != HttpURLConnection.HTTP_OK)
+        if (status != HttpURLConnection.HTTP_OK) {
             throw new Exception("HTTP " + status);
+        }
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(conn.getInputStream()));
@@ -211,6 +305,7 @@ public class RegisterActivity extends AppCompatActivity {
         while ((line = reader.readLine()) != null) sb.append(line);
         reader.close();
         conn.disconnect();
+
         return new JSONArray(sb.toString());
     }
 
@@ -228,12 +323,14 @@ public class RegisterActivity extends AppCompatActivity {
     // =========================================================================
 
     private boolean validateInputs() {
-        String fullName       = etFullName.getText().toString().trim();
-        String email          = etEmail.getText().toString().trim();
-        String password       = etPassword.getText().toString();
-        String confirmPass    = etConfirmPassword.getText().toString();
-        String city           = spinnerCity.getText().toString().trim();
-        String barangay       = spinnerBarangay.getText().toString().trim();
+        String fullName        = etFullName.getText().toString().trim();
+        String email           = etEmail.getText().toString().trim();
+        String password        = etPassword.getText().toString();
+        String confirmPassword = etConfirmPassword.getText().toString();
+        String region          = spinnerRegion.getText().toString().trim();
+        String province        = spinnerProvince.getText().toString().trim();
+        String city            = spinnerCity.getText().toString().trim();
+        String barangay        = spinnerBarangay.getText().toString().trim();
 
         if (fullName.isEmpty()) {
             etFullName.setError("Full name is required");
@@ -248,6 +345,16 @@ public class RegisterActivity extends AppCompatActivity {
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             etEmail.setError("Enter a valid email");
             etEmail.requestFocus();
+            return false;
+        }
+        if (region.isEmpty()) {
+            spinnerRegion.setError("Please select a region");
+            spinnerRegion.requestFocus();
+            return false;
+        }
+        if (province.isEmpty()) {
+            spinnerProvince.setError("Please select a province");
+            spinnerProvince.requestFocus();
             return false;
         }
         if (city.isEmpty()) {
@@ -270,14 +377,14 @@ public class RegisterActivity extends AppCompatActivity {
             etPassword.requestFocus();
             return false;
         }
-        if (!password.equals(confirmPass)) {
+        if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError("Passwords do not match");
             etConfirmPassword.requestFocus();
             return false;
         }
         if (!cbTerms.isChecked()) {
             Toast.makeText(this,
-                    "You must accept the Terms and Privacy Policy to continue.",
+                    "You must accept the Terms and Privacy Policy to continue",
                     Toast.LENGTH_LONG).show();
             return false;
         }
@@ -285,7 +392,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    //  Firebase — Auth + Firestore
+    //  Firebase – Auth + Firestore
     // =========================================================================
 
     private void registerUser() {
@@ -314,16 +421,22 @@ public class RegisterActivity extends AppCompatActivity {
     private void saveUserToFirestore(String uid) {
         String fullName = etFullName.getText().toString().trim();
         String email    = etEmail.getText().toString().trim();
+        String region   = spinnerRegion.getText().toString().trim();
+        String province = spinnerProvince.getText().toString().trim();
         String city     = spinnerCity.getText().toString().trim();
         String barangay = spinnerBarangay.getText().toString().trim();
-        String cityCode = cityCodeMap.get(city);
 
-        // Build address — region and province are fixed
+        String regionCode   = regionCodeMap.get(region);
+        String provinceCode = provinceCodeMap.get(province);
+        String cityCode     = cityCodeMap.get(city);
+
         Map<String, Object> address = new HashMap<>();
-        address.put("region",       FIXED_REGION);
-        address.put("province",     FIXED_PROVINCE);
+        address.put("region",       region);
+        address.put("regionCode",   regionCode);
+        address.put("province",     province);
+        address.put("provinceCode", provinceCode);
         address.put("city",         city);
-        address.put("cityCode",     cityCode != null ? cityCode : "");
+        address.put("cityCode",     cityCode);
         address.put("barangay",     barangay);
 
         Map<String, Object> userDoc = new HashMap<>();
@@ -345,10 +458,11 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(this,
                             "Account created successfully!",
                             Toast.LENGTH_SHORT).show();
+                    // TODO: navigate to MainActivity
                     finish();
                 })
                 .addOnFailureListener(e -> {
-                    // Roll back auth if Firestore save fails
+                    // Roll back auth account so the user can retry cleanly
                     FirebaseUser current = mAuth.getCurrentUser();
                     if (current != null) current.delete();
 
