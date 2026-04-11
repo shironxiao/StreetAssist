@@ -32,5 +32,19 @@
         android:name="com.mobileapplication.streetassist.ui.resident.Profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/reportFragment"
+        android:name="com.mobileapplication.streetassist.ui.resident.Reports.ReportFragment" />
 
+    <fragment
+        android:id="@+id/submitReportStep1Fragment"
+        android:name="com.mobileapplication.streetassist.ui.resident.Reports.SubmitReportStep1Fragment" />
+
+    <fragment
+        android:id="@+id/submitReportStep2Fragment"
+        android:name="com.mobileapplication.streetassist.ui.resident.Reports.SubmitReportStep2Fragment" />
+
+    <fragment
+        android:id="@+id/submitReportStep3Fragment"
+        android:name="com.mobileapplication.streetassist.ui.resident.Reports.SubmitReportStep3Fragment" />
 </navigation>

@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -199,14 +200,16 @@ public class ReportFragment extends Fragment {
 
     private void setupButtons(View root) {
         MaterialButton btnAddNewReport = root.findViewById(R.id.btnAddNewReport);
-        btnAddNewReport.setOnClickListener(v ->
-                startActivity(new Intent(getActivity(), submit_report_step1.class)));
+        btnAddNewReport.setOnClickListener(v -> openStep1());
 
         MaterialButton btnSubmitReport = root.findViewById(R.id.btnSubmitReport);
         if (btnSubmitReport != null) {
-            btnSubmitReport.setOnClickListener(v ->
-                    startActivity(new Intent(getActivity(), submit_report_step1.class)));
+            btnSubmitReport.setOnClickListener(v -> openStep1());
         }
+    }
+
+    private void openStep1() {
+        Navigation.findNavController(requireView()).navigate(R.id.submitReportStep1Fragment);
     }
 
     // ── Show / Hide ────────────────────────────────────────────────────────────

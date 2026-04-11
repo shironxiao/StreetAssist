@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
@@ -21,12 +22,10 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.mobileapplication.streetassist.R;
-import com.mobileapplication.streetassist.ui.resident.Reports.submit_report_step1;
+import com.mobileapplication.streetassist.ui.resident.Reports.ReportFragment;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -87,7 +86,7 @@ public class HomeFragment extends Fragment {
 
         // ── Submit report card ────────────────────────────────────────────────
         cardSubmitReport.setOnClickListener(v ->
-                startActivity(new Intent(getActivity(), submit_report_step1.class)));
+                Navigation.findNavController(requireView()).navigate(R.id.reportFragment));
 
         // ── Notification bell ─────────────────────────────────────────────────
         view.findViewById(R.id.ivNotification).setOnClickListener(v ->

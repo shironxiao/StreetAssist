@@ -3,7 +3,6 @@ package com.mobileapplication.streetassist.ui.resident.Reports;
 import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -11,6 +10,8 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
@@ -19,9 +20,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -40,14 +43,13 @@ import org.osmdroid.views.overlay.Marker;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 
-public class submit_report_step1 extends AppCompatActivity {
+public class SubmitReportStep1Fragment extends Fragment {
 
     // Map
     private MapView mapView;
@@ -72,28 +74,38 @@ public class submit_report_step1 extends AppCompatActivity {
     private AutoCompleteTextView actvSex;
     private MaterialCardView mapCard;
 
+    public SubmitReportStep1Fragment() {}
+
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
 
-        Configuration.getInstance().load(this,
-                PreferenceManager.getDefaultSharedPreferences(this));
-        Configuration.getInstance().setUserAgentValue(getPackageName());
+        Configuration.getInstance().load(
+                requireContext(),
+                PreferenceManager.getDefaultSharedPreferences(requireContext()));
+        Configuration.getInstance().setUserAgentValue(requireContext().getPackageName());
 
-        setContentView(R.layout.submit_report_step1);
+        return inflater.inflate(R.layout.fragment_submit_report_step1, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         // Bind views
-        mapView            = findViewById(R.id.mapView);
-        mapCard            = findViewById(R.id.mapCard);
-        btnUseMyLocation   = findViewById(R.id.btnUseMyLocation);
-        tvSelectedLocation = findViewById(R.id.tvSelectedLocation);
-        etSearch           = findViewById(R.id.etSearch);
-        etAge              = findViewById(R.id.etAge);
-        etDescription      = findViewById(R.id.etDescription);
-        actvSex            = findViewById(R.id.actvSex);
-        etDateTimePicker   = findViewById(R.id.etDateTimePicker);
+        mapView            = view.findViewById(R.id.mapView);
+        mapCard            = view.findViewById(R.id.mapCard);
+        btnUseMyLocation   = view.findViewById(R.id.btnUseMyLocation);
+        tvSelectedLocation = view.findViewById(R.id.tvSelectedLocation);
+        etSearch           = view.findViewById(R.id.etSearch);
+        etAge              = view.findViewById(R.id.etAge);
+        etDescription      = view.findViewById(R.id.etDescription);
+        actvSex            = view.findViewById(R.id.actvSex);
+        etDateTimePicker   = view.findViewById(R.id.etDateTimePicker);
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         setupMap();
         setupSexDropdown();
@@ -105,12 +117,10 @@ public class submit_report_step1 extends AppCompatActivity {
     // ─── DATE & TIME ──────────────────────────────────────────────────────────
 
     private void setupDateTimePicker() {
-        // Tapping the field opens date picker → then time picker
         etDateTimePicker.setOnClickListener(v -> openDatePicker());
         etDateTimePicker.setFocusable(false);
 
-        // "Use current date & time" button
-        MaterialButton btnUseNow = findViewById(R.id.btnUseCurrentDateTime);
+        MaterialButton btnUseNow = requireView().findViewById(R.id.btnUseCurrentDateTime);
         btnUseNow.setOnClickListener(v -> {
             selectedDateTime = Calendar.getInstance();
             updateDateTimeDisplay();
@@ -119,12 +129,12 @@ public class submit_report_step1 extends AppCompatActivity {
 
     private void openDatePicker() {
         Calendar cal = selectedDateTime != null ? selectedDateTime : Calendar.getInstance();
-        new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+        new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
             if (selectedDateTime == null) selectedDateTime = Calendar.getInstance();
             selectedDateTime.set(Calendar.YEAR, year);
             selectedDateTime.set(Calendar.MONTH, month);
             selectedDateTime.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            openTimePicker(); // Chain into time picker after date is set
+            openTimePicker();
         },
                 cal.get(Calendar.YEAR),
                 cal.get(Calendar.MONTH),
@@ -133,7 +143,7 @@ public class submit_report_step1 extends AppCompatActivity {
 
     private void openTimePicker() {
         Calendar cal = selectedDateTime != null ? selectedDateTime : Calendar.getInstance();
-        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+        new TimePickerDialog(requireContext(), (view, hourOfDay, minute) -> {
             selectedDateTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
             selectedDateTime.set(Calendar.MINUTE, minute);
             selectedDateTime.set(Calendar.SECOND, 0);
@@ -170,7 +180,7 @@ public class submit_report_step1 extends AppCompatActivity {
             public boolean longPressHelper(GeoPoint p) { return false; }
         }));
 
-        FloatingActionButton btnExpand = findViewById(R.id.btnExpandMap);
+        FloatingActionButton btnExpand = requireView().findViewById(R.id.btnExpandMap);
         btnExpand.setOnClickListener(v -> toggleMapExpand());
 
         getCurrentLocation(false);
@@ -187,23 +197,23 @@ public class submit_report_step1 extends AppCompatActivity {
         selectedMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         selectedMarker.setTitle(isManual ? "Pinned Location" : "Your Location");
 
-        Drawable icon = ContextCompat.getDrawable(this, R.drawable.ic_location_pin_red);
+        Drawable icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_location_pin_red);
         if (icon != null) selectedMarker.setIcon(icon);
 
         mapView.getOverlays().add(selectedMarker);
         mapView.getController().animateTo(point);
         mapView.invalidate();
 
-        findViewById(R.id.tvMapHint).setVisibility(android.view.View.GONE);
+        requireView().findViewById(R.id.tvMapHint).setVisibility(View.GONE);
 
         if (isManual) {
             btnUseMyLocation.setText("Use this location");
             btnUseMyLocation.setIcon(
-                    ContextCompat.getDrawable(this, android.R.drawable.ic_menu_add));
+                    ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_add));
         } else {
             btnUseMyLocation.setText("Use my location");
             btnUseMyLocation.setIcon(
-                    ContextCompat.getDrawable(this, android.R.drawable.ic_menu_mylocation));
+                    ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_mylocation));
         }
 
         reverseGeocode(point);
@@ -216,8 +226,8 @@ public class submit_report_step1 extends AppCompatActivity {
         params.height = heightPx;
         mapCard.setLayoutParams(params);
 
-        FloatingActionButton btnExpand = findViewById(R.id.btnExpandMap);
-        btnExpand.setImageDrawable(ContextCompat.getDrawable(this,
+        FloatingActionButton btnExpand = requireView().findViewById(R.id.btnExpandMap);
+        btnExpand.setImageDrawable(ContextCompat.getDrawable(requireContext(),
                 isMapExpanded
                         ? android.R.drawable.ic_menu_close_clear_cancel
                         : android.R.drawable.ic_menu_zoom));
@@ -228,7 +238,7 @@ public class submit_report_step1 extends AppCompatActivity {
     private void reverseGeocode(GeoPoint point) {
         new Thread(() -> {
             try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
                 List<Address> addresses = geocoder.getFromLocation(
                         point.getLatitude(), point.getLongitude(), 1);
                 if (addresses != null && !addresses.isEmpty()) {
@@ -238,16 +248,19 @@ public class submit_report_step1 extends AppCompatActivity {
                         sb.append(address.getAddressLine(i));
                         if (i < address.getMaxAddressLineIndex()) sb.append(", ");
                     }
-                    runOnUiThread(() -> tvSelectedLocation.setText(sb.toString()));
+                    requireActivity().runOnUiThread(() ->
+                            tvSelectedLocation.setText(sb.toString()));
                 } else {
-                    runOnUiThread(() -> tvSelectedLocation.setText(
-                            String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
-                                    point.getLatitude(), point.getLongitude())));
+                    requireActivity().runOnUiThread(() ->
+                            tvSelectedLocation.setText(
+                                    String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
+                                            point.getLatitude(), point.getLongitude())));
                 }
             } catch (IOException e) {
-                runOnUiThread(() -> tvSelectedLocation.setText(
-                        String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
-                                point.getLatitude(), point.getLongitude())));
+                requireActivity().runOnUiThread(() ->
+                        tvSelectedLocation.setText(
+                                String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
+                                        point.getLatitude(), point.getLongitude())));
             }
         }).start();
     }
@@ -256,22 +269,23 @@ public class submit_report_step1 extends AppCompatActivity {
         if (query.isEmpty()) return;
         new Thread(() -> {
             try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
                 List<Address> results = geocoder.getFromLocationName(query, 1);
                 if (results != null && !results.isEmpty()) {
                     Address address = results.get(0);
                     GeoPoint point = new GeoPoint(address.getLatitude(), address.getLongitude());
-                    runOnUiThread(() -> {
+                    requireActivity().runOnUiThread(() -> {
                         dropMarker(point, true);
                         mapView.getController().setZoom(17.0);
                     });
                 } else {
-                    runOnUiThread(() ->
-                            Toast.makeText(this, "Location not found.", Toast.LENGTH_SHORT).show());
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(requireContext(), "Location not found.",
+                                    Toast.LENGTH_SHORT).show());
                 }
             } catch (IOException e) {
-                runOnUiThread(() ->
-                        Toast.makeText(this, "Search failed. Check your connection.",
+                requireActivity().runOnUiThread(() ->
+                        Toast.makeText(requireContext(), "Search failed. Check your connection.",
                                 Toast.LENGTH_SHORT).show());
             }
         }).start();
@@ -280,9 +294,9 @@ public class submit_report_step1 extends AppCompatActivity {
     // ─── CURRENT LOCATION ─────────────────────────────────────────────────────
 
     private void getCurrentLocation(boolean showToastIfFail) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
+        if (ActivityCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     LOCATION_PERMISSION_REQUEST);
             return;
@@ -293,7 +307,7 @@ public class submit_report_step1 extends AppCompatActivity {
                 dropMarker(point, false);
                 mapView.getController().setZoom(17.0);
             } else if (showToastIfFail) {
-                Toast.makeText(this, "Could not get location. Try again.",
+                Toast.makeText(requireContext(), "Could not get location. Try again.",
                         Toast.LENGTH_SHORT).show();
             }
         });
@@ -304,7 +318,7 @@ public class submit_report_step1 extends AppCompatActivity {
     private void setupSexDropdown() {
         String[] sexOptions = {"Male", "Female"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, sexOptions);
+                requireContext(), android.R.layout.simple_dropdown_item_1line, sexOptions);
         actvSex.setAdapter(adapter);
     }
 
@@ -330,20 +344,23 @@ public class submit_report_step1 extends AppCompatActivity {
             }
         });
 
-        MaterialButton btnNext = findViewById(R.id.btnNext);
+        MaterialButton btnNext = requireView().findViewById(R.id.btnNext);
         btnNext.setOnClickListener(v -> {
             if (!validateForm()) return;
             saveAndProceed();
         });
 
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        // Replace requireActivity().onBackPressed() with:
+        requireView().findViewById(R.id.btnBack).setOnClickListener(v ->
+                Navigation.findNavController(requireView()).popBackStack());
     }
 
     // ─── VALIDATION + NAVIGATION ──────────────────────────────────────────────
 
     private boolean validateForm() {
         if (selectedPoint == null) {
-            Toast.makeText(this, "Please select a location on the map.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Please select a location on the map.",
+                    Toast.LENGTH_SHORT).show();
             return false;
         }
         if (etAge.getText() == null || etAge.getText().toString().trim().isEmpty()) {
@@ -352,7 +369,7 @@ public class submit_report_step1 extends AppCompatActivity {
             return false;
         }
         if (actvSex.getText() == null || actvSex.getText().toString().trim().isEmpty()) {
-            Toast.makeText(this, "Please select sex.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Please select sex.", Toast.LENGTH_SHORT).show();
             return false;
         }
         if (etDescription.getText() == null || etDescription.getText().toString().trim().isEmpty()) {
@@ -361,7 +378,8 @@ public class submit_report_step1 extends AppCompatActivity {
             return false;
         }
         if (selectedDateTime == null) {
-            Toast.makeText(this, "Please select the date and time when the individual was seen.",
+            Toast.makeText(requireContext(),
+                    "Please select the date and time when the individual was seen.",
                     Toast.LENGTH_SHORT).show();
             return false;
         }
@@ -373,16 +391,17 @@ public class submit_report_step1 extends AppCompatActivity {
 
         String locationText = tvSelectedLocation.getText().toString();
 
-        // Pass date/time as a long (milliseconds) to Step 2 → Step 3
-        Intent intent = new Intent(this, submit_report_step2.class);
-        intent.putExtra("latitude",        selectedPoint.getLatitude());
-        intent.putExtra("longitude",       selectedPoint.getLongitude());
-        intent.putExtra("locationText",    locationText);
-        intent.putExtra("age",             etAge.getText().toString().trim());
-        intent.putExtra("sex",             actvSex.getText().toString().trim());
-        intent.putExtra("description",     etDescription.getText().toString().trim());
-        intent.putExtra("seenAt",          selectedDateTime.getTimeInMillis());
-        startActivity(intent);
+        Bundle args = new Bundle();
+        args.putDouble("latitude",      selectedPoint.getLatitude());
+        args.putDouble("longitude",     selectedPoint.getLongitude());
+        args.putString("locationText",  locationText);
+        args.putString("age",           etAge.getText().toString().trim());
+        args.putString("sex",           actvSex.getText().toString().trim());
+        args.putString("description",   etDescription.getText().toString().trim());
+        args.putLong("seenAt",          selectedDateTime.getTimeInMillis());
+
+        Navigation.findNavController(requireView())
+                .navigate(R.id.submitReportStep2Fragment, args); // ← passes Bundle as nav args
     }
 
     // ─── PERMISSIONS ──────────────────────────────────────────────────────────
@@ -402,10 +421,10 @@ public class submit_report_step1 extends AppCompatActivity {
     // ─── OSMDroid LIFECYCLE ───────────────────────────────────────────────────
 
     @Override
-    protected void onResume() { super.onResume(); mapView.onResume(); }
+    public void onResume() { super.onResume(); mapView.onResume(); }
 
     @Override
-    protected void onPause() { super.onPause(); mapView.onPause(); }
+    public void onPause() { super.onPause(); mapView.onPause(); }
 
     // ─── UTILITY ──────────────────────────────────────────────────────────────
 
