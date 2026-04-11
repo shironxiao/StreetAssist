@@ -21,20 +21,20 @@
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:adjustViewBounds="true"
-            android:contentDescription="@string/cnsc_logo"
+            android:contentDescription="Street Assist Logo"
             android:scaleType="fitCenter"
+            android:src="@drawable/logo"
             app:layout_constraintBottom_toTopOf="@id/tv_institution_name"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHeight_max="250dp"
             app:layout_constraintHeight_min="150dp"
-            app:layout_constraintHorizontal_bias="0.495"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.4"
             app:layout_constraintVertical_chainStyle="packed"
             app:layout_constraintWidth_max="250dp"
-            app:layout_constraintWidth_min="150dp" />
+            app:layout_constraintWidth_min="150dp"/>
 
         <TextView
             android:id="@+id/tv_institution_name"

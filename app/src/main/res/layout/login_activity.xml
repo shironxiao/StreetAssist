@@ -7,25 +7,51 @@
     android:background="@android:color/white"
     tools:context=".ui.auth.LoginActivity">
 
-    <!-- Top Decorative Background (Placeholder for the Wave) -->
+    <!-- Responsive Guideline for the Header height (30% of screen) -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.3" />
 
-    <!-- "Sign in" Header -->
+    <!-- Top Decorative Background -->
     <View
         android:id="@+id/topBackground"
-        android:layout_width="match_parent"
-        android:layout_height="280dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="#2F80ED"
+        app:layout_constraintBottom_toTopOf="@+id/guidelineHeader"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Brand Container (Logo + Name) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@id/topBackground"
+        app:layout_constraintEnd_toEndOf="@id/topBackground"
+        app:layout_constraintStart_toStartOf="@id/topBackground"
+        app:layout_constraintTop_toTopOf="@id/topBackground">
+
+        <ImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:src="@drawable/logo" />
+
+    </LinearLayout>
+
+    <!-- "Sign in" Header -->
     <TextView
         android:id="@+id/tvSignIn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
         android:text="Sign in"
         android:textColor="#333333"
@@ -33,6 +59,8 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBackground" />
+
+    <!-- REST OF YOUR XML REMAINS EXACTLY THE SAME BELOW -->
 
     <View
         android:id="@+id/lineUnderline"
@@ -75,7 +103,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:hint="demo@email.com"
+            android:hint="example@email.com"
             android:inputType="textEmailAddress"
             android:paddingStart="0dp" />
     </com.google.android.material.textfield.TextInputLayout>

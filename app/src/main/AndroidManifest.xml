@@ -44,12 +44,6 @@
         <activity
             android:name=".ui.auth.AppIntroduction"
             android:exported="false" />
-        <activity android:name=".ui.auth.AppIntroScreen1"
-            android:exported="false" />
-        <activity android:name=".ui.auth.AppIntroScreen2"
-            android:exported="false" />
-        <activity android:name=".ui.auth.AppIntroScreen3"
-            android:exported="false" />
         <activity android:name=".ui.resident.ResidentMainActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />

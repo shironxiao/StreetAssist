@@ -12,15 +12,9 @@ public class AppIntroduction extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_introduction);
 
-        MaterialButton btnGetStarted= findViewById(R.id.btnGetStarted);
-
-
-
-        if (btnGetStarted != null) {
-            btnGetStarted.setOnClickListener(v -> {
-                Intent intent = new Intent(AppIntroduction.this, AppIntroScreen1.class);
-                startActivity(intent);
-            });
-        }
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, new IntroScreen0Fragment())
+                .commit();
     }
 }
