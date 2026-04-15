@@ -38,7 +38,7 @@
                         android:id="@+id/ivAvatar"
                         android:layout_width="56dp"
                         android:layout_height="56dp"
-                        android:src="@drawable/circle_bg_light_blue"
+                        android:src="@drawable/ic_default_avatar"
                         app:civ_border_color="#FFFFFF"
                         app:civ_border_width="2dp" />
 
