@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@android:color/white">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".ui.auth.AdminLoginActivity">
+
+        <!-- Top Decorative Background -->
+        <View
+            android:id="@+id/topBackground"
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            android:background="#2F80ED"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Logo Added Here -->
+        <ImageView
+            android:id="@+id/ivLoginLogo"
+            android:layout_width="246dp"
+            android:layout_height="223dp"
+            android:contentDescription="App Logo"
+            android:scaleType="fitCenter"
+            android:src="@drawable/logo"
+            app:layout_constraintBottom_toBottomOf="@id/topBackground"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/topBackground" />
+
+        <TextView
+            android:id="@+id/tvSignIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="40dp"
+            android:fontFamily="sans-serif-black"
+            android:text="Admin Login"
+            android:textColor="#333333"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/topBackground" />
+
+        <View
+            android:id="@+id/lineUnderline"
+            android:layout_width="120dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="8dp"
+            android:background="#2F80ED"
+            app:layout_constraintStart_toStartOf="@id/tvSignIn"
+            app:layout_constraintTop_toBottomOf="@id/tvSignIn" />
+
+        <!-- Email Section -->
+        <TextView
+            android:id="@+id/lblEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Admin Email"
+            android:textColor="#757575"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@id/tvSignIn"
+            app:layout_constraintTop_toBottomOf="@id/lineUnderline" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilEmail"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:hintEnabled="false"
+            app:startIconDrawable="@android:drawable/ic_dialog_email"
+            app:startIconTint="#BDBDBD"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/lblEmail"
+            app:layout_constraintTop_toBottomOf="@id/lblEmail">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:hint="admin@streetassist.com"
+                android:inputType="textEmailAddress"
+                android:paddingStart="0dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <View
+            android:id="@+id/lineEmail"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            app:layout_constraintEnd_toEndOf="@id/tilEmail"
+            app:layout_constraintStart_toStartOf="@id/tilEmail"
+            app:layout_constraintTop_toBottomOf="@id/tilEmail" />
+
+        <!-- Password Section -->
+        <TextView
+            android:id="@+id/lblPassword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Password"
+            android:textColor="#757575"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@id/lblEmail"
+            app:layout_constraintTop_toBottomOf="@id/lineEmail" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilPassword"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="32dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="0dp"
+            app:endIconMode="password_toggle"
+            app:endIconTint="#BDBDBD"
+            app:hintEnabled="false"
+            app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+            app:startIconTint="#BDBDBD"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@id/lblPassword"
+            app:layout_constraintTop_toBottomOf="@id/lblPassword">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:hint="••••••••"
+                android:inputType="textPassword"
+                android:paddingStart="0dp" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <View
+            android:id="@+id/linePassword"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            app:layout_constraintEnd_toEndOf="@id/tilPassword"
+            app:layout_constraintStart_toStartOf="@id/tilPassword"
+            app:layout_constraintTop_toBottomOf="@id/tilPassword" />
+
+        <!-- Login Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogin"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="48dp"
+            android:layout_marginEnd="32dp"
+            android:backgroundTint="#2F80ED"
+            android:text="Login"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            app:cornerRadius="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/linePassword" />
+
+        <!-- Footer Text -->
+        <TextView
+            android:id="@+id/tvBackToSelection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="32dp"
+            android:text="Not an Admin? Switch User"
+            android:textColor="#757575"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnLogin" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

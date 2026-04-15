@@ -29,9 +29,8 @@ public class IntroductionUserLevel extends AppCompatActivity {
 
         if (btnAdmin != null) {
             btnAdmin.setOnClickListener(v -> {
-                // Add your admin navigation here later
-                // Intent intent = new Intent(IntroductionUserLevel.this, AdminActivity.class);
-                // startActivity(intent);
+                Intent intent = new Intent(IntroductionUserLevel.this, AdminLoginActivity.class);
+                startActivity(intent);
             });
         }
     }

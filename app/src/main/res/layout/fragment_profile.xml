@@ -25,6 +25,21 @@
                 android:paddingTop="48dp"
                 android:paddingBottom="60dp">
 
+                <!-- Edit Profile Button at top-right -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEditProfileHeader"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginEnd="16dp"
+                    android:text="Edit Profile"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    app:icon="@android:drawable/ic_menu_edit"
+                    app:iconTint="@android:color/white"
+                    app:iconSize="16dp" />
+
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -125,12 +140,11 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Row 1: Full Name -->
+                        <!-- ── Row: Full Name ── -->
                         <LinearLayout
                             android:id="@+id/rowFullName"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:padding="16dp">
 
@@ -163,12 +177,6 @@
                                     android:text="Ronald Sevilla"
                                     android:textColor="#757575" />
                             </LinearLayout>
-
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_media_play"
-                                app:tint="#CCCCCC" />
                         </LinearLayout>
 
                         <View
@@ -177,7 +185,7 @@
                             android:background="#F0F0F0"
                             android:layout_marginHorizontal="16dp" />
 
-                        <!-- Row 2: Email -->
+                        <!-- ── Row: Email (view-only) ── -->
                         <LinearLayout
                             android:id="@+id/rowEmail"
                             android:layout_width="match_parent"
@@ -216,10 +224,11 @@
                                     android:textColor="#757575" />
                             </LinearLayout>
 
+                            <!-- Lock icon to signal view-only -->
                             <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_media_play"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@android:drawable/ic_lock_idle_lock"
                                 app:tint="#CCCCCC" />
                         </LinearLayout>
 
@@ -229,7 +238,52 @@
                             android:background="#F0F0F0"
                             android:layout_marginHorizontal="16dp" />
 
-                        <!-- Row 3: Address -->
+                        <!-- ── Row: Contact Number ── -->
+                        <LinearLayout
+                            android:id="@+id/rowContact"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:padding="16dp">
+
+                            <ImageView
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/circle_bg_light_blue"
+                                android:padding="8dp"
+                                android:src="@android:drawable/ic_menu_call"
+                                app:tint="#4169E1" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Contact Number"
+                                    android:textColor="#333333"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvValContact"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="—"
+                                    android:textColor="#757575" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#F0F0F0"
+                            android:layout_marginHorizontal="16dp" />
+
+                        <!-- ── Row: Address (view-only) ── -->
                         <LinearLayout
                             android:id="@+id/rowAddress"
                             android:layout_width="match_parent"
@@ -268,10 +322,11 @@
                                     android:textColor="#757575" />
                             </LinearLayout>
 
+                            <!-- Lock icon to signal view-only -->
                             <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_media_play"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@android:drawable/ic_lock_idle_lock"
                                 app:tint="#CCCCCC" />
                         </LinearLayout>
 
@@ -281,12 +336,11 @@
                             android:background="#F0F0F0"
                             android:layout_marginHorizontal="16dp" />
 
-                        <!-- Row 4: Password -->
+                        <!-- ── Row: Change Password ── -->
                         <LinearLayout
                             android:id="@+id/rowPassword"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
                             android:gravity="center_vertical"
                             android:padding="16dp">
 
@@ -298,20 +352,27 @@
                                 android:src="@android:drawable/ic_lock_idle_lock"
                                 app:tint="#4169E1" />
 
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="16dp"
                                 android:layout_weight="1"
-                                android:text="Change Password"
-                                android:textColor="#333333"
-                                android:textStyle="bold" />
+                                android:orientation="vertical">
 
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_media_play"
-                                app:tint="#CCCCCC" />
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Change Password"
+                                    android:textColor="#333333"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Tap edit to change your password"
+                                    android:textColor="#BBBBBB"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
                         </LinearLayout>
 
                     </LinearLayout>

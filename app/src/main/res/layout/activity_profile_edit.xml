@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F7FA">
+
+    <!-- App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#4169E1"
+            app:navigationIcon="@drawable/ic_back"
+            app:navigationIconTint="@android:color/white"
+            app:title="Edit Profile"
+            app:titleTextColor="@android:color/white"
+            app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:clipToPadding="false"
+        android:paddingBottom="32dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- ════════════════════════════════════════════
+                 SECTION: EDITABLE FIELDS
+                 ════════════════════════════════════════════ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="EDITABLE INFO"
+                android:textColor="#4169E1"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="10dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@android:color/white"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Full Name -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilFullName"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Full Name"
+                        android:layout_marginBottom="16dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
+                        app:startIconDrawable="@android:drawable/ic_menu_myplaces"
+                        app:startIconTint="#4169E1">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etFullName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName|textCapWords"
+                            android:textColor="#333333" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Contact Number -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilContact"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Contact Number"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
+                        app:startIconDrawable="@android:drawable/ic_menu_call"
+                        app:startIconTint="#4169E1"
+                        app:helperText="Format: 09XXXXXXXXX">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etContact"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="phone"
+                            android:maxLength="11"
+                            android:textColor="#333333" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ════════════════════════════════════════════
+                 SECTION: VIEW-ONLY FIELDS
+                 ════════════════════════════════════════════ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VIEW ONLY"
+                android:textColor="#999999"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:layout_marginBottom="10dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#F8F8F8"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Info Banner -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/rounded_info_bg"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:layout_marginBottom="16dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:src="@android:drawable/ic_dialog_info"
+                            app:tint="#4169E1" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="Email and address cannot be changed here. Contact support for assistance."
+                            android:textColor="#4169E1"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <!-- Email (View Only) -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilEmail"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Email Address"
+                        android:layout_marginBottom="16dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#CCCCCC"
+                        app:hintTextColor="#999999"
+                        app:startIconDrawable="@android:drawable/ic_dialog_email"
+                        app:startIconTint="#AAAAAA"
+                        app:endIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:endIconTint="#AAAAAA">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:enabled="false"
+                            android:focusable="false"
+                            android:textColor="#AAAAAA"
+                            android:inputType="textEmailAddress" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Address (View Only) -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilAddress"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Address"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#CCCCCC"
+                        app:hintTextColor="#999999"
+                        app:startIconDrawable="@android:drawable/ic_menu_mapmode"
+                        app:startIconTint="#AAAAAA"
+                        app:endIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:endIconTint="#AAAAAA">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etAddress"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:enabled="false"
+                            android:focusable="false"
+                            android:textColor="#AAAAAA"
+                            android:inputType="textMultiLine"
+                            android:minLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ════════════════════════════════════════════
+                 SECTION: CHANGE PASSWORD
+                 ════════════════════════════════════════════ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CHANGE PASSWORD"
+                android:textColor="#4169E1"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:layout_marginBottom="10dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@android:color/white"
+                android:layout_marginBottom="28dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Current Password -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilCurrentPassword"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Current Password"
+                        android:layout_marginBottom="16dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
+                        app:endIconMode="password_toggle"
+                        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:startIconTint="#4169E1"
+                        app:helperText="Required to save any changes">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etCurrentPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textColor="#333333" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- New Password -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilNewPassword"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="New Password (optional)"
+                        android:layout_marginBottom="16dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
+                        app:endIconMode="password_toggle"
+                        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:startIconTint="#4169E1"
+                        app:helperText="Leave blank to keep current password">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNewPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textColor="#333333" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Confirm New Password -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilConfirmPassword"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Confirm New Password"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
+                        app:endIconMode="password_toggle"
+                        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:startIconTint="#4169E1">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etConfirmPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textColor="#333333" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Save Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveChanges"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Save Changes"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                app:backgroundTint="#4169E1"
+                app:cornerRadius="14dp"
+                app:icon="@android:drawable/ic_menu_save"
+                app:iconGravity="textStart"
+                app:iconTint="@android:color/white" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
