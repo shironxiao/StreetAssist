@@ -41,6 +41,10 @@
             android:exported="false" />
         <activity android:name=".admin.AdminDashboardActivity"
             android:exported="false" />
+        <activity android:name=".admin.AdminReportsActivity"
+            android:exported="false" />
+        <activity android:name=".admin.AdminAnnouncementsActivity"/>
+
         <activity
             android:name=".ui.shared.SplashActivity"
             android:exported="false" />

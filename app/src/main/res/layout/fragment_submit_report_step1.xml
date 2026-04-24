@@ -269,7 +269,7 @@
                         android:id="@+id/etAge"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g. 40-50 years old" />
+                        android:hint="e.g. 10-50 years old" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- SEX -->

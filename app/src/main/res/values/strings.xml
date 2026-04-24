@@ -10,6 +10,15 @@
     <string name="forgot_password">Forgot Password?</string>
     <string name="sign_in">Sign In</string>
     <string name="don_t_have_an_account_sign_up">Don\'t have an account? Sign Up</string>
+    <string name="reports_management">Reports Management</string>
+    <string name="reports_list">Reports List</string>
+    <string name="view_and_manage_all_case_reports">View and manage all case reports</string>
+    <string name="export">Export</string>
+    <string name="search_hint_reports">Search by reporter, location...</string>
+    <string name="status_filter">Status</string>
+    <string name="showing_all_reports">Showing all reports</string>
+    <string name="no_description">No description</string>
+    <string name="unknown_location">Unknown location</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

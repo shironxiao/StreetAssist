@@ -6,4 +6,11 @@
     </style>
 
     <style name="Theme.StreetAssist" parent="Base.Theme.StreetAssist" />
+
+    <!-- Shape Appearance for Drawer Items -->
+    <style name="ShapeAppearance.StreetAssist.SmallComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
 </resources>
