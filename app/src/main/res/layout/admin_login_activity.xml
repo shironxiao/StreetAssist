@@ -17,7 +17,7 @@
             android:id="@+id/topBackground"
             android:layout_width="match_parent"
             android:layout_height="280dp"
-            android:background="#2F80ED"
+            android:background="@color/blue_primary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
@@ -55,7 +55,7 @@
             android:layout_width="120dp"
             android:layout_height="4dp"
             android:layout_marginTop="8dp"
-            android:background="#2F80ED"
+            android:background="@color/blue_primary"
             app:layout_constraintStart_toStartOf="@id/tvSignIn"
             app:layout_constraintTop_toBottomOf="@id/tvSignIn" />
 
@@ -161,12 +161,12 @@
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
             android:layout_marginTop="48dp"
-            android:backgroundTint="#2F80ED"
+            android:backgroundTint="@color/blue_primary"
             android:text="Login as Admin"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="18sp"
-            app:cornerRadius="16dp"
+            app:cornerRadius="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/linePassword" />

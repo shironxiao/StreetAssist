@@ -106,40 +106,65 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
     private void showAddAnnouncementDialog() {
         android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_announcement, null);
-        com.google.android.material.textfield.TextInputEditText etTitle = dialogView.findViewById(R.id.etTitle);
-        com.google.android.material.textfield.TextInputEditText etCategory = dialogView.findViewById(R.id.etCategory);
-        com.google.android.material.textfield.TextInputEditText etSubtitle = dialogView.findViewById(R.id.etSubtitle);
-        com.google.android.material.textfield.TextInputEditText etContact = dialogView.findViewById(R.id.etContact);
-        com.google.android.material.textfield.TextInputEditText etImageUrl = dialogView.findViewById(R.id.etImageUrl);
+        android.widget.EditText etTitle = dialogView.findViewById(R.id.etTitle);
+        android.widget.EditText etCategory = dialogView.findViewById(R.id.etCategory);
+        android.widget.EditText etSubtitle = dialogView.findViewById(R.id.etSubtitle);
+        android.widget.EditText etContact = dialogView.findViewById(R.id.etContact);
+        android.view.View containerUpload = dialogView.findViewById(R.id.containerUpload);
+        android.view.View btnClose = dialogView.findViewById(R.id.btnClose);
+        android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+        android.widget.Button btnPost = dialogView.findViewById(R.id.btnPost);
 
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_StreetAssist)
                 .setView(dialogView)
-                .setPositiveButton("Post", (dialog, which) -> {
-                    String title = etTitle.getText().toString();
-                    String category = etCategory.getText().toString();
-                    String subtitle = etSubtitle.getText().toString();
-                    String contact = etContact.getText().toString();
-                    String imageUrl = etImageUrl.getText().toString();
+                .setCancelable(true)
+                .create();
 
-                    if (!title.isEmpty() && !category.isEmpty()) {
-                        java.util.Map<String, Object> post = new java.util.HashMap<>();
-                        post.put("title", title);
-                        post.put("category", category);
-                        post.put("subtitle", subtitle);
-                        post.put("contact", contact);
-                        post.put("imageUrl", imageUrl);
-                        post.put("date", new java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(new java.util.Date()));
-                        post.put("timestamp", com.google.firebase.Timestamp.now());
+        // Make background transparent to show card corners
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
 
-                        db.collection("announcements").add(post)
-                                .addOnSuccessListener(doc -> Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show())
-                                .addOnFailureListener(e -> Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show());
-                    } else {
-                        Toast.makeText(this, "Title and Category are required", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        btnClose.setOnClickListener(v -> {
+            Log.d(TAG, "Close button clicked");
+            dialog.dismiss();
+        });
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        containerUpload.setOnClickListener(v -> {
+            // TODO: Implement image picker
+            Toast.makeText(this, "Image upload clicked", Toast.LENGTH_SHORT).show();
+        });
+
+        btnPost.setOnClickListener(v -> {
+            String title = etTitle.getText().toString();
+            String category = etCategory.getText().toString();
+            String subtitle = etSubtitle.getText().toString();
+            String contact = etContact.getText().toString();
+            String imageUrl = ""; // You can update this when image picker is implemented
+
+            if (!title.isEmpty() && !category.isEmpty()) {
+                java.util.Map<String, Object> post = new java.util.HashMap<>();
+                post.put("title", title);
+                post.put("category", category);
+                post.put("subtitle", subtitle);
+                post.put("contact", contact);
+                post.put("imageUrl", imageUrl);
+                post.put("date", new java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(new java.util.Date()));
+                post.put("timestamp", com.google.firebase.Timestamp.now());
+
+                db.collection("announcements").add(post)
+                        .addOnSuccessListener(doc -> {
+                            Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
+                            dialog.dismiss();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show());
+            } else {
+                Toast.makeText(this, "Title and Category are required", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
     }
 
     private void fetchAnnouncements() {

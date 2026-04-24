@@ -40,7 +40,7 @@
             style="@style/Widget.MaterialComponents.Button.Icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="#2F80ED"
+            android:backgroundTint="@color/blue_primary"
             android:insetTop="0dp"
             android:insetBottom="0dp"
             android:text="@string/export"

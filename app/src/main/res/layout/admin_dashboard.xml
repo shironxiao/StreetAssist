@@ -33,14 +33,14 @@
                 android:contentDescription="Menu"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_menu_hamburger"
-                app:tint="#001F54" />
+                app:tint="@color/text_primary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="Dashboard"
-                android:textColor="#001F54"
+                android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -332,8 +332,8 @@
         android:background="@color/white"
         app:headerLayout="@layout/nav_header_admin"
         app:menu="@menu/admin_drawer_menu"
-        app:itemIconTint="@color/text_secondary"
-        app:itemTextColor="@color/text_secondary"
+        app:itemIconTint="@color/nav_item_color_state"
+        app:itemTextColor="@color/nav_item_color_state"
         app:itemIconSize="22dp"
         app:itemHorizontalPadding="24dp"
         app:itemIconPadding="18dp"

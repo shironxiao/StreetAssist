@@ -23,16 +23,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="#REP-12345"
-                android:textColor="#001F54"
+                android:textColor="@color/text_primary"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
             <ImageButton
                 android:id="@+id/btnClose"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close_dialog"
                 android:src="@drawable/ic_close"
                 app:tint="#A3AED0" />
         </RelativeLayout>
@@ -74,7 +78,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="INCIDENT DESCRIPTION"
+            android:text="@string/incident_description"
             android:textColor="#A3AED0"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -93,7 +97,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LOCATION"
+            android:text="@string/location_label"
             android:textColor="#A3AED0"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -108,7 +112,7 @@
             android:textColor="#1B2559"
             android:textSize="14sp" />
 
-        <!-- UPDATE STATUS SECTION (New) -->
+        <!-- UPDATE STATUS SECTION -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -118,8 +122,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="UPDATE STATUS"
-            android:textColor="#001F54"
+            android:text="@string/update_status"
+            android:textColor="@color/text_primary"
             android:textSize="12sp"
             android:textStyle="bold"
             android:layout_marginBottom="12dp"/>
@@ -133,10 +137,10 @@
             <Button
                 android:id="@+id/btnSetInProgress"
                 android:layout_width="0dp"
-                android:layout_height="45dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="In Progress"
+                android:text="@string/in_progress"
                 android:textAllCaps="false"
                 android:textSize="13sp"
                 android:backgroundTint="@color/status_inprogress_bg"
@@ -147,9 +151,9 @@
             <Button
                 android:id="@+id/btnSetResolved"
                 android:layout_width="0dp"
-                android:layout_height="45dp"
+                android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="Resolved"
+                android:text="@string/resolved"
                 android:textAllCaps="false"
                 android:textSize="13sp"
                 android:backgroundTint="@color/status_resolved_bg"
@@ -171,7 +175,8 @@
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:src="@drawable/ic_profile_placeholder"
-                app:tint="#001F54" />
+                android:contentDescription="@null"
+                app:tint="@color/text_primary" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -183,15 +188,31 @@
                     android:id="@+id/tvReporterName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="John Doe"
+                    android:text="@string/loading"
                     android:textColor="#1B2559"
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvReporterContact"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Reporter"
+                    android:textColor="#A3AED0"
+                    android:textSize="11sp"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:id="@+id/tvReporterAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#A3AED0"
+                    android:textSize="11sp"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/reporter_label"
                     android:textColor="#A3AED0"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -201,11 +222,11 @@
             android:id="@+id/btnViewLocation"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:backgroundTint="#001F54"
-            android:text="Open on Map"
+            android:backgroundTint="@color/blue_primary"
+            android:text="@string/open_on_map"
             android:textAllCaps="false"
             android:textSize="16sp"
-            app:cornerRadius="16dp" />
+            app:cornerRadius="28dp" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

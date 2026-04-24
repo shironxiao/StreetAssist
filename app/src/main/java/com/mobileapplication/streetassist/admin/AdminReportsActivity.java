@@ -179,6 +179,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         TextView tvDesc = dialogView.findViewById(R.id.tvDetailDescription);
         TextView tvLoc = dialogView.findViewById(R.id.tvDetailLocation);
         TextView tvName = dialogView.findViewById(R.id.tvReporterName);
+        TextView tvContact = dialogView.findViewById(R.id.tvReporterContact);
+        TextView tvAddress = dialogView.findViewById(R.id.tvReporterAddress);
         ImageButton btnClose = dialogView.findViewById(R.id.btnClose);
         Button btnInProgress = dialogView.findViewById(R.id.btnSetInProgress);
         Button btnResolved = dialogView.findViewById(R.id.btnSetResolved);
@@ -191,8 +193,41 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         tvId.setText("RPT-" + reportId);
         tvDesc.setText(String.valueOf(report.get("description")));
         tvLoc.setText(String.valueOf(report.get("locationAddress")));
-        tvName.setText(String.valueOf(report.get("reporterName") != null ? report.get("reporterName") : "Anonymous"));
         tvStatus.setText(status.toUpperCase());
+
+        // Fetch Reporter Details
+        String reporterId = String.valueOf(report.get("userId"));
+        if (reporterId != null && !reporterId.equals("anonymous")) {
+            db.collection("users").document(reporterId).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String fullName = documentSnapshot.getString("fullName");
+                            String contact = documentSnapshot.getString("contactNumber");
+                            Map<String, Object> addressMap = (Map<String, Object>) documentSnapshot.get("address");
+
+                            tvName.setText(fullName != null ? fullName : "Anonymous");
+
+                            if (contact != null && !contact.isEmpty()) {
+                                tvContact.setText(getString(R.string.reporter_contact) + " " + contact);
+                                tvContact.setVisibility(android.view.View.VISIBLE);
+                            }
+
+                            if (addressMap != null) {
+                                String city = (String) addressMap.get("city");
+                                String brgy = (String) addressMap.get("barangay");
+                                if (city != null && brgy != null) {
+                                    tvAddress.setText(getString(R.string.reporter_address) + " " + brgy + ", " + city);
+                                    tvAddress.setVisibility(android.view.View.VISIBLE);
+                                }
+                            }
+                        } else {
+                            tvName.setText(getString(R.string.anonymous));
+                        }
+                    })
+                    .addOnFailureListener(e -> tvName.setText(getString(R.string.anonymous)));
+        } else {
+            tvName.setText(getString(R.string.anonymous));
+        }
 
         // Format Time
         Object ts = report.get("timestamp");

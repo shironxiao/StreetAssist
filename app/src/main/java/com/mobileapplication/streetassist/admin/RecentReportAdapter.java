@@ -49,6 +49,9 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemViewType(int position) {
+        if (context instanceof AdminDashboardActivity) {
+            return TYPE_ITEM;
+        }
         return position == 0 ? TYPE_HEADER : TYPE_ITEM;
     }
 
@@ -68,6 +71,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof HeaderViewHolder) {
             HeaderViewHolder h = (HeaderViewHolder) holder;
+
             h.btnExport.setOnClickListener(v -> {
                 if (headerListener != null) headerListener.onExportClick();
             });
@@ -83,9 +87,12 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             });
         } else if (holder instanceof ViewHolder) {
             int adapterPos = holder.getAdapterPosition();
-            if (adapterPos == RecyclerView.NO_POSITION || adapterPos <= 0) return;
+            if (adapterPos == RecyclerView.NO_POSITION) return;
 
-            Map<String, Object> report = reportList.get(adapterPos - 1);
+            int dataIndex = (context instanceof AdminDashboardActivity) ? adapterPos : adapterPos - 1;
+            if (dataIndex < 0 || dataIndex >= reportList.size()) return;
+
+            Map<String, Object> report = reportList.get(dataIndex);
             ViewHolder itemHolder = (ViewHolder) holder;
 
             Object reportIdObj = report.get("reportId");
@@ -117,10 +124,19 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             itemHolder.itemView.setOnClickListener(v -> {
                 int currentPos = holder.getAdapterPosition();
-                if (currentPos != RecyclerView.NO_POSITION && currentPos > 0) {
-                    Map<String, Object> currentReport = reportList.get(currentPos - 1);
-                    if (context instanceof com.mobileapplication.streetassist.admin.AdminReportsActivity) {
-                        ((com.mobileapplication.streetassist.admin.AdminReportsActivity) context).showReportDetails(currentReport);
+                if (currentPos != RecyclerView.NO_POSITION) {
+                    int clickedIndex = (context instanceof AdminDashboardActivity) ? currentPos : currentPos - 1;
+                    if (clickedIndex >= 0 && clickedIndex < reportList.size()) {
+                        Map<String, Object> currentReport = reportList.get(clickedIndex);
+                        if (context instanceof com.mobileapplication.streetassist.admin.AdminReportsActivity) {
+                            ((com.mobileapplication.streetassist.admin.AdminReportsActivity) context).showReportDetails(currentReport);
+                        } else if (context instanceof AdminDashboardActivity) {
+                            // On Dashboard, we can navigate to the full reports view or show details if desired
+                            // For now, let's just make it consistent with the Reports Activity if we want to show details
+                            // but AdminDashboardActivity doesn't have showReportDetails implemented.
+                            // So let's just open the AdminReportsActivity
+                            context.startActivity(new android.content.Intent(context, com.mobileapplication.streetassist.admin.AdminReportsActivity.class));
+                        }
                     }
                 }
             });
@@ -156,6 +172,9 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemCount() {
+        if (context instanceof AdminDashboardActivity) {
+            return reportList.size();
+        }
         return reportList.size() + 1; // +1 for header
     }
 
