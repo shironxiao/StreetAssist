@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_comment.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="6dp"
+    android:gravity="top">
+
+    <!-- ── User avatar (Cloudinary via Glide, circleCrop) ────────────── -->
+    <ImageView
+        android:id="@+id/ivCommentAvatar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="User avatar"
+        android:scaleType="centerCrop"
+        android:background="@drawable/circle_avatar_bg"
+        android:src="@drawable/ic_default_avatar" />
+
+    <!-- ── Comment bubble ──────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Bubble background -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/comment_bubble_bg"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:maxWidth="280dp">
+
+            <!-- Username -->
+            <TextView
+                android:id="@+id/tvCommentName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="13sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="2dp" />
+
+            <!-- Comment text -->
+            <TextView
+                android:id="@+id/tvCommentText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:lineSpacingMultiplier="1.3" />
+        </LinearLayout>
+
+        <!-- Timestamp below bubble -->
+        <TextView
+            android:id="@+id/tvCommentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:layout_marginStart="4dp"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
+            android:id="@+id/tvCommentLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginStart="4dp"
+            android:textSize="11sp"
+            android:textColor="@color/blue_primary"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</LinearLayout>

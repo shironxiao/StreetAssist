@@ -95,131 +95,39 @@
                     app:strokeColor="#4169E1" />
             </LinearLayout>
 
-            <!-- NEWS LIST (Example Card) -->
-            <androidx.core.widget.NestedScrollView
+            <!-- LOADING INDICATOR -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="40dp"
+                android:visibility="gone" />
+
+            <!-- EMPTY STATE -->
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="40dp"
+                android:gravity="center"
+                android:text="No announcements yet."
+                android:textColor="#BDBDBD"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+            <!-- REAL ANNOUNCEMENTS LIST -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvAnnouncements"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="16dp">
+                android:layout_marginTop="16dp"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp"
+                tools:listitem="@layout/item_announcement" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <!-- Missing Person Card Example -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        app:cardBackgroundColor="@android:color/white"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="2dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical">
-
-                            <!-- Image Placeholder -->
-                            <RelativeLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="180dp"
-                                android:background="#E0E0E0">
-
-                                <ImageView
-                                    android:layout_width="60dp"
-                                    android:layout_height="60dp"
-                                    android:layout_centerInParent="true"
-                                    android:alpha="0.5"
-                                    android:src="@android:drawable/ic_menu_gallery" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_alignParentEnd="true"
-                                    android:layout_margin="12dp"
-                                    android:background="#4169E1"
-                                    android:paddingHorizontal="8dp"
-                                    android:paddingVertical="4dp"
-                                    android:text="OFFICIAL"
-                                    android:textColor="@android:color/white"
-                                    android:textSize="10sp"
-                                    android:textStyle="bold" />
-                            </RelativeLayout>
-
-                            <!-- Content -->
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:padding="16dp">
-
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:background="#FFE8E8"
-                                        android:paddingHorizontal="6dp"
-                                        android:paddingVertical="2dp"
-                                        android:text="MISSING PERSON"
-                                        android:textColor="#FF4B2B"
-                                        android:textSize="10sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="8dp"
-                                        android:text="Juan Dela Cruz"
-                                        android:textColor="#333333"
-                                        android:textSize="20sp"
-                                        android:textStyle="bold" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="4dp"
-                                        android:text="Last seen: Brgy. Commonwealth, QC"
-                                        android:textColor="#757575"
-                                        android:textSize="13sp" />
-                                </LinearLayout>
-                            </LinearLayout>
-
-                            <View
-                                android:layout_width="match_parent"
-                                android:layout_height="1dp"
-                                android:layout_marginHorizontal="16dp"
-                                android:background="#F0F0F0" />
-
-                            <RelativeLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:padding="16dp">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Contact: 0917-123-4567"
-                                    android:textColor="#4169E1"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_alignParentEnd="true"
-                                    android:text="Posted Mar 15"
-                                    android:textColor="#BDBDBD"
-                                    android:textSize="12sp" />
-                            </RelativeLayout>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                </LinearLayout>
-            </androidx.core.widget.NestedScrollView>
         </LinearLayout>
     </LinearLayout>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
