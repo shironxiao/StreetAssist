@@ -66,5 +66,15 @@
             android:textSize="11sp"
             android:textColor="@color/text_secondary" />
 
+        <TextView
+            android:id="@+id/tvCommentLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginStart="4dp"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            android:visibility="gone" />
+
     </LinearLayout>
 </LinearLayout>
