@@ -61,9 +61,6 @@ public class SubmitReportStep3Fragment extends Fragment {
         TextView tvReportId = view.findViewById(R.id.tvReportId);
         tvReportId.setText(reportId);
 
-        // ── Save to Firestore immediately on screen load ───────────────────────
-        saveToFirestore(reportId, latitude, longitude, locationText,
-                age, sex, description, assistance, contact, seenAtMillis);
         // ── Save to Firestore only once ───────────────────────────────────────
         if (!reportSaved) {
             reportSaved = true;
@@ -116,11 +113,29 @@ public class SubmitReportStep3Fragment extends Fragment {
         db.collection("reports")
                 .document(reportId)
                 .set(report)
-                .addOnSuccessListener(unused ->
-                        Toast.makeText(requireContext(), "Report saved successfully!",
-                                Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(requireContext(), "Report saved successfully!",
+                            Toast.LENGTH_SHORT).show();
+                    sendAdminNotification(db, reportId, locationText);
+                })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(), "Failed to save report: " + e.getMessage(),
                                 Toast.LENGTH_LONG).show());
+    }
+
+    private void sendAdminNotification(FirebaseFirestore db, String reportId, String location) {
+        Map<String, Object> notification = new HashMap<>();
+        notification.put("title", "New Report Submitted");
+        notification.put("message", "A new report (" + reportId + ") has been submitted at " + location);
+        notification.put("createdAt", new Date());
+        notification.put("isRead", false);
+        notification.put("type", "new_report");
+        notification.put("referenceId", reportId);
+
+        db.collection("admin_notifications")
+                .add(notification)
+                .addOnFailureListener(e -> {
+                    // Fail silently or log
+                });
     }
 }

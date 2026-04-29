@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.admin.RecentReportAdapter;
@@ -36,7 +37,10 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
     private List<Map<String, Object>> reportList = new ArrayList<>();
     private FirebaseFirestore db;
 
-    private TextView tvCountTotal, tvCountPending, tvCountInProgress, tvCountResolved;
+    private TextView tvCountTotal, tvCountPending, tvCountInProgress, tvCountResolved, tvNotificationBadge;
+    private android.view.View btnNotifications;
+    private ListenerRegistration reportsListener;
+    private ListenerRegistration notificationsListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,18 +78,85 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
         tvCountInProgress = findViewById(R.id.tvCountInProgress);
         tvCountResolved = findViewById(R.id.tvCountResolved);
 
+        tvNotificationBadge = findViewById(R.id.tvNotificationBadge);
+        btnNotifications = findViewById(R.id.btnNotifications);
+
+        btnNotifications.setOnClickListener(v -> {
+            startActivity(new Intent(this, AdminNotificationActivity.class));
+        });
+
         rvReports = findViewById(R.id.rvAdminReports);
         rvReports.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new RecentReportAdapter(this, reportList);
         rvReports.setAdapter(adapter);
 
-        fetchReports();
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
     }
 
-    private void fetchReports() {
+    @Override
+    protected void onStart() {
+        super.onStart();
+        startRealtimeListeners();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        stopRealtimeListeners();
+    }
+
+    private void startRealtimeListeners() {
+        if (reportsListener == null) {
+            reportsListener = fetchReports();
+        }
+        if (notificationsListener == null) {
+            notificationsListener = listenToNotifications();
+        }
+    }
+
+    private void stopRealtimeListeners() {
+        if (reportsListener != null) {
+            reportsListener.remove();
+            reportsListener = null;
+        }
+        if (notificationsListener != null) {
+            notificationsListener.remove();
+            notificationsListener = null;
+        }
+    }
+
+    private ListenerRegistration listenToNotifications() {
+        return db.collection("admin_notifications")
+                .whereEqualTo("isRead", false)
+                .addSnapshotListener((value, error) -> {
+                    if (error != null) return;
+                    if (value != null) {
+                        int unread = value.size();
+                        if (unread > 0) {
+                            tvNotificationBadge.setVisibility(android.view.View.VISIBLE);
+                            tvNotificationBadge.setText(unread > 9 ? "9+" : String.valueOf(unread));
+                        } else {
+                            tvNotificationBadge.setVisibility(android.view.View.GONE);
+                        }
+                    }
+                });
+    }
+
+    private ListenerRegistration fetchReports() {
         // Single listener for all report data to avoid nested listeners and ANRs
-        db.collection("reports")
+        return db.collection("reports")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
@@ -141,6 +212,9 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminAnnouncementsActivity.class));
             finish();
+        } else if (id == R.id.nav_trash) {
+            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
+            finish();
         } else if (id == R.id.nav_logout) {
             logout();
 
@@ -162,12 +236,5 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
         finish();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
+
 }

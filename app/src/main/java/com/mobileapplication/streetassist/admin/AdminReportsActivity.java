@@ -12,20 +12,26 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Query;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -40,6 +46,10 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     private FirebaseFirestore db;
     private String currentSearchQuery = "";
     private String currentStatusFilter = "All";
+    
+    private interface TrashMoveCallback {
+        void onComplete(boolean success, String errorMessage);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,12 +95,47 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
             @Override
             public void onExportClick() {
-                Toast.makeText(AdminReportsActivity.this, "Exporting " + filteredList.size() + " reports...", Toast.LENGTH_SHORT).show();
+                exportFilteredReports();
+            }
+
+            @Override
+            public void onDeleteSelected(java.util.Set<String> selectedIds) {
+                new android.app.AlertDialog.Builder(AdminReportsActivity.this)
+                        .setTitle("Move Selected to Trash")
+                        .setMessage("Move " + selectedIds.size() + " selected reports to Trash?")
+                        .setPositiveButton("Move to Trash", (d, which) -> {
+                            deleteMultipleReports(selectedIds);
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+            }
+
+            @Override
+            public void onRestoreSelected(java.util.Set<String> selectedIds) {
+                // Restore action is supported in AdminTrashActivity.
+            }
+
+            @Override
+            public void onCancelSelection() {
+                adapter.clearSelection();
             }
         });
         rvReports.setAdapter(adapter);
 
         fetchAllReports();
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
     }
 
     private void fetchAllReports() {
@@ -103,9 +148,11 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
                     }
                     if (value != null) {
                         reportList.clear();
-                        for (com.google.firebase.firestore.DocumentSnapshot doc : value.getDocuments()) {
+                        for (QueryDocumentSnapshot doc : value) {
                             Map<String, Object> data = doc.getData();
                             if (data != null) {
+                                // Only active reports should appear in Reports screen.
+                                if (data.get("deletedAt") != null) continue;
                                 data.put("documentId", doc.getId());
                                 reportList.add(data);
                             }
@@ -185,6 +232,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         Button btnInProgress = dialogView.findViewById(R.id.btnSetInProgress);
         Button btnResolved = dialogView.findViewById(R.id.btnSetResolved);
         Button btnMap = dialogView.findViewById(R.id.btnViewLocation);
+        ImageButton btnDelete = dialogView.findViewById(R.id.btnDelete);
 
         String docId = String.valueOf(report.get("documentId"));
         String reportId = String.valueOf(report.get("reportId"));
@@ -258,7 +306,187 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
         });
 
+        btnDelete.setOnClickListener(v -> {
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Move to Trash")
+                    .setMessage("Move this report to Trash? You can restore it later.")
+                    .setPositiveButton("Move to Trash", (d, which) -> {
+                        deleteReport(docId, dialog);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
         dialog.show();
+    }
+
+    private void deleteMultipleReports(java.util.Set<String> selectedIds) {
+        if (selectedIds.isEmpty()) return;
+        java.util.List<String> idList = new java.util.ArrayList<>(selectedIds);
+        processTrashMoveSequentially(idList, 0, 0, 0);
+    }
+
+    private void deleteReport(String docId, android.app.AlertDialog detailsDialog) {
+        moveReportToTrash(docId, (success, errorMessage) -> {
+            if (success) {
+                Toast.makeText(this, "Report moved to Trash", Toast.LENGTH_SHORT).show();
+                showRestoreSnackbar(java.util.Collections.singleton(docId), "Report moved to Trash");
+                if (detailsDialog != null) detailsDialog.dismiss();
+            } else {
+                Toast.makeText(this, "Failed to move report to Trash: " + errorMessage, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void processTrashMoveSequentially(java.util.List<String> ids, int index, int successCount, int failCount) {
+        if (index >= ids.size()) {
+            if (failCount == 0) {
+                Toast.makeText(this, successCount + " reports moved to Trash", Toast.LENGTH_SHORT).show();
+                showRestoreSnackbar(new java.util.HashSet<>(ids), successCount + " reports moved to Trash");
+            } else {
+                Toast.makeText(this, "Moved " + successCount + ", failed " + failCount, Toast.LENGTH_LONG).show();
+            }
+            adapter.clearSelection();
+            return;
+        }
+
+        moveReportToTrash(ids.get(index), (success, errorMessage) -> {
+            int nextSuccess = success ? successCount + 1 : successCount;
+            int nextFail = success ? failCount : failCount + 1;
+            processTrashMoveSequentially(ids, index + 1, nextSuccess, nextFail);
+        });
+    }
+
+    private void moveReportToTrash(String docId, TrashMoveCallback callback) {
+        if (docId == null || docId.trim().isEmpty() || "null".equalsIgnoreCase(docId)) {
+            callback.onComplete(false, "Invalid report id");
+            return;
+        }
+
+        com.google.firebase.firestore.DocumentReference reportRef = db.collection("reports").document(docId);
+
+        reportRef.get()
+                .addOnSuccessListener(snapshot -> {
+                    if (!snapshot.exists() || snapshot.getData() == null) {
+                        callback.onComplete(false, "Report not found");
+                        return;
+                    }
+
+                    reportRef.update("deletedAt", com.google.firebase.Timestamp.now())
+                            .addOnSuccessListener(unused -> callback.onComplete(true, null))
+                            .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+                })
+                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
+    }
+
+    private void showRestoreSnackbar(java.util.Set<String> docIds, String message) {
+        if (docIds == null || docIds.isEmpty()) return;
+        Snackbar.make(rvReports, message, Snackbar.LENGTH_LONG)
+                .setAction("Restore", v -> restoreReports(docIds))
+                .show();
+    }
+
+    private void restoreReports(java.util.Set<String> docIds) {
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
+        for (String id : docIds) {
+            if (id != null && !id.trim().isEmpty()) {
+                batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.delete());
+            }
+        }
+        batch.commit()
+                .addOnSuccessListener(unused ->
+                        Toast.makeText(this, "Report restored", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to restore: " + e.getMessage(), Toast.LENGTH_LONG).show());
+    }
+
+    private void exportFilteredReports() {
+        if (filteredList.isEmpty()) {
+            Toast.makeText(this, "No reports to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            String csv = buildCsvFromReports(filteredList);
+            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                    .format(new Date());
+            java.io.File exportDir = new java.io.File(getCacheDir(), "exports");
+            if (!exportDir.exists() && !exportDir.mkdirs()) {
+                Toast.makeText(this, "Failed to prepare export folder", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            java.io.File csvFile = new java.io.File(exportDir, "reports_export_" + timestamp + ".csv");
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(csvFile)) {
+                fos.write(csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+
+            android.net.Uri fileUri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".fileprovider",
+                    csvFile
+            );
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/csv");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "StreetAssist Reports Export");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Exported " + filteredList.size() + " reports.");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, "Export reports"));
+        } catch (Exception e) {
+            Log.e(TAG, "Export failed", e);
+            Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private String buildCsvFromReports(List<Map<String, Object>> reports) {
+        StringBuilder sb = new StringBuilder();
+        sb.append('\uFEFF');
+        sb.append("Document ID,Report ID,Status,Description,Location,Latitude,Longitude,Timestamp,User ID\n");
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        for (Map<String, Object> report : reports) {
+            String documentId = safeString(report.get("documentId"));
+            String reportId = safeString(report.get("reportId"));
+            String status = safeString(report.get("status"));
+            String description = safeString(report.get("description"));
+            String location = safeString(report.get("locationAddress"));
+            String latitude = safeString(report.get("latitude"));
+            String longitude = safeString(report.get("longitude"));
+            String userId = safeString(report.get("userId"));
+
+            String timestamp = "";
+            Object ts = report.get("timestamp");
+            if (ts instanceof com.google.firebase.Timestamp) {
+                timestamp = sdf.format(((com.google.firebase.Timestamp) ts).toDate());
+            } else if (ts != null) {
+                timestamp = ts.toString();
+            }
+
+            sb.append(csvCell(documentId)).append(',')
+                    .append(csvCell(reportId)).append(',')
+                    .append(csvCell(status)).append(',')
+                    .append(csvCell(description)).append(',')
+                    .append(csvCell(location)).append(',')
+                    .append(csvCell(latitude)).append(',')
+                    .append(csvCell(longitude)).append(',')
+                    .append(csvCell(timestamp)).append(',')
+                    .append(csvCell(userId))
+                    .append('\n');
+        }
+
+        return sb.toString();
+    }
+
+    private String safeString(Object value) {
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private String csvCell(String value) {
+        String escaped = value.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 
     private void updateReportStatus(String docId, String newStatus, android.app.AlertDialog dialog) {
@@ -283,6 +511,9 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminAnnouncementsActivity.class));
             finish();
+        } else if (id == R.id.nav_trash) {
+            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
+            finish();
         } else if (id == R.id.nav_logout) {
             logout();
         }
@@ -301,12 +532,5 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         finish();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
+
 }

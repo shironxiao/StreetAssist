@@ -14,9 +14,11 @@ import com.mobileapplication.streetassist.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -26,11 +28,17 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final Context context;
     private List<Map<String, Object>> reportList;
     private OnHeaderActionListener headerListener;
+    
+    private final Set<String> selectedReportIds = new HashSet<>();
+    private boolean isSelectionMode = false;
 
     public interface OnHeaderActionListener {
         void onSearch(String query);
         void onFilterClick();
         void onExportClick();
+        void onDeleteSelected(Set<String> selectedIds);
+        void onRestoreSelected(Set<String> selectedIds);
+        void onCancelSelection();
     }
 
     public RecentReportAdapter(Context context, List<Map<String, Object>> reportList) {
@@ -78,6 +86,39 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             h.btnFilter.setOnClickListener(v -> {
                 if (headerListener != null) headerListener.onFilterClick();
             });
+
+            if (isSelectionMode) {
+                h.btnCancelSelection.setVisibility(View.VISIBLE);
+                h.btnCancelSelection.setOnClickListener(v -> {
+                    if (headerListener != null) headerListener.onCancelSelection();
+                });
+
+                if (!selectedReportIds.isEmpty()) {
+                    h.btnDeleteSelected.setVisibility(View.VISIBLE);
+                    ((com.google.android.material.button.MaterialButton) h.btnDeleteSelected).setText(
+                            context.getString(R.string.delete_selected, selectedReportIds.size()));
+                    h.btnDeleteSelected.setOnClickListener(v -> {
+                        if (headerListener != null) headerListener.onDeleteSelected(new HashSet<>(selectedReportIds));
+                    });
+
+                    if (context instanceof AdminTrashActivity) {
+                        h.btnRestoreSelected.setVisibility(View.VISIBLE);
+                        h.btnRestoreSelected.setOnClickListener(v -> {
+                            if (headerListener != null) headerListener.onRestoreSelected(new HashSet<>(selectedReportIds));
+                        });
+                    } else {
+                        h.btnRestoreSelected.setVisibility(View.GONE);
+                    }
+                } else {
+                    h.btnDeleteSelected.setVisibility(View.GONE);
+                    h.btnRestoreSelected.setVisibility(View.GONE);
+                }
+            } else {
+                h.btnCancelSelection.setVisibility(View.GONE);
+                h.btnDeleteSelected.setVisibility(View.GONE);
+                h.btnRestoreSelected.setVisibility(View.GONE);
+            }
+
             h.etSearch.addTextChangedListener(new android.text.TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -94,6 +135,9 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             Map<String, Object> report = reportList.get(dataIndex);
             ViewHolder itemHolder = (ViewHolder) holder;
+
+            Object docIdObj = report.get("documentId");
+            String docId = docIdObj != null ? String.valueOf(docIdObj) : null;
 
             Object reportIdObj = report.get("reportId");
             String id = reportIdObj != null ? String.valueOf(reportIdObj) : null;
@@ -119,10 +163,33 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 itemHolder.tvTimestamp.setText("—");
             }
 
+            // Selection Logic
+            if (isSelectionMode && !(context instanceof AdminDashboardActivity)) {
+                itemHolder.cbSelect.setVisibility(View.VISIBLE);
+                itemHolder.cbSelect.setChecked(selectedReportIds.contains(docId));
+            } else {
+                itemHolder.cbSelect.setVisibility(View.GONE);
+            }
+
+            itemHolder.cbSelect.setOnClickListener(v -> {
+                if (docId != null) {
+                    if (itemHolder.cbSelect.isChecked()) {
+                        selectedReportIds.add(docId);
+                    } else {
+                        selectedReportIds.remove(docId);
+                    }
+                    updateDeleteButtonState();
+                }
+            });
+
             // Apply status styles
             applyStatusStyle(itemHolder, status);
 
             itemHolder.itemView.setOnClickListener(v -> {
+                if (isSelectionMode && !(context instanceof AdminDashboardActivity)) {
+                    itemHolder.cbSelect.performClick();
+                    return;
+                }
                 int currentPos = holder.getAdapterPosition();
                 if (currentPos != RecyclerView.NO_POSITION) {
                     int clickedIndex = (context instanceof AdminDashboardActivity) ? currentPos : currentPos - 1;
@@ -130,17 +197,38 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                         Map<String, Object> currentReport = reportList.get(clickedIndex);
                         if (context instanceof com.mobileapplication.streetassist.admin.AdminReportsActivity) {
                             ((com.mobileapplication.streetassist.admin.AdminReportsActivity) context).showReportDetails(currentReport);
+                        } else if (context instanceof com.mobileapplication.streetassist.admin.AdminTrashActivity) {
+                            ((com.mobileapplication.streetassist.admin.AdminTrashActivity) context).showReportDetails(currentReport);
                         } else if (context instanceof AdminDashboardActivity) {
-                            // On Dashboard, we can navigate to the full reports view or show details if desired
-                            // For now, let's just make it consistent with the Reports Activity if we want to show details
-                            // but AdminDashboardActivity doesn't have showReportDetails implemented.
-                            // So let's just open the AdminReportsActivity
                             context.startActivity(new android.content.Intent(context, com.mobileapplication.streetassist.admin.AdminReportsActivity.class));
                         }
                     }
                 }
             });
+
+            itemHolder.itemView.setOnLongClickListener(v -> {
+                if (context instanceof AdminDashboardActivity) return false;
+                if (!isSelectionMode) {
+                    isSelectionMode = true;
+                    if (docId != null) selectedReportIds.add(docId);
+                    notifyDataSetChanged();
+                    updateDeleteButtonState();
+                    return true;
+                }
+                return false;
+            });
         }
+    }
+
+    private void updateDeleteButtonState() {
+        // This will be handled via the header update
+        notifyItemChanged(0);
+    }
+
+    public void clearSelection() {
+        isSelectionMode = false;
+        selectedReportIds.clear();
+        notifyDataSetChanged();
     }
 
     private void applyStatusStyle(ViewHolder holder, String status) {
@@ -179,7 +267,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
-        View btnExport, btnFilter;
+        View btnExport, btnFilter, btnDeleteSelected, btnCancelSelection, btnRestoreSelected;
         android.widget.EditText etSearch;
         TextView tvShowingResults;
 
@@ -187,6 +275,9 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             super(itemView);
             btnExport = itemView.findViewById(R.id.btnExport);
             btnFilter = itemView.findViewById(R.id.btnFilterStatus);
+            btnDeleteSelected = itemView.findViewById(R.id.btnDeleteSelected);
+            btnCancelSelection = itemView.findViewById(R.id.btnCancelSelection);
+            btnRestoreSelected = itemView.findViewById(R.id.btnRestoreSelected);
             etSearch = itemView.findViewById(R.id.etSearch);
             tvShowingResults = itemView.findViewById(R.id.tvShowingResults);
         }
@@ -195,6 +286,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public static class ViewHolder extends RecyclerView.ViewHolder {
         View statusBar;
         TextView tvId, tvDescription, tvLocation, tvTimestamp, tvStatus;
+        android.widget.CheckBox cbSelect;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -204,6 +296,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             tvLocation = itemView.findViewById(R.id.tvRecentLocation);
             tvTimestamp = itemView.findViewById(R.id.tvRecentTimestamp);
             tvStatus = itemView.findViewById(R.id.tvRecentStatus);
+            cbSelect = itemView.findViewById(R.id.cbSelectReport);
         }
     }
 }

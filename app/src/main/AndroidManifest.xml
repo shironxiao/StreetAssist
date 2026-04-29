@@ -44,6 +44,10 @@
         <activity android:name=".admin.AdminReportsActivity"
             android:exported="false" />
         <activity android:name=".admin.AdminAnnouncementsActivity"/>
+        <activity android:name=".admin.AdminTrashActivity"
+            android:exported="false" />
+        <activity android:name=".admin.AdminNotificationActivity"
+            android:exported="false" />
 
         <activity
             android:name=".ui.shared.SplashActivity"
@@ -57,6 +61,16 @@
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

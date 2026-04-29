@@ -218,15 +218,34 @@
             </LinearLayout>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btnViewLocation"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:backgroundTint="@color/blue_primary"
-            android:text="@string/open_on_map"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            app:cornerRadius="28dp" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnViewLocation"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="12dp"
+                android:backgroundTint="@color/blue_primary"
+                android:text="@string/open_on_map"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                app:cornerRadius="28dp" />
+
+            <ImageButton
+                android:id="@+id/btnDelete"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_delete_circle"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/red_primary"
+                android:padding="16dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="@string/delete_report"/>
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

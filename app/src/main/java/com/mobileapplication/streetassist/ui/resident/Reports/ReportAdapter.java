@@ -5,13 +5,17 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
 
 import java.text.SimpleDateFormat;
@@ -68,8 +72,41 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         String seenAtFormatted = formatTimestamp(report.get("seenAt"));
         holder.tvSeenAt.setText("Seen: " + seenAtFormatted);
 
+        // holder.btnDeleteReport.setOnClickListener(v -> showDeleteConfirmation(report, position));
+
         holder.tvViewDetails.setOnClickListener(v -> showDetailsBottomSheet(report));
         holder.itemView.setOnClickListener(v -> showDetailsBottomSheet(report));
+    }
+
+    private void showDeleteConfirmation(Map<String, Object> report, int position) {
+        new AlertDialog.Builder(context)
+                .setTitle("Delete Report")
+                .setMessage("Are you sure you want to delete this report?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteReportFromFirestore(report, position))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteReportFromFirestore(Map<String, Object> report, int position) {
+        String docId = (String) report.get("documentId");
+        if (docId == null) {
+            docId = (String) report.get("reportId");
+        }
+
+        if (docId == null) {
+            Toast.makeText(context, "Error: Could not find report ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FirebaseFirestore.getInstance().collection("reports")
+                .document(docId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(context, "Report deleted", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Failed to delete: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     @Override

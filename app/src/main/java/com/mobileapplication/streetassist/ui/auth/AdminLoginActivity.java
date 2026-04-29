@@ -1,7 +1,12 @@
 package com.mobileapplication.streetassist.ui.auth;
 
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -21,6 +26,8 @@ public class AdminLoginActivity extends AppCompatActivity {
     private MaterialButton btnLogin;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private final Handler loginTimeoutHandler = new Handler(Looper.getMainLooper());
+    private Runnable loginTimeoutRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,19 +73,36 @@ public class AdminLoginActivity extends AppCompatActivity {
     }
 
     private void loginAdmin(String email, String password) {
+        if (!hasInternetConnection()) {
+            Toast.makeText(this, "No internet connection. Please try again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         btnLogin.setEnabled(false);
         btnLogin.setText("Signing in...");
 
+        loginTimeoutRunnable = () -> {
+            if (!isFinishing()) {
+                mAuth.signOut();
+                showErrorAndReset("Login timed out. Check your connection and try again.");
+            }
+        };
+        loginTimeoutHandler.postDelayed(loginTimeoutRunnable, 15000);
+
         mAuth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener(authResult -> {
+                .addOnCompleteListener(this, task -> {
+                    if (!task.isSuccessful()) {
+                        showErrorAndReset("Invalid credentials.");
+                        return;
+                    }
+
                     FirebaseUser user = mAuth.getCurrentUser();
                     if (user == null) {
                         showErrorAndReset("Login failed. Please try again.");
                         return;
                     }
                     verifyAdminRole(user.getUid());
-                })
-                .addOnFailureListener(e -> showErrorAndReset("Invalid credentials."));
+                });
     }
 
     private void verifyAdminRole(String uid) {
@@ -88,6 +112,7 @@ public class AdminLoginActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     String role = doc.getString("role");
                     if ("admin".equalsIgnoreCase(role)) {
+                        loginTimeoutHandler.removeCallbacks(loginTimeoutRunnable);
                         Toast.makeText(this, "Admin Login Successful!", Toast.LENGTH_SHORT).show();
                         startActivity(new Intent(this, AdminDashboardActivity.class));
                         finish();
@@ -103,8 +128,27 @@ public class AdminLoginActivity extends AppCompatActivity {
     }
 
     private void showErrorAndReset(String message) {
+        loginTimeoutHandler.removeCallbacks(loginTimeoutRunnable);
         btnLogin.setEnabled(true);
         btnLogin.setText("Login");
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean hasInternetConnection() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        Network network = cm.getActiveNetwork();
+        if (network == null) return false;
+        NetworkCapabilities caps = cm.getNetworkCapabilities(network);
+        return caps != null &&
+                (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                        || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                        || caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET));
+    }
+
+    @Override
+    protected void onDestroy() {
+        loginTimeoutHandler.removeCallbacks(loginTimeoutRunnable);
+        super.onDestroy();
     }
 }
