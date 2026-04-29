@@ -32,7 +32,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etEmail, etPassword;
     private MaterialButton btnGetStarted;
     private CheckBox cbRememberMe;
-    private TextView tvSignUpPrompt, tvForgotPassword;
+    private TextView tvSignUpPrompt, tvForgotPassword, tvContinueAsGuest;
 
     // ── Firebase ─────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
         cbRememberMe    = findViewById(R.id.cbRememberMe);
         tvSignUpPrompt  = findViewById(R.id.tvSignUpPrompt);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
+        tvContinueAsGuest = findViewById(R.id.tvContinueAsGuest);
 
         // ── Auto-login: if user is already signed in, skip to main ───────────
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -83,6 +84,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         tvForgotPassword.setOnClickListener(v -> handleForgotPassword());
+        tvContinueAsGuest.setOnClickListener(v -> continueAsGuest());
 
         setupSignUpSpannable();
     }
@@ -283,6 +285,15 @@ public class LoginActivity extends AppCompatActivity {
             editor.remove(KEY_EMAIL);
         }
         editor.apply();
+    }
+
+    private void continueAsGuest() {
+        Intent intent = new Intent(this, ResidentMainActivity.class);
+        intent.putExtra("is_guest", true);
+        intent.putExtra("role", "guest");
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     // =========================================================================

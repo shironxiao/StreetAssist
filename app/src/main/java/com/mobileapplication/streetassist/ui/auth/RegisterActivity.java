@@ -1,5 +1,6 @@
 package com.mobileapplication.streetassist.ui.auth;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -406,6 +407,10 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(this,
                             "Account created successfully!",
                             Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
                     finish();
                 })
                 .addOnFailureListener(e -> {
@@ -428,7 +433,14 @@ public class RegisterActivity extends AppCompatActivity {
         String text = "Already have an account? Log in";
         SpannableString ss = new SpannableString(text);
         ss.setSpan(new ClickableSpan() {
-            @Override public void onClick(@NonNull View w) { finish(); }
+            @Override
+            public void onClick(@NonNull View w) {
+                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            }
             @Override public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
                 ds.setColor(Color.parseColor("#4169E1"));

@@ -29,6 +29,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.ui.auth.LoginActivity;
+import com.mobileapplication.streetassist.ui.auth.RegisterActivity;
 
 import org.json.JSONObject;
 
@@ -76,6 +77,7 @@ public class ProfileFragment extends Fragment {
     private String currentContactNumber  = "";
     private String currentEmail          = "";
     private String currentAddress        = "";
+    private boolean isGuestMode          = false;
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -142,14 +144,31 @@ public class ProfileFragment extends Fragment {
         rowAddress   = view.findViewById(R.id.rowAddress);
         rowPassword  = view.findViewById(R.id.rowPassword);
         rowContact   = view.findViewById(R.id.rowContact);
+        isGuestMode  = requireActivity().getIntent().getBooleanExtra("is_guest", false);
 
         // ── Load data ────────────────────────────────────────
-        loadUserProfile();
+        if (isGuestMode) {
+            populateGuestUI();
+        } else {
+            loadUserProfile();
+        }
 
         // ── Click listeners ──────────────────────────────────
-        fabEditPhoto.setOnClickListener(v -> openImagePicker());
+        fabEditPhoto.setOnClickListener(v -> {
+            if (isGuestMode) {
+                showCreateAccountDialog("Create account to edit your profile photo?");
+                return;
+            }
+            openImagePicker();
+        });
 
-        btnEditProfileHeader.setOnClickListener(v -> openProfileEdit());
+        btnEditProfileHeader.setOnClickListener(v -> {
+            if (isGuestMode) {
+                showCreateAccountDialog("Create account to edit your profile?");
+                return;
+            }
+            openProfileEdit();
+        });
 
         btnLogout.setOnClickListener(v -> showLogoutDialog());
 
@@ -260,6 +279,29 @@ public class ProfileFragment extends Fragment {
         intent.putExtra(ProfileEdit.EXTRA_EMAIL,     currentEmail);
         intent.putExtra(ProfileEdit.EXTRA_ADDRESS,   currentAddress);
         profileEditLauncher.launch(intent);
+    }
+
+    private void populateGuestUI() {
+        tvProfileName.setText("Guest");
+        tvProfileSub.setText("PUBLIC VIEW");
+        tvValFullName.setText("Guest");
+        tvValEmail.setText("—");
+        tvValAddress.setText("—");
+        tvValContact.setText("—");
+        tvInitials.setVisibility(View.GONE);
+        ivProfilePhoto.setVisibility(View.VISIBLE);
+        ivProfilePhoto.setImageResource(R.drawable.ic_default_avatar);
+    }
+
+    private void showCreateAccountDialog(String message) {
+        if (getContext() == null) return;
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Create Account")
+                .setMessage(message)
+                .setPositiveButton("Yes", (dialog, which) ->
+                        startActivity(new Intent(requireActivity(), RegisterActivity.class)))
+                .setNegativeButton("No", null)
+                .show();
     }
 
     // =========================================================================

@@ -208,6 +208,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <TextView
+        android:id="@+id/tvContinueAsGuest"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Continue as Guest"
+        android:textColor="#2F80ED"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@id/btnGetStarted"
+        app:layout_constraintStart_toStartOf="@id/btnGetStarted"
+        app:layout_constraintTop_toBottomOf="@id/btnGetStarted" />
+
     <!-- Footer Text -->
     <TextView
         android:id="@+id/tvSignUpPrompt"

@@ -160,23 +160,6 @@
                         android:src="@android:drawable/ic_menu_send" />
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvPinnedLocation"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="No pinned location"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/btnPinLocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="📍 Pin last seen location"
-                    android:textColor="@color/blue_primary"
-                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
