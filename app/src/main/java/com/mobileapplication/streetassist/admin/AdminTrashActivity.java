@@ -35,6 +35,7 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
     private RecentReportAdapter adapter;
     private List<Map<String, Object>> trashList = new ArrayList<>();
     private FirebaseFirestore db;
+    private com.google.firebase.firestore.ListenerRegistration trashListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +56,18 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         btnMenu.setOnClickListener(v -> {
             if (drawerLayout != null) {
                 drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    startActivity(new Intent(AdminTrashActivity.this, AdminDashboardActivity.class));
+                    finish();
+                }
             }
         });
 
@@ -96,25 +109,30 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         });
         rvTrash.setAdapter(adapter);
 
-        fetchTrashReports();
-
-        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    drawerLayout.closeDrawer(GravityCompat.START);
-                } else {
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
-                }
-            }
-        });
     }
 
-    private void fetchTrashReports() {
-        db.collection("reports")
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (trashListener == null) {
+            trashListener = fetchTrashReports();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (trashListener != null) {
+            trashListener.remove();
+            trashListener = null;
+        }
+    }
+
+    private com.google.firebase.firestore.ListenerRegistration fetchTrashReports() {
+        return db.collection("reports")
                 .whereGreaterThan("deletedAt", new com.google.firebase.Timestamp(new java.util.Date(0)))
                 .orderBy("deletedAt", Query.Direction.DESCENDING)
+                .limit(100)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Listen failed.", error);
@@ -135,6 +153,15 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
     }
 
     public void showReportDetails(Map<String, Object> report) {
+        // Update adminSeenAt if not already set
+        if (report.get("adminSeenAt") == null) {
+            String docId = (String) report.get("documentId");
+            if (docId != null) {
+                db.collection("reports").document(docId)
+                        .update("adminSeenAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            }
+        }
+
         String reportId = String.valueOf(report.get("reportId"));
         String docId = String.valueOf(report.get("documentId"));
         new android.app.AlertDialog.Builder(this)
@@ -195,6 +222,9 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
             finish();
         } else if (id == R.id.nav_trash) {
             // Already here
+        } else if (id == R.id.nav_notifications) {
+            startActivity(new Intent(this, AdminNotificationActivity.class));
+            finish();
         } else if (id == R.id.nav_logout) {
             logout();
         }

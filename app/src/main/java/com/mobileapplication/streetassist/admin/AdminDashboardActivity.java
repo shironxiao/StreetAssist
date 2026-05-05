@@ -28,7 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class AdminDashboardActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class AdminDashboardActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "AdminDashboard";
     private DrawerLayout drawerLayout;
@@ -97,8 +98,7 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
                 if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
                     drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
                 } else {
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
+                    moveTaskToBack(true);
                 }
             }
         });
@@ -141,9 +141,13 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
         return db.collection("admin_notifications")
                 .whereEqualTo("isRead", false)
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) return;
+                    if (error != null) {
+                        Log.e(TAG, "Notification listener failed: " + error.getMessage());
+                        return;
+                    }
                     if (value != null) {
                         int unread = value.size();
+                        Log.d(TAG, "Unread notifications count: " + unread);
                         if (unread > 0) {
                             tvNotificationBadge.setVisibility(android.view.View.VISIBLE);
                             tvNotificationBadge.setText(unread > 9 ? "9+" : String.valueOf(unread));
@@ -155,30 +159,41 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
     }
 
     private ListenerRegistration fetchReports() {
-        // Single listener for all report data to avoid nested listeners and ANRs
+        // Limit results to 5 for the dashboard to minimize main thread processing and prevent ANRs
         return db.collection("reports")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(100)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Listen failed.", error);
                         return;
                     }
                     if (value != null) {
-                        int total = value.size();
+                        int total = 0;
                         int pending = 0, inProgress = 0, resolved = 0;
                         List<Map<String, Object>> allReports = new ArrayList<>();
 
                         for (com.google.firebase.firestore.DocumentSnapshot doc : value.getDocuments()) {
                             Map<String, Object> data = doc.getData();
                             if (data != null) {
+                                // Exclude deleted reports from stats and list
+                                if (data.get("deletedAt") != null) continue;
+
+                                total++;
                                 data.put("documentId", doc.getId());
                                 allReports.add(data);
 
                                 String status = String.valueOf(data.get("status")).toLowerCase();
                                 switch (status) {
-                                    case "pending": pending++; break;
-                                    case "in progress": inProgress++; break;
-                                    case "resolved": resolved++; break;
+                                    case "pending":
+                                        pending++;
+                                        break;
+                                    case "in progress":
+                                        inProgress++;
+                                        break;
+                                    case "resolved":
+                                        resolved++;
+                                        break;
                                 }
                             }
                         }
@@ -191,7 +206,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
 
                         // Update Recent Reports List (Top 5)
                         if (!allReports.isEmpty()) {
-                            List<Map<String, Object>> recentReports = allReports.subList(0, Math.min(allReports.size(), 5));
+                            List<Map<String, Object>> recentReports = allReports.subList(0,
+                                    Math.min(allReports.size(), 5));
                             adapter.updateList(recentReports);
                         } else {
                             adapter.updateList(new ArrayList<>());
@@ -215,9 +231,11 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();
+        } else if (id == R.id.nav_notifications) {
+            startActivity(new Intent(this, AdminNotificationActivity.class));
+            finish();
         } else if (id == R.id.nav_logout) {
             logout();
-
         } else {
             Toast.makeText(this, "Unknown navigation item: " + item.getTitle(), Toast.LENGTH_SHORT).show();
         }
@@ -231,10 +249,10 @@ public class AdminDashboardActivity extends AppCompatActivity implements Navigat
     private void logout() {
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, IntroductionUserLevel.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.addFlags(
+                Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
-
 
 }

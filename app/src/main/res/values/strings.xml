@@ -38,6 +38,8 @@
     <string name="resolved">Resolved</string>
     <string name="open_on_map">Open on Map</string>
     <string name="incident_description">INCIDENT DESCRIPTION</string>
+    <string name="subject_info_label">SUBJECT INFORMATION</string>
+    <string name="assistance_label">ASSISTANCE NEEDED</string>
     <string name="location_label">LOCATION</string>
     <string name="update_status">UPDATE STATUS</string>
     <string name="reporter_label">Reporter</string>

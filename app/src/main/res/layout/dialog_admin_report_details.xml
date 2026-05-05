@@ -112,6 +112,44 @@
             android:textColor="#1B2559"
             android:textSize="14sp" />
 
+        <!-- Subject Info -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/subject_info_label"
+            android:textColor="#A3AED0"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetailSubject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="20dp"
+            android:text="Age: 25, Sex: Male"
+            android:textColor="#1B2559"
+            android:textSize="14sp" />
+
+        <!-- Assistance Needed -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/assistance_label"
+            android:textColor="#A3AED0"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDetailAssistance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="20dp"
+            android:text="Requires immediate medical attention and ambulance."
+            android:textColor="#1B2559"
+            android:textSize="14sp" />
+
         <!-- UPDATE STATUS SECTION -->
         <View
             android:layout_width="match_parent"
@@ -193,6 +231,7 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
 
+
                 <TextView
                     android:id="@+id/tvReporterContact"
                     android:layout_width="wrap_content"
@@ -209,12 +248,6 @@
                     android:textSize="11sp"
                     android:visibility="gone"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/reporter_label"
-                    android:textColor="#A3AED0"
-                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
 

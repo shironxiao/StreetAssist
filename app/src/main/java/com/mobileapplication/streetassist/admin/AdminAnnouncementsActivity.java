@@ -95,14 +95,21 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         MaterialButton btnAdd = findViewById(R.id.btnAddAnnouncement);
         btnAdd.setOnClickListener(v -> showAddAnnouncementDialog());
 
+        // Check if opened from notification
+        String targetAnnouncementId = getIntent().getStringExtra("announcementId");
+        if (targetAnnouncementId != null) {
+            getIntent().removeExtra("announcementId");
+            showCommentsDialog(targetAnnouncementId);
+        }
+
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
                 if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
                     drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
                 } else {
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
+                    startActivity(new Intent(AdminAnnouncementsActivity.this, AdminDashboardActivity.class));
+                    finish();
                 }
             }
         });
@@ -135,9 +142,11 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();
+        } else if (id == R.id.nav_notifications) {
+            startActivity(new Intent(this, AdminNotificationActivity.class));
+            finish();
         } else if (id == R.id.nav_logout) {
             logout();
-
         } else {
             Toast.makeText(this, "Unknown navigation item: " + item.getTitle(), Toast.LENGTH_SHORT).show();
         }

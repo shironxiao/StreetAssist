@@ -41,7 +41,6 @@ public class HomeFragment extends Fragment {
     private TextView tvWelcomeName;
     private TextView tvInitialsAvatar;
     private CircleImageView ivAvatar;
-    private TextView tvNotificationBadge;
     private TextView tvTotalCount, tvPendingCount, tvResolvedCount;
     private TextView tvSeeAll;
     private LinearLayout layoutRecentReports;
@@ -52,7 +51,6 @@ public class HomeFragment extends Fragment {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ListenerRegistration reportsListener;
-    private ListenerRegistration notifListener;
 
     public HomeFragment() {}
 
@@ -75,7 +73,6 @@ public class HomeFragment extends Fragment {
         tvWelcomeName       = view.findViewById(R.id.tvWelcomeName);
         ivAvatar            = view.findViewById(R.id.ivAvatar);
         tvInitialsAvatar    = view.findViewById(R.id.tvInitialsAvatar);
-        tvNotificationBadge = view.findViewById(R.id.tvNotificationBadge);
         tvTotalCount        = view.findViewById(R.id.tvTotalCount);
         tvPendingCount      = view.findViewById(R.id.tvPendingCount);
         tvResolvedCount     = view.findViewById(R.id.tvResolvedCount);
@@ -88,10 +85,6 @@ public class HomeFragment extends Fragment {
         cardSubmitReport.setOnClickListener(v ->
                 Navigation.findNavController(requireView()).navigate(R.id.reportFragment));
 
-        // ── Notification bell ─────────────────────────────────────────────────
-        view.findViewById(R.id.ivNotification).setOnClickListener(v ->
-                startActivity(new Intent(getActivity(), NotificationActivity.class)));
-
         // ── See all → navigates to Reports tab ───────────────────────────────
         tvSeeAll.setOnClickListener(v -> {
             // Trigger bottom nav to switch to Reports tab
@@ -102,7 +95,6 @@ public class HomeFragment extends Fragment {
 
         loadUserProfile();
         listenToReports();
-        listenToNotifications();
     }
 
     // ── Load user profile from Firestore ──────────────────────────────────────
@@ -252,28 +244,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    // ── Real-time notification badge listener ─────────────────────────────────
-
-    private void listenToNotifications() {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null) return;
-
-        notifListener = db.collection("notifications")
-                .whereEqualTo("userId", user.getUid())
-                .whereEqualTo("isRead", false)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null || snapshots == null || getContext() == null) return;
-
-                    int unread = snapshots.size();
-                    if (unread > 0) {
-                        tvNotificationBadge.setVisibility(View.VISIBLE);
-                        tvNotificationBadge.setText(unread > 9 ? "9+" : String.valueOf(unread));
-                    } else {
-                        tvNotificationBadge.setVisibility(View.GONE);
-                    }
-                });
-    }
-
     // ── Status styling ─────────────────────────────────────────────────────────
 
     private void applyStatusStyle(TextView badge, View bar, String status) {
@@ -318,6 +288,5 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (reportsListener != null) reportsListener.remove();
-        if (notifListener  != null) notifListener.remove();
     }
 }

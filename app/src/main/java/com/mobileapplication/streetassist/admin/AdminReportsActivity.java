@@ -46,10 +46,14 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     private FirebaseFirestore db;
     private String currentSearchQuery = "";
     private String currentStatusFilter = "All";
-    
+    private com.google.firebase.firestore.ListenerRegistration reportsListener;
+
     private interface TrashMoveCallback {
         void onComplete(boolean success, String errorMessage);
     }
+
+    private final android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable searchRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,7 +89,9 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             @Override
             public void onSearch(String query) {
                 currentSearchQuery = query;
-                applyFilters();
+                searchHandler.removeCallbacks(searchRunnable);
+                searchRunnable = () -> applyFilters();
+                searchHandler.postDelayed(searchRunnable, 300);
             }
 
             @Override
@@ -121,26 +127,46 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
         });
         rvReports.setAdapter(adapter);
-
-        fetchAllReports();
-
-        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
-                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
-                } else {
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
-                }
-            }
-        });
-
     }
 
-    private void fetchAllReports() {
-        db.collection("reports")
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (reportsListener == null) {
+            reportsListener = fetchAllReports();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (reportsListener != null) {
+            reportsListener.remove();
+            reportsListener = null;
+        }
+    }
+
+    private void checkForIntentExtras() {
+        String targetId = getIntent().getStringExtra("reportId");
+        if (targetId != null && !targetId.isEmpty()) {
+            getIntent().removeExtra("reportId"); // Clear it so it only shows once
+            db.collection("reports").document(targetId).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            Map<String, Object> data = documentSnapshot.getData();
+                            if (data != null) {
+                                data.put("documentId", documentSnapshot.getId());
+                                showReportDetails(data);
+                            }
+                        }
+                    });
+        }
+    }
+
+    private com.google.firebase.firestore.ListenerRegistration fetchAllReports() {
+        return db.collection("reports")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(100)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Listen failed.", error);
@@ -158,6 +184,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
                             }
                         }
                         applyFilters();
+                        // Handle opening a specific report if we came from a notification
+                        checkForIntentExtras();
                     }
                 });
     }
@@ -214,6 +242,15 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     }
 
     public void showReportDetails(Map<String, Object> report) {
+        // Update adminSeenAt if not already set for admin tracking
+        if (report.get("adminSeenAt") == null) {
+            String docId = (String) report.get("documentId");
+            if (docId != null) {
+                db.collection("reports").document(docId)
+                        .update("adminSeenAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+            }
+        }
+
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_admin_report_details, null);
         builder.setView(dialogView);
@@ -225,6 +262,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         TextView tvTime = dialogView.findViewById(R.id.tvDetailTime);
         TextView tvDesc = dialogView.findViewById(R.id.tvDetailDescription);
         TextView tvLoc = dialogView.findViewById(R.id.tvDetailLocation);
+        TextView tvSubject = dialogView.findViewById(R.id.tvDetailSubject);
+        TextView tvAssistance = dialogView.findViewById(R.id.tvDetailAssistance);
         TextView tvName = dialogView.findViewById(R.id.tvReporterName);
         TextView tvContact = dialogView.findViewById(R.id.tvReporterContact);
         TextView tvAddress = dialogView.findViewById(R.id.tvReporterAddress);
@@ -238,44 +277,21 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         String reportId = String.valueOf(report.get("reportId"));
         String status = String.valueOf(report.get("status"));
 
-        tvId.setText("RPT-" + reportId);
-        tvDesc.setText(String.valueOf(report.get("description")));
-        tvLoc.setText(String.valueOf(report.get("locationAddress")));
+        tvId.setText(reportId.startsWith("RPT-") ? reportId : "RPT-" + reportId);
+        tvDesc.setText(String.valueOf(report.getOrDefault("description", "No description provided")));
+        tvLoc.setText(String.valueOf(report.getOrDefault("locationAddress", "Unknown Location")));
         tvStatus.setText(status.toUpperCase());
 
+        // Set Subject and Assistance details
+        String age = String.valueOf(report.getOrDefault("approximateAge", "N/A"));
+        String sex = String.valueOf(report.getOrDefault("sex", "N/A"));
+        tvSubject.setText("Age: " + age + ", Sex: " + sex);
+
+        String assistance = String.valueOf(report.getOrDefault("assistanceDescription", "No assistance details provided"));
+        tvAssistance.setText(assistance);
+
         // Fetch Reporter Details
-        String reporterId = String.valueOf(report.get("userId"));
-        if (reporterId != null && !reporterId.equals("anonymous")) {
-            db.collection("users").document(reporterId).get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            String fullName = documentSnapshot.getString("fullName");
-                            String contact = documentSnapshot.getString("contactNumber");
-                            Map<String, Object> addressMap = (Map<String, Object>) documentSnapshot.get("address");
-
-                            tvName.setText(fullName != null ? fullName : "Anonymous");
-
-                            if (contact != null && !contact.isEmpty()) {
-                                tvContact.setText(getString(R.string.reporter_contact) + " " + contact);
-                                tvContact.setVisibility(android.view.View.VISIBLE);
-                            }
-
-                            if (addressMap != null) {
-                                String city = (String) addressMap.get("city");
-                                String brgy = (String) addressMap.get("barangay");
-                                if (city != null && brgy != null) {
-                                    tvAddress.setText(getString(R.string.reporter_address) + " " + brgy + ", " + city);
-                                    tvAddress.setVisibility(android.view.View.VISIBLE);
-                                }
-                            }
-                        } else {
-                            tvName.setText(getString(R.string.anonymous));
-                        }
-                    })
-                    .addOnFailureListener(e -> tvName.setText(getString(R.string.anonymous)));
-        } else {
-            tvName.setText(getString(R.string.anonymous));
-        }
+        updateReporterInfo(report, tvName, tvContact, tvAddress);
 
         // Format Time
         Object ts = report.get("timestamp");
@@ -318,6 +334,101 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         });
 
         dialog.show();
+    }
+
+    private void updateReporterInfo(Map<String, Object> report, TextView tvName, TextView tvContact, TextView tvAddress) {
+        String reporterId = report.get("userId") != null ? String.valueOf(report.get("userId")) : "";
+        String reportEmail = report.get("userEmail") != null ? String.valueOf(report.get("userEmail")) : "";
+        String reportContact = report.get("contactNumber") != null ? String.valueOf(report.get("contactNumber")) : "";
+        String reportFullName = report.get("fullName") != null ? String.valueOf(report.get("fullName")) : "";
+
+        // 1. Initial display from report data
+        if (!reportContact.isEmpty() && !reportContact.equalsIgnoreCase("null")) {
+            tvContact.setText("Contact: " + reportContact);
+            tvContact.setVisibility(android.view.View.VISIBLE);
+        } else {
+            tvContact.setVisibility(android.view.View.GONE);
+        }
+        
+        tvAddress.setVisibility(android.view.View.GONE);
+
+        // Priority: Use full name from report if it exists, otherwise email, otherwise "Resident"
+        if (!reportFullName.isEmpty() && !reportFullName.equalsIgnoreCase("null")) {
+            tvName.setText(reportFullName);
+        } else if (!reportEmail.isEmpty() && !reportEmail.equalsIgnoreCase("null")) {
+            tvName.setText(reportEmail);
+        } else {
+            tvName.setText("Resident");
+        }
+
+        // 2. Fetch additional user details if not anonymous to get the latest fullName
+        if (!reporterId.isEmpty() && !reporterId.equalsIgnoreCase("anonymous") && !reporterId.equalsIgnoreCase("null")) {
+            if (reporterId.contains("@")) {
+                // Case where email might be stored in userId field
+                db.collection("users").whereEqualTo("email", reporterId).get()
+                        .addOnSuccessListener(qs -> {
+                            if (!qs.isEmpty()) {
+                                populateUserDetails(qs.getDocuments().get(0), tvName, tvContact, tvAddress);
+                            }
+                        });
+            } else {
+                // Priority 1: Lookup by UID
+                db.collection("users").document(reporterId).get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists()) {
+                                populateUserDetails(doc, tvName, tvContact, tvAddress);
+                            } else if (reportEmail.contains("@")) {
+                                // Priority 2: Lookup by Email if UID not found
+                                db.collection("users").whereEqualTo("email", reportEmail).get()
+                                        .addOnSuccessListener(qs -> {
+                                            if (!qs.isEmpty()) {
+                                                populateUserDetails(qs.getDocuments().get(0), tvName, tvContact, tvAddress);
+                                            }
+                                        });
+                            }
+                        });
+            }
+        } else if (reportEmail.contains("@")) {
+            db.collection("users").whereEqualTo("email", reportEmail).get()
+                    .addOnSuccessListener(qs -> {
+                        if (!qs.isEmpty()) {
+                            populateUserDetails(qs.getDocuments().get(0), tvName, tvContact, tvAddress);
+                        }
+                    });
+        }
+    }
+
+    private void populateUserDetails(com.google.firebase.firestore.DocumentSnapshot doc, TextView tvName, TextView tvContact, TextView tvAddress) {
+        // 1. Resolve Name
+        String name = doc.getString("fullName");
+        if (name == null || name.isEmpty()) name = doc.getString("fullname");
+        if (name == null || name.isEmpty()) name = doc.getString("username");
+        if (name == null || name.isEmpty()) name = doc.getString("email");
+        tvName.setText(name != null && !name.isEmpty() ? name : "Resident");
+
+        // 2. Resolve Contact (overwrites report contact if available in profile)
+        String contact = doc.getString("contactNumber");
+        if (contact == null || contact.isEmpty()) contact = doc.getString("phoneNumber");
+        if (contact != null && !contact.isEmpty()) {
+            tvContact.setText("Contact: " + contact);
+            tvContact.setVisibility(android.view.View.VISIBLE);
+        }
+
+        // 3. Resolve Address
+        Object addrObj = doc.get("address");
+        if (addrObj instanceof Map) {
+            Map<String, Object> addrMap = (Map<String, Object>) addrObj;
+            String brgy = String.valueOf(addrMap.getOrDefault("barangay", ""));
+            String city = String.valueOf(addrMap.getOrDefault("city", ""));
+            if (!brgy.isEmpty() || !city.isEmpty()) {
+                String fullAddr = brgy + (brgy.isEmpty() || city.isEmpty() ? "" : ", ") + city;
+                tvAddress.setText("Address: " + fullAddr);
+                tvAddress.setVisibility(android.view.View.VISIBLE);
+            }
+        } else if (addrObj instanceof String && !((String) addrObj).isEmpty()) {
+            tvAddress.setText("Address: " + addrObj);
+            tvAddress.setVisibility(android.view.View.VISIBLE);
+        }
     }
 
     private void deleteMultipleReports(java.util.Set<String> selectedIds) {
@@ -513,6 +624,9 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             finish();
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
+            finish();
+        } else if (id == R.id.nav_notifications) {
+            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminNotificationActivity.class));
             finish();
         } else if (id == R.id.nav_logout) {
             logout();

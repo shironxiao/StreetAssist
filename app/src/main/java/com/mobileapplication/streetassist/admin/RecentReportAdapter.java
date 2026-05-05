@@ -70,7 +70,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             View view = LayoutInflater.from(context).inflate(R.layout.header_admin_reports, parent, false);
             return new HeaderViewHolder(view);
         } else {
-            View view = LayoutInflater.from(context).inflate(R.layout.item_recent_report, parent, false);
+            View view = LayoutInflater.from(context).inflate(R.layout.item_admin_report, parent, false);
             return new ViewHolder(view);
         }
     }
@@ -119,13 +119,25 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 h.btnRestoreSelected.setVisibility(View.GONE);
             }
 
-            h.etSearch.addTextChangedListener(new android.text.TextWatcher() {
+            // Fix: Remove previous listener to prevent accumulation and infinite loops
+            if (h.etSearch.getTag() instanceof android.text.TextWatcher) {
+                h.etSearch.removeTextChangedListener((android.text.TextWatcher) h.etSearch.getTag());
+            }
+
+            android.text.TextWatcher watcher = new android.text.TextWatcher() {
+                private String lastText = "";
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
                 @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (headerListener != null) headerListener.onSearch(s.toString());
+                    String newText = s.toString();
+                    if (!newText.equals(lastText)) {
+                        lastText = newText;
+                        if (headerListener != null) headerListener.onSearch(newText);
+                    }
                 }
                 @Override public void afterTextChanged(android.text.Editable s) {}
-            });
+            };
+            h.etSearch.addTextChangedListener(watcher);
+            h.etSearch.setTag(watcher);
         } else if (holder instanceof ViewHolder) {
             int adapterPos = holder.getAdapterPosition();
             if (adapterPos == RecyclerView.NO_POSITION) return;
@@ -141,7 +153,8 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             Object reportIdObj = report.get("reportId");
             String id = reportIdObj != null ? String.valueOf(reportIdObj) : null;
-            itemHolder.tvId.setText("RPT-" + (id != null ? id : "—"));
+            String displayId = (id != null) ? (id.startsWith("RPT-") ? id : "RPT-" + id) : "—";
+            itemHolder.tvId.setText(displayId);
 
             Object descObj = report.get("description");
             itemHolder.tvDescription.setText(descObj != null ? String.valueOf(descObj) : "No description");
@@ -152,6 +165,17 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             Object statusObj = report.get("status");
             String status = statusObj != null ? String.valueOf(statusObj) : "Pending";
             itemHolder.tvStatus.setText(status);
+            applyStatusStyle(itemHolder, status);
+
+            // Handle Read Status and NEW Tag using adminSeenAt
+            Object adminSeenAt = report.get("adminSeenAt");
+            if (adminSeenAt == null) {
+                itemHolder.viewReadStatus.setVisibility(View.VISIBLE);
+                itemHolder.tvNewTag.setVisibility(View.VISIBLE);
+            } else {
+                itemHolder.viewReadStatus.setVisibility(View.GONE);
+                itemHolder.tvNewTag.setVisibility(View.GONE);
+            }
 
             // Format timestamp
             Object ts = report.get("timestamp");
@@ -182,9 +206,6 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 }
             });
 
-            // Apply status styles
-            applyStatusStyle(itemHolder, status);
-
             itemHolder.itemView.setOnClickListener(v -> {
                 if (isSelectionMode && !(context instanceof AdminDashboardActivity)) {
                     itemHolder.cbSelect.performClick();
@@ -200,7 +221,10 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                         } else if (context instanceof com.mobileapplication.streetassist.admin.AdminTrashActivity) {
                             ((com.mobileapplication.streetassist.admin.AdminTrashActivity) context).showReportDetails(currentReport);
                         } else if (context instanceof AdminDashboardActivity) {
-                            context.startActivity(new android.content.Intent(context, com.mobileapplication.streetassist.admin.AdminReportsActivity.class));
+                            String docIdToPass = (String) currentReport.get("documentId");
+                            android.content.Intent intent = new android.content.Intent(context, com.mobileapplication.streetassist.admin.AdminReportsActivity.class);
+                            intent.putExtra("reportId", docIdToPass);
+                            context.startActivity(intent);
                         }
                     }
                 }
@@ -284,19 +308,21 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        View statusBar;
-        TextView tvId, tvDescription, tvLocation, tvTimestamp, tvStatus;
+        View statusBar, viewReadStatus;
+        TextView tvId, tvDescription, tvLocation, tvTimestamp, tvStatus, tvNewTag;
         android.widget.CheckBox cbSelect;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             statusBar = itemView.findViewById(R.id.statusBar);
+            viewReadStatus = itemView.findViewById(R.id.viewReadStatus);
             tvId = itemView.findViewById(R.id.tvRecentReportId);
             tvDescription = itemView.findViewById(R.id.tvRecentDescription);
             tvLocation = itemView.findViewById(R.id.tvRecentLocation);
             tvTimestamp = itemView.findViewById(R.id.tvRecentTimestamp);
             tvStatus = itemView.findViewById(R.id.tvRecentStatus);
             cbSelect = itemView.findViewById(R.id.cbSelectReport);
+            tvNewTag = itemView.findViewById(R.id.tvNewTag);
         }
     }
 }

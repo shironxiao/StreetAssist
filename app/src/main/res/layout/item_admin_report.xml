@@ -20,6 +20,14 @@
         android:padding="14dp"
         android:gravity="center_vertical">
 
+        <!-- Admin Selection Checkbox -->
+        <CheckBox
+            android:id="@+id/cbSelectReport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:visibility="gone" />
+
         <!-- Left color bar based on status -->
         <View
             android:id="@+id/statusBar"
@@ -35,15 +43,42 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvRecentReportId"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text="RPT-—"
-                android:textColor="@color/blue_primary"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Read Status Dot -->
+                <View
+                    android:id="@+id/viewReadStatus"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/circle_bg_light_blue" />
+
+                <TextView
+                    android:id="@+id/tvRecentReportId"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="RPT-—"
+                    android:textColor="@color/blue_primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <!-- NEW Indication Tag -->
+                <TextView
+                    android:id="@+id/tvNewTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="NEW"
+                    android:textColor="#4CAF50"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvRecentDescription"
