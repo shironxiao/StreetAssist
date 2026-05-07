@@ -24,6 +24,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
+import com.mobileapplication.streetassist.admin.AdminDashboardActivity;
 import com.mobileapplication.streetassist.ui.resident.ResidentMainActivity;
 
 public class LoginActivity extends AppCompatActivity {
@@ -62,13 +63,6 @@ public class LoginActivity extends AppCompatActivity {
         tvSignUpPrompt  = findViewById(R.id.tvSignUpPrompt);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
         tvContinueAsGuest = findViewById(R.id.tvContinueAsGuest);
-
-        // ── Auto-login: if user is already signed in, skip to main ───────────
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            navigateByRole(currentUser.getUid());
-            return;
-        }
 
         // ── Restore remembered email ─────────────────────────────────────────
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -193,10 +187,8 @@ public class LoginActivity extends AppCompatActivity {
 
                         // Route by role
                         Intent intent;
-                        if ("admin".equals(role)) {
-                            // TODO: swap for your AdminMainActivity when ready
-                            // intent = new Intent(this, AdminMainActivity.class);
-                            intent = new Intent(this, ResidentMainActivity.class);
+                        if ("admin".equalsIgnoreCase(role)) {
+                            intent = new Intent(this, AdminDashboardActivity.class);
                         } else {
                             intent = new Intent(this, ResidentMainActivity.class);
                         }
