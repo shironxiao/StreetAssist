@@ -44,6 +44,27 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
 
         db = FirebaseFirestore.getInstance();
 
+        // Security Guard
+        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            logout();
+            return;
+        }
+
+        // Verify Admin Role
+        db.collection("users").document(user.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String role = documentSnapshot.getString("role");
+                    if (!"admin".equalsIgnoreCase(role)) {
+                        Toast.makeText(this, "Access Denied: Admin role required", Toast.LENGTH_LONG).show();
+                        logout();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Role verification failed", e);
+                    Toast.makeText(this, "Error verifying role: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -219,12 +240,10 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
             finish();
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, AdminAnnouncementsActivity.class));
-            finish();
         } else if (id == R.id.nav_trash) {
             // Already here
         } else if (id == R.id.nav_notifications) {
             startActivity(new Intent(this, AdminNotificationActivity.class));
-            finish();
         } else if (id == R.id.nav_logout) {
             logout();
         }
@@ -236,6 +255,11 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
     }
 
     private void logout() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            db.collection("users").document(uid)
+                    .update("fcmToken", FieldValue.delete());
+        }
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, IntroductionUserLevel.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

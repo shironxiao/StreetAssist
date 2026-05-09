@@ -33,6 +33,7 @@ public class SplashActivity extends AppCompatActivity {
         if (currentUser != null) {
             navigateByRole(currentUser.getUid());
         } else {
+            // Check if there was a previous session level recorded, or go to level selection
             startActivity(new Intent(this, IntroductionUserLevel.class));
             finish();
         }
