@@ -10,11 +10,13 @@ import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
@@ -25,6 +27,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.ui.resident.ResidentMainActivity;
+import com.mobileapplication.streetassist.utils.SessionManager;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -32,16 +35,14 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etEmail, etPassword;
     private MaterialButton btnGetStarted;
     private CheckBox cbRememberMe;
-    private TextView tvSignUpPrompt, tvForgotPassword, tvContinueAsGuest;
+    private TextView tvSignUpPrompt, tvForgotPassword, tvContinueAsGuest, tvBackToMenu;
 
     // ── Firebase ─────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
-    // ── Remember Me ──────────────────────────────────────────────────────────
-    private static final String PREFS_NAME  = "LoginPrefs";
-    private static final String KEY_EMAIL   = "saved_email";
-    private static final String KEY_REMEMBER = "remember_me";
+    // ── Session Manager ──────────────────────────────────────────────────────
+    private SessionManager sessionManager;
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -50,9 +51,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_activity);
 
-        // Firebase
+        // Firebase & Session
         mAuth = FirebaseAuth.getInstance();
         db    = FirebaseFirestore.getInstance();
+        sessionManager = new SessionManager(this);
 
         // Views
         etEmail         = findViewById(R.id.etEmail);
@@ -62,6 +64,7 @@ public class LoginActivity extends AppCompatActivity {
         tvSignUpPrompt  = findViewById(R.id.tvSignUpPrompt);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
         tvContinueAsGuest = findViewById(R.id.tvContinueAsGuest);
+        tvBackToMenu     = findViewById(R.id.tvBackToMenu);
 
         // ── Auto-login: if user is already signed in, skip to main ───────────
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -70,11 +73,9 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // ── Restore remembered email ─────────────────────────────────────────
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        boolean remembered = prefs.getBoolean(KEY_REMEMBER, false);
-        if (remembered) {
-            etEmail.setText(prefs.getString(KEY_EMAIL, ""));
+        // ── Restore remembered email via SessionManager ──────────────────────
+        if (sessionManager.isRememberMeChecked()) {
+            etEmail.setText(sessionManager.getSavedEmail());
             cbRememberMe.setChecked(true);
         }
 
@@ -85,6 +86,10 @@ public class LoginActivity extends AppCompatActivity {
 
         tvForgotPassword.setOnClickListener(v -> handleForgotPassword());
         tvContinueAsGuest.setOnClickListener(v -> continueAsGuest());
+        tvBackToMenu.setOnClickListener(v -> {
+            startActivity(new Intent(LoginActivity.this, IntroductionUserLevel.class));
+            finish();
+        });
 
         setupSignUpSpannable();
     }
@@ -245,28 +250,7 @@ public class LoginActivity extends AppCompatActivity {
     // =========================================================================
 
     private void handleForgotPassword() {
-        String email = etEmail.getText().toString().trim();
-
-        if (email.isEmpty()) {
-            etEmail.setError("Enter your email first");
-            etEmail.requestFocus();
-            return;
-        }
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            etEmail.setError("Enter a valid email");
-            etEmail.requestFocus();
-            return;
-        }
-
-        mAuth.sendPasswordResetEmail(email)
-                .addOnSuccessListener(aVoid ->
-                        Toast.makeText(this,
-                                "Password reset email sent to " + email,
-                                Toast.LENGTH_LONG).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(this,
-                                "Failed to send reset email: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show());
+        startActivity(new Intent(this, ResetPassword.class));
     }
 
     // =========================================================================
@@ -274,17 +258,7 @@ public class LoginActivity extends AppCompatActivity {
     // =========================================================================
 
     private void saveRememberMe(String email) {
-        SharedPreferences.Editor editor =
-                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
-
-        if (cbRememberMe.isChecked()) {
-            editor.putBoolean(KEY_REMEMBER, true);
-            editor.putString(KEY_EMAIL, email);
-        } else {
-            editor.putBoolean(KEY_REMEMBER, false);
-            editor.remove(KEY_EMAIL);
-        }
-        editor.apply();
+        sessionManager.setRememberMe(cbRememberMe.isChecked(), email);
     }
 
     private void continueAsGuest() {

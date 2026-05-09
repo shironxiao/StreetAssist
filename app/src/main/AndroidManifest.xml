@@ -44,7 +44,8 @@
         <activity android:name=".admin.AdminReportsActivity"
             android:exported="false" />
         <activity android:name=".admin.AdminAnnouncementsActivity"/>
-
+        <activity android:name=".ui.auth.ResetPassword"
+            android:exported="false" />
         <activity
             android:name=".ui.shared.SplashActivity"
             android:exported="false" />

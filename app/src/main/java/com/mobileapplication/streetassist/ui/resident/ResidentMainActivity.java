@@ -34,6 +34,25 @@ public class ResidentMainActivity extends AppCompatActivity {
             if (isGuestMode) {
                 configureGuestNavigation(navController);
             }
+            checkIntent(getIntent());
+        }
+    }
+
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        checkIntent(intent);
+    }
+
+    private void checkIntent(android.content.Intent intent) {
+        if (intent != null && intent.getBooleanExtra("nav_to_report", false)) {
+            if (binding.bottomNavigation != null) {
+                binding.bottomNavigation.post(() -> {
+                    android.view.View reportTab = binding.bottomNavigation.findViewById(R.id.report);
+                    if (reportTab != null) reportTab.performClick();
+                });
+            }
         }
     }
 

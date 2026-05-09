@@ -23,7 +23,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.mobileapplication.streetassist.R;
-import com.mobileapplication.streetassist.ui.resident.Reports.ReportFragment;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -35,9 +34,9 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class HomeFragment extends Fragment {
 
     private static final String TAG = "HomeFragment";
-    private static final int MAX_RECENT = 3; // show only latest 3
+    private static final int MAX_RECENT = 3;
 
-    // ── Views ──────────────────────────────────────────────────────────────────
+    // Views
     private TextView tvWelcomeName;
     private TextView tvInitialsAvatar;
     private CircleImageView ivAvatar;
@@ -48,11 +47,14 @@ public class HomeFragment extends Fragment {
     private LinearLayout layoutRecentEmpty;
     private com.google.android.material.card.MaterialCardView cardSubmitReport;
 
-    // ── Firebase ───────────────────────────────────────────────────────────────
+    // Firebase
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private ListenerRegistration reportsListener;
     private ListenerRegistration notifListener;
+
+    // Status watcher — auto-creates notifications on status change
+    private ReportStatusWatcher statusWatcher;
 
     public HomeFragment() {}
 
@@ -71,7 +73,7 @@ public class HomeFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
         db    = FirebaseFirestore.getInstance();
 
-        // ── Bind views ────────────────────────────────────────────────────────
+        // Bind views
         tvWelcomeName       = view.findViewById(R.id.tvWelcomeName);
         ivAvatar            = view.findViewById(R.id.ivAvatar);
         tvInitialsAvatar    = view.findViewById(R.id.tvInitialsAvatar);
@@ -84,17 +86,16 @@ public class HomeFragment extends Fragment {
         layoutRecentEmpty   = view.findViewById(R.id.layoutRecentEmpty);
         cardSubmitReport    = view.findViewById(R.id.cardSubmitReport);
 
-        // ── Submit report card ────────────────────────────────────────────────
+        // Submit report card
         cardSubmitReport.setOnClickListener(v ->
                 Navigation.findNavController(requireView()).navigate(R.id.reportFragment));
 
-        // ── Notification bell ─────────────────────────────────────────────────
+        // Notification bell
         view.findViewById(R.id.ivNotification).setOnClickListener(v ->
                 startActivity(new Intent(getActivity(), NotificationActivity.class)));
 
-        // ── See all → navigates to Reports tab ───────────────────────────────
+        // See all → Reports tab
         tvSeeAll.setOnClickListener(v -> {
-            // Trigger bottom nav to switch to Reports tab
             if (getActivity() != null) {
                 getActivity().findViewById(R.id.report).performClick();
             }
@@ -103,10 +104,13 @@ public class HomeFragment extends Fragment {
         loadUserProfile();
         listenToReports();
         listenToNotifications();
+
+        // Start watching report status changes and auto-create notifications
+        statusWatcher = new ReportStatusWatcher();
+        statusWatcher.start();
     }
 
-    // ── Load user profile from Firestore ──────────────────────────────────────
-
+    // Load user profile from Firestore
     private void loadUserProfile() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
@@ -120,30 +124,26 @@ public class HomeFragment extends Fragment {
                     String fullName = doc.getString("fullName");
                     String photoUrl = doc.getString("profilePhotoUrl");
 
-                    // First name only for welcome
                     String firstName = fullName != null
                             ? fullName.trim().split("\\s+")[0] : "User";
                     tvWelcomeName.setText("Welcome, " + firstName + "!");
 
-                    // Avatar
                     if (photoUrl != null && !photoUrl.isEmpty()) {
                         tvInitialsAvatar.setVisibility(View.GONE);
+                        ivAvatar.setVisibility(View.VISIBLE);
                         Glide.with(this)
                                 .load(photoUrl)
                                 .transform(new CircleCrop())
-                                .placeholder(R.drawable.circle_bg_light_blue)
+                                .placeholder(R.drawable.ic_default_avatar)
+                                .error(R.drawable.ic_default_avatar)
                                 .into(ivAvatar);
                     } else {
-                        ivAvatar.setVisibility(View.GONE);
-                        tvInitialsAvatar.setVisibility(View.VISIBLE);
-                        if (fullName != null && !fullName.isEmpty()) {
-                            String[] parts  = fullName.trim().split("\\s+");
-                            String initials = parts.length >= 2
-                                    ? String.valueOf(parts[0].charAt(0))
-                                    + String.valueOf(parts[parts.length - 1].charAt(0))
-                                    : String.valueOf(parts[0].charAt(0));
-                            tvInitialsAvatar.setText(initials.toUpperCase());
-                        }
+                        tvInitialsAvatar.setVisibility(View.GONE);
+                        ivAvatar.setVisibility(View.VISIBLE);
+                        Glide.with(this)
+                                .load(R.drawable.ic_default_avatar)
+                                .transform(new CircleCrop())
+                                .into(ivAvatar);
                     }
                 })
                 .addOnFailureListener(e ->
@@ -151,8 +151,7 @@ public class HomeFragment extends Fragment {
                                 "Failed to load profile.", Toast.LENGTH_SHORT).show());
     }
 
-    // ── Real-time listener: reports → stats + recent list ─────────────────────
-
+    // Real-time listener: reports → stats + recent list
     private void listenToReports() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
@@ -164,7 +163,6 @@ public class HomeFragment extends Fragment {
 
                     int total = 0, pending = 0, resolved = 0;
 
-                    // Sort newest first
                     List<DocumentSnapshot> docs = snapshots.getDocuments();
                     docs.sort((a, b) -> {
                         Object tsA = a.get("timestamp");
@@ -177,7 +175,6 @@ public class HomeFragment extends Fragment {
                         return 0;
                     });
 
-                    // Count stats
                     for (DocumentSnapshot doc : docs) {
                         total++;
                         String status = doc.getString("status");
@@ -189,13 +186,11 @@ public class HomeFragment extends Fragment {
                     tvPendingCount.setText(String.valueOf(pending));
                     tvResolvedCount.setText(String.valueOf(resolved));
 
-                    // Build recent reports list (max 3)
                     buildRecentReports(docs);
                 });
     }
 
-    // ── Build recent report cards dynamically ─────────────────────────────────
-
+    // Build recent report cards dynamically
     private void buildRecentReports(List<DocumentSnapshot> docs) {
         if (layoutRecentReports == null || getContext() == null) return;
         layoutRecentReports.removeAllViews();
@@ -220,19 +215,15 @@ public class HomeFragment extends Fragment {
             View card = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_recent_report, layoutRecentReports, false);
 
-            // Report ID
             TextView tvId = card.findViewById(R.id.tvRecentReportId);
             tvId.setText(getString(d, "reportId", doc.getId()));
 
-            // Description
             TextView tvDesc = card.findViewById(R.id.tvRecentDescription);
             tvDesc.setText(getString(d, "description", "No description"));
 
-            // Location
             TextView tvLoc = card.findViewById(R.id.tvRecentLocation);
             tvLoc.setText(getString(d, "locationAddress", "Location not set"));
 
-            // Timestamp
             TextView tvTs = card.findViewById(R.id.tvRecentTimestamp);
             Object ts = d.get("timestamp");
             if (ts instanceof com.google.firebase.Timestamp) {
@@ -241,19 +232,27 @@ public class HomeFragment extends Fragment {
                 tvTs.setText("—");
             }
 
-            // Status badge + left color bar
             String status   = getString(d, "status", "Pending");
             TextView tvStat = card.findViewById(R.id.tvRecentStatus);
             View statusBar  = card.findViewById(R.id.statusBar);
             tvStat.setText(status);
             applyStatusStyle(tvStat, statusBar, status);
 
+            // Navigate to Reports fragment on click
+            card.setOnClickListener(v -> {
+                if (getActivity() != null) {
+                    View reportTab = getActivity().findViewById(R.id.report);
+                    if (reportTab != null) {
+                        reportTab.performClick();
+                    }
+                }
+            });
+
             layoutRecentReports.addView(card);
         }
     }
 
-    // ── Real-time notification badge listener ─────────────────────────────────
-
+    // Real-time notification badge listener
     private void listenToNotifications() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
@@ -274,8 +273,7 @@ public class HomeFragment extends Fragment {
                 });
     }
 
-    // ── Status styling ─────────────────────────────────────────────────────────
-
+    // Status styling for recent report cards
     private void applyStatusStyle(TextView badge, View bar, String status) {
         switch (status) {
             case "Pending":
@@ -305,19 +303,18 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    // ── Helper ─────────────────────────────────────────────────────────────────
-
+    // Helper
     private String getString(Map<String, Object> map, String key, String fallback) {
         Object val = map.get(key);
         return val != null && !val.toString().isEmpty() ? val.toString() : fallback;
     }
 
-    // ── Lifecycle ──────────────────────────────────────────────────────────────
-
+    // Lifecycle
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (reportsListener != null) reportsListener.remove();
         if (notifListener  != null) notifListener.remove();
+        if (statusWatcher  != null) statusWatcher.stop();
     }
 }

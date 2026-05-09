@@ -43,6 +43,7 @@ public class RegisterActivity extends AppCompatActivity {
     private ImageButton btnBack;
     private TextInputEditText etFullName, etEmail, etContactNumber, etPassword, etConfirmPassword;
     private AutoCompleteTextView spinnerCity, spinnerBarangay;
+    private boolean hasReadTerms = false;
 
     // ── Firebase ──────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
@@ -228,6 +229,15 @@ public class RegisterActivity extends AppCompatActivity {
         spinnerBarangay   = findViewById(R.id.spinnerBarangay);
 
         spinnerBarangay.setEnabled(false);
+        
+        // Prevent checking terms unless they've been read
+        cbTerms.setOnClickListener(v -> {
+            if (!hasReadTerms) {
+                cbTerms.setChecked(false);
+                Toast.makeText(this, "Please read the Terms and Privacy Policy first.", Toast.LENGTH_SHORT).show();
+                showTermsDialog();
+            }
+        });
 
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
 
@@ -338,10 +348,13 @@ public class RegisterActivity extends AppCompatActivity {
             etConfirmPassword.requestFocus();
             return false;
         }
+        if (!hasReadTerms) {
+            Toast.makeText(this, "Please read the Terms and Privacy Policy first.", Toast.LENGTH_LONG).show();
+            showTermsDialog();
+            return false;
+        }
         if (!cbTerms.isChecked()) {
-            Toast.makeText(this,
-                    "You must accept the Terms and Privacy Policy to continue.",
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "You must accept the Terms and Privacy Policy to continue.", Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
@@ -487,7 +500,12 @@ public class RegisterActivity extends AppCompatActivity {
                                 "3. Not shared with third parties.\n" +
                                 "4. Location used only during report submission.\n" +
                                 "5. Questions? streetassist.support@example.com")
-                .setPositiveButton("I Understand", (d, w) -> d.dismiss())
+                .setPositiveButton("I Have Read & Understand", (d, w) -> {
+                    hasReadTerms = true;
+                    cbTerms.setEnabled(true);
+                    cbTerms.setChecked(true);
+                    d.dismiss();
+                })
                 .show();
     }
 }

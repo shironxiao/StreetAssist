@@ -76,24 +76,40 @@
                         android:id="@+id/etSearchNews"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Search announcements..."
+                        android:hint="Search by name..."
                         android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnFilter"
+                    android:id="@+id/btnDatePicker"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="52dp"
                     android:layout_height="52dp"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="8dp"
                     android:padding="0dp"
                     app:cornerRadius="12dp"
-                    app:icon="@android:drawable/ic_menu_sort_by_size"
+                    app:icon="@android:drawable/ic_menu_today"
                     app:iconGravity="textStart"
                     app:iconPadding="0dp"
                     app:iconTint="#4169E1"
                     app:strokeColor="#4169E1" />
+
             </LinearLayout>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDateFilter"
+                style="@style/Widget.MaterialComponents.Chip.Entry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Date: 2023-10-25"
+                android:textColor="#4169E1"
+                android:visibility="gone"
+                app:chipBackgroundColor="#E8EFFF"
+                app:chipIcon="@android:drawable/ic_menu_today"
+                app:chipIconTint="#4169E1"
+                app:closeIconVisible="true"
+                app:closeIconTint="#4169E1" />
 
             <!-- LOADING INDICATOR -->
             <ProgressBar
@@ -118,14 +134,21 @@
                 android:visibility="gone" />
 
             <!-- REAL ANNOUNCEMENTS LIST -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAnnouncements"
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipeRefresh"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="16dp"
-                android:clipToPadding="false"
-                android:paddingBottom="16dp"
-                tools:listitem="@layout/item_announcement" />
+                android:layout_marginTop="16dp">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAnnouncements"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="16dp"
+                    tools:listitem="@layout/item_announcement" />
+
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         </LinearLayout>
     </LinearLayout>

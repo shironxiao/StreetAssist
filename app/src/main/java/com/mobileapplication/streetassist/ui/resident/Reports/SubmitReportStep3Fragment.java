@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.ui.resident.ResidentMainActivity;
+import com.mobileapplication.streetassist.ui.resident.Home.ReportStatusWatcher;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -61,9 +62,6 @@ public class SubmitReportStep3Fragment extends Fragment {
         TextView tvReportId = view.findViewById(R.id.tvReportId);
         tvReportId.setText(reportId);
 
-        // ── Save to Firestore immediately on screen load ───────────────────────
-        saveToFirestore(reportId, latitude, longitude, locationText,
-                age, sex, description, assistance, contact, seenAtMillis);
         // ── Save to Firestore only once ───────────────────────────────────────
         if (!reportSaved) {
             reportSaved = true;
@@ -91,10 +89,9 @@ public class SubmitReportStep3Fragment extends Fragment {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        String userId = "anonymous";
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        }
+        final String userId = (FirebaseAuth.getInstance().getCurrentUser() != null)
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : "anonymous";
 
         Timestamp seenAtTimestamp = new Timestamp(new Date(seenAtMillis));
 
@@ -116,9 +113,14 @@ public class SubmitReportStep3Fragment extends Fragment {
         db.collection("reports")
                 .document(reportId)
                 .set(report)
-                .addOnSuccessListener(unused ->
+                .addOnSuccessListener(unused -> {
+                    if (isAdded()) {
                         Toast.makeText(requireContext(), "Report saved successfully!",
-                                Toast.LENGTH_SHORT).show())
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    // Notify the status watcher that a new report was submitted
+                    ReportStatusWatcher.notifyReportSubmitted(userId, reportId);
+                })
                 .addOnFailureListener(e ->
                         Toast.makeText(requireContext(), "Failed to save report: " + e.getMessage(),
                                 Toast.LENGTH_LONG).show());

@@ -99,13 +99,6 @@
                         android:text="Pending"
                         app:chipCornerRadius="12dp" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipVerified"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Verified"
-                        app:chipCornerRadius="12dp" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipInProgress"

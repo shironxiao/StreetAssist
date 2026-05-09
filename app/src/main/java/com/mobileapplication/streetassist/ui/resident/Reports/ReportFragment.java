@@ -164,7 +164,6 @@ public class ReportFragment extends Fragment {
             int id = checkedIds.get(0);
             if      (id == R.id.chipAll)        currentFilter = "All";
             else if (id == R.id.chipPending)    currentFilter = "Pending";
-            else if (id == R.id.chipVerified)   currentFilter = "Verified";
             else if (id == R.id.chipInProgress) currentFilter = "In Progress";
             else if (id == R.id.chipResolved)   currentFilter = "Resolved";
 

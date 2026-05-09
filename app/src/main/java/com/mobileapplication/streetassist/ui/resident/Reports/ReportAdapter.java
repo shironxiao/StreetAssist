@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import android.widget.Toast;
 import com.mobileapplication.streetassist.R;
 
 import java.text.SimpleDateFormat;
@@ -69,6 +70,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         holder.tvSeenAt.setText("Seen: " + seenAtFormatted);
 
         holder.tvViewDetails.setOnClickListener(v -> showDetailsBottomSheet(report));
+        holder.btnDelete.setOnClickListener(v -> showDeleteConfirmation(report));
         holder.itemView.setOnClickListener(v -> showDetailsBottomSheet(report));
     }
 
@@ -120,7 +122,51 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         MaterialButton btnClose = sheetView.findViewById(R.id.dialogBtnClose);
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
+        MaterialButton btnDelete = sheetView.findViewById(R.id.dialogBtnDelete);
+        btnDelete.setOnClickListener(v -> {
+            dialog.dismiss();
+            showDeleteConfirmation(report);
+        });
+
         dialog.show();
+    }
+
+    private void showDeleteConfirmation(Map<String, Object> report) {
+        new android.app.AlertDialog.Builder(context)
+                .setTitle("Delete Report")
+                .setMessage("Are you sure you want to delete this report permanently?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteReport(report))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteReport(Map<String, Object> report) {
+        String docId = (String) report.get("reportId");
+        if (docId == null) return;
+
+        com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
+        
+        db.collection("reports").document(docId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(context, "Report deleted successfully", Toast.LENGTH_SHORT).show();
+                    
+                    // Also delete all notifications linked to this report
+                    db.collection("notifications")
+                            .whereEqualTo("reportId", docId)
+                            .get()
+                            .addOnSuccessListener(snapshots -> {
+                                if (snapshots.isEmpty()) return;
+                                com.google.firebase.firestore.WriteBatch batch = db.batch();
+                                for (com.google.firebase.firestore.DocumentSnapshot d : snapshots) {
+                                    batch.delete(d.getReference());
+                                }
+                                batch.commit();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Error deleting report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -182,7 +228,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
     static class ReportViewHolder extends RecyclerView.ViewHolder {
         TextView tvReportId, tvStatus, tvDescription, tvAge,
                 tvSex, tvLocation, tvAssistance, tvTimestamp,
-                tvSeenAt, tvViewDetails;
+                tvSeenAt, tvViewDetails, btnDelete;
 
         ReportViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -196,6 +242,7 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             tvTimestamp   = itemView.findViewById(R.id.tvTimestamp);
             tvSeenAt      = itemView.findViewById(R.id.tvSeenAt);      // new
             tvViewDetails = itemView.findViewById(R.id.tvViewDetails);
+            btnDelete     = itemView.findViewById(R.id.btnDeleteReport);
         }
     }
 }

@@ -118,62 +118,7 @@
                             android:textColor="#333333" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- ════════════════════════════════════════════
-                 SECTION: VIEW-ONLY FIELDS
-                 ════════════════════════════════════════════ -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="VIEW ONLY"
-                android:textColor="#999999"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.12"
-                android:layout_marginBottom="10dp" />
-
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#F8F8F8"
-                android:layout_marginBottom="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <!-- Info Banner -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/rounded_info_bg"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:padding="12dp"
-                        android:layout_marginBottom="16dp">
-
-                        <ImageView
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:src="@android:drawable/ic_dialog_info"
-                            app:tint="#4169E1" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:text="Email and address cannot be changed here. Contact support for assistance."
-                            android:textColor="#4169E1"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
-                    <!-- Email (View Only) -->
+                    <!-- Email -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/tilEmail"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -185,50 +130,64 @@
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusBottomEnd="12dp"
-                        app:boxStrokeColor="#CCCCCC"
-                        app:hintTextColor="#999999"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
                         app:startIconDrawable="@android:drawable/ic_dialog_email"
-                        app:startIconTint="#AAAAAA"
-                        app:endIconDrawable="@android:drawable/ic_lock_idle_lock"
-                        app:endIconTint="#AAAAAA">
+                        app:startIconTint="#4169E1">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmail"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:enabled="false"
-                            android:focusable="false"
-                            android:textColor="#AAAAAA"
-                            android:inputType="textEmailAddress" />
+                            android:inputType="textEmailAddress"
+                            android:textColor="#333333" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <!-- Address (View Only) -->
+                    <!-- City Spinner -->
                     <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/tilAddress"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:id="@+id/tilCity"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Address"
+                        android:hint="City / Municipality"
+                        android:layout_marginBottom="16dp"
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusBottomEnd="12dp"
-                        app:boxStrokeColor="#CCCCCC"
-                        app:hintTextColor="#999999"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
                         app:startIconDrawable="@android:drawable/ic_menu_mapmode"
-                        app:startIconTint="#AAAAAA"
-                        app:endIconDrawable="@android:drawable/ic_lock_idle_lock"
-                        app:endIconTint="#AAAAAA">
+                        app:startIconTint="#4169E1">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAddress"
+                        <AutoCompleteTextView
+                            android:id="@+id/spinnerCity"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:enabled="false"
-                            android:focusable="false"
-                            android:textColor="#AAAAAA"
-                            android:inputType="textMultiLine"
-                            android:minLines="1" />
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Barangay Spinner -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilBarangay"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Barangay"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#4169E1"
+                        app:hintTextColor="#4169E1"
+                        app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+                        app:startIconTint="#4169E1">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/spinnerBarangay"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
@@ -294,7 +253,7 @@
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="New Password (optional)"
+                        android:hint="New Password"
                         android:layout_marginBottom="16dp"
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
@@ -304,8 +263,7 @@
                         app:hintTextColor="#4169E1"
                         app:endIconMode="password_toggle"
                         app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
-                        app:startIconTint="#4169E1"
-                        app:helperText="Leave blank to keep current password">
+                        app:startIconTint="#4169E1">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNewPassword"

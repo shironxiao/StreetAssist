@@ -27,17 +27,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:id="@+id/tvCategory"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@color/blue_bg"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
-                android:text="CATEGORY"
-                android:textColor="@color/blue_primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvTitle"
@@ -136,28 +125,58 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
-                    <EditText
-                        android:id="@+id/etComment"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/comment_bubble_bg"
-                        android:hint="Write a comment..."
-                        android:paddingHorizontal="10dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_secondary"
-                        android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/tvAttachedLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="📍 Location attached"
+                        android:textColor="@color/blue_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
 
-                    <ImageButton
-                        android:id="@+id/btnSendComment"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Send comment"
-                        android:src="@android:drawable/ic_menu_send" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageButton
+                            android:id="@+id/btnCommentLocation"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Attach location"
+                            android:padding="8dp"
+                            android:scaleType="centerInside"
+                            android:src="@android:drawable/ic_menu_mylocation"
+                            app:tint="@color/text_secondary" />
+
+                        <EditText
+                            android:id="@+id/etComment"
+                            android:layout_width="0dp"
+                            android:layout_height="40dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/comment_bubble_bg"
+                            android:hint="Write a comment..."
+                            android:paddingHorizontal="10dp"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_secondary"
+                            android:textSize="13sp" />
+
+                        <ImageButton
+                            android:id="@+id/btnSendComment"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginStart="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Send comment"
+                            android:src="@android:drawable/ic_menu_send" />
+                    </LinearLayout>
                 </LinearLayout>
 
             </LinearLayout>

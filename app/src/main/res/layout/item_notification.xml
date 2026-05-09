@@ -20,7 +20,8 @@
             android:layout_width="10dp"
             android:layout_height="10dp"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
+            android:layout_marginTop="4dp"
+            android:layout_alignParentTop="true"
             android:background="@drawable/circle_bg_light_blue"
             android:backgroundTint="#4169E1"
             android:visibility="gone" />
@@ -31,6 +32,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toStartOf="@id/dotUnread"
+            android:layout_alignParentTop="true"
             android:text="Notification Title"
             android:textColor="#1A1A1A"
             android:textSize="15sp"
@@ -48,12 +50,45 @@
             android:textColor="#555555"
             android:textSize="13sp" />
 
+        <!-- Status chip row -->
+        <LinearLayout
+            android:id="@+id/layoutChipRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvNotifMessage"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Colored status dot -->
+            <View
+                android:id="@+id/dotStatus"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/circle_bg_light_blue"
+                android:visibility="gone" />
+
+            <!-- Status label -->
+            <TextView
+                android:id="@+id/tvNotifStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="3dp"
+                android:text="In Progress"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
         <!-- Timestamp -->
         <TextView
             android:id="@+id/tvNotifTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/tvNotifMessage"
+            android:layout_below="@id/layoutChipRow"
             android:layout_marginTop="6dp"
             android:text="Jan 01, 2025  08:00 AM"
             android:textColor="#AAAAAA"

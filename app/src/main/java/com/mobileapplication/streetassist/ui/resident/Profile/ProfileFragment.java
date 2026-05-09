@@ -55,7 +55,6 @@ public class ProfileFragment extends Fragment {
     private MaterialButton btnLogout;
     private View rowFullName, rowEmail, rowAddress, rowPassword, rowContact;
 
-    private MaterialButton btnEditProfileHeader;
 
     // ── Firebase ─────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
@@ -137,7 +136,6 @@ public class ProfileFragment extends Fragment {
         tvInitials           = view.findViewById(R.id.tvInitials);
         fabEditPhoto         = view.findViewById(R.id.fabEditPhoto);
         btnLogout            = view.findViewById(R.id.btnLogout);
-        btnEditProfileHeader = view.findViewById(R.id.btnEditProfileHeader);
 
         rowFullName  = view.findViewById(R.id.rowFullName);
         rowEmail     = view.findViewById(R.id.rowEmail);
@@ -162,23 +160,14 @@ public class ProfileFragment extends Fragment {
             openImagePicker();
         });
 
-        btnEditProfileHeader.setOnClickListener(v -> {
-            if (isGuestMode) {
-                showCreateAccountDialog("Create account to edit your profile?");
-                return;
-            }
-            openProfileEdit();
-        });
 
         btnLogout.setOnClickListener(v -> showLogoutDialog());
 
-        rowEmail.setOnClickListener(v ->
-                Toast.makeText(getContext(),
-                        "Email cannot be changed.", Toast.LENGTH_SHORT).show());
-
-        rowAddress.setOnClickListener(v ->
-                Toast.makeText(getContext(),
-                        "Address cannot be changed here.", Toast.LENGTH_SHORT).show());
+        rowFullName.setOnClickListener(v -> openProfileEdit());
+        rowEmail.setOnClickListener(v -> openProfileEdit());
+        rowAddress.setOnClickListener(v -> openProfileEdit());
+        rowPassword.setOnClickListener(v -> openProfileEdit());
+        rowContact.setOnClickListener(v -> openProfileEdit());
     }
 
     @Override
@@ -273,11 +262,24 @@ public class ProfileFragment extends Fragment {
     // =========================================================================
 
     private void openProfileEdit() {
+        if (isGuestMode) {
+            showCreateAccountDialog("Create account to edit your profile?");
+            return;
+        }
+
         Intent intent = new Intent(getActivity(), ProfileEdit.class);
         intent.putExtra(ProfileEdit.EXTRA_FULL_NAME, tvValFullName.getText().toString());
         intent.putExtra(ProfileEdit.EXTRA_CONTACT,   currentContactNumber);
         intent.putExtra(ProfileEdit.EXTRA_EMAIL,     currentEmail);
-        intent.putExtra(ProfileEdit.EXTRA_ADDRESS,   currentAddress);
+        
+        // Pass individual address components if available
+        // Note: currentAddress was constructed as "Barangay, City, Province"
+        String[] parts = currentAddress.split(", ");
+        if (parts.length >= 2) {
+            intent.putExtra("extra_barangay", parts[0]);
+            intent.putExtra("extra_city",     parts[1]);
+        }
+        
         profileEditLauncher.launch(intent);
     }
 

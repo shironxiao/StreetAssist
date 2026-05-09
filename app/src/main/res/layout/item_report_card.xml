@@ -199,6 +199,20 @@
                 android:textColor="#AAAAAA"
                 android:textSize="11sp" />
 
+            <!-- Delete clickable text -->
+            <TextView
+                android:id="@+id/btnDeleteReport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:text="Delete"
+                android:textColor="#FF5252"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
             <!-- View Details clickable text -->
             <TextView
                 android:id="@+id/tvViewDetails"
