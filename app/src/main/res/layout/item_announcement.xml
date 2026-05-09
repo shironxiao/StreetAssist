@@ -84,6 +84,18 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </RelativeLayout>
+
+            <TextView
+                android:id="@+id/btnViewComments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="@string/view_comments"
+                android:textColor="@color/blue_primary"
+                android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

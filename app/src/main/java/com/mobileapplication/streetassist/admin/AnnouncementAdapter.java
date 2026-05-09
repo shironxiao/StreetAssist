@@ -49,6 +49,13 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         } else {
             holder.ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
         }
+
+        String id = (String) announcement.get("id");
+        holder.btnViewComments.setOnClickListener(v -> {
+            if (context instanceof AdminAnnouncementsActivity) {
+                ((AdminAnnouncementsActivity) context).showCommentsDialog(id);
+            }
+        });
     }
 
     @Override
@@ -58,7 +65,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
-        TextView tvCategory, tvTitle, tvSubtitle, tvContact, tvDate;
+        TextView tvCategory, tvTitle, tvSubtitle, tvContact, tvDate, btnViewComments;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -68,6 +75,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
             tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
             tvContact = itemView.findViewById(R.id.tvContact);
             tvDate = itemView.findViewById(R.id.tvDate);
+            btnViewComments = itemView.findViewById(R.id.btnViewComments);
         }
     }
 }

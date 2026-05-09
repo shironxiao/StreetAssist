@@ -7,7 +7,6 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.mobileapplication.streetassist.R;
-import com.mobileapplication.streetassist.ui.shared.SplashActivity;
 
 public class IntroductionUserLevel extends AppCompatActivity {
 
@@ -21,9 +20,8 @@ public class IntroductionUserLevel extends AppCompatActivity {
 
         if (btnResident != null) {
             btnResident.setOnClickListener(v -> {
-                Intent intent = new Intent(IntroductionUserLevel.this, SplashActivity.class);
+                Intent intent = new Intent(IntroductionUserLevel.this, LoginActivity.class);
                 startActivity(intent);
-                finish();
             });
         }
 

@@ -20,6 +20,7 @@
 
     <color name="green_primary">#05CD99</color>
     <color name="green_bg">#EBF9EE</color>
+    <color name="red_primary">#E53935</color>
 
     <color name="status_pending_bg">#FFF8E6</color>
     <color name="status_pending_text">#FFB800</color>

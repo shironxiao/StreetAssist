@@ -19,7 +19,7 @@
             android:textColor="@color/text_primary"
             android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/btnExport"
+            app:layout_constraintEnd_toStartOf="@+id/layoutActionButtons"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -31,29 +31,69 @@
             android:text="@string/view_and_manage_all_case_reports"
             android:textColor="@color/text_secondary"
             android:textSize="14sp"
-            app:layout_constraintEnd_toStartOf="@+id/btnExport"
+            app:layout_constraintEnd_toStartOf="@+id/layoutActionButtons"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvTitle" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnExport"
-            style="@style/Widget.MaterialComponents.Button.Icon"
+        <LinearLayout
+            android:id="@+id/layoutActionButtons"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/blue_primary"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="@string/export"
-            android:textAllCaps="false"
-            android:textSize="13sp"
-            app:cornerRadius="8dp"
-            app:icon="@android:drawable/ic_menu_save"
-            app:iconGravity="textStart"
-            app:iconPadding="8dp"
-            app:iconSize="18dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelSelection"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:text="@string/cancel_selection"
+                android:textColor="@color/text_secondary"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeleteSelected"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Delete (0)"
+                android:textColor="#E53935"
+                android:visibility="gone"
+                app:icon="@android:drawable/ic_menu_delete"
+                app:iconTint="#E53935" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRestoreSelected"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="Restore (0)"
+                android:textColor="#2E7D32"
+                android:visibility="gone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExport"
+                style="@style/Widget.MaterialComponents.Button.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/blue_primary"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/export"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                app:cornerRadius="8dp"
+                app:icon="@android:drawable/ic_menu_save"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconSize="18dp" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

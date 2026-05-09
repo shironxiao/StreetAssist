@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="28dp"
+    app:cardCornerRadius="24dp"
     app:cardElevation="0dp"
     android:layout_margin="16dp">
 
@@ -12,26 +12,26 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="24dp">
+        android:paddingBottom="0dp">
 
         <!-- Header -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="60dp"
-            android:paddingBottom="16dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
-                android:layout_height="49dp"
+                android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:layout_marginStart="19dp"
-                android:layout_marginEnd="53dp"
+                android:layout_marginEnd="52dp"
+                android:layout_centerVertical="true"
                 android:layout_toStartOf="@id/btnClose"
                 android:text="@string/new_announcement"
                 android:textColor="@color/text_primary"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <ImageButton
@@ -39,7 +39,6 @@
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_alignParentEnd="true"
-                android:layout_marginEnd="17dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/close_dialog"
                 android:padding="12dp"
@@ -55,14 +54,16 @@
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="24dp"
-                android:paddingTop="20dp">
+                android:paddingHorizontal="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
 
                 <!-- Title Field -->
                 <TextView
@@ -215,6 +216,7 @@
                         android:orientation="vertical"
                         android:layout_marginStart="12dp">
                         <TextView
+                            android:id="@+id/tvUploadStatus"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/upload_an_image"
@@ -243,8 +245,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp">
+                    android:layout_marginTop="8dp">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCancel"

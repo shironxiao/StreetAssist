@@ -104,6 +104,7 @@ public class ReportFragment extends Fragment {
         // Sorting is done manually below.
         listenerRegistration = db.collection("reports")
                 .whereEqualTo("userId", currentUserId)
+                .limit(50)
                 .addSnapshotListener((snapshots, error) -> {
 
                     if (error != null) {

@@ -38,6 +38,8 @@
     <string name="resolved">Resolved</string>
     <string name="open_on_map">Open on Map</string>
     <string name="incident_description">INCIDENT DESCRIPTION</string>
+    <string name="subject_info_label">SUBJECT INFORMATION</string>
+    <string name="assistance_label">ASSISTANCE NEEDED</string>
     <string name="location_label">LOCATION</string>
     <string name="update_status">UPDATE STATUS</string>
     <string name="reporter_label">Reporter</string>
@@ -45,6 +47,12 @@
     <string name="reporter_contact">Contact:</string>
     <string name="reporter_address">Address:</string>
     <string name="loading">Loading...</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="resident_comments">Resident Comments</string>
+    <string name="no_comments_yet">No comments yet.</string>
+    <string name="view_comments">View Comments</string>
+    <string name="delete_report">Delete Report</string>
+    <string name="delete_selected">Delete (%1$d)</string>
+    <string name="cancel_selection">Cancel</string>
+    <string name="delete_selected_title">Delete Selected Reports</string>
+    <string name="delete_selected_message">Are you sure you want to delete %1$d selected reports? This action cannot be undone.</string>
 </resources>

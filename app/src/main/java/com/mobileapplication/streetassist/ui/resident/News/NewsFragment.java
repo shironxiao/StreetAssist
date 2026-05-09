@@ -453,7 +453,7 @@ public class NewsFragment extends Fragment {
                         etComment.setError("Write something first");
                         return;
                     }
-                    postComment(announcement.id, text, etComment, btnSendComment);
+                    postComment(announcement, text, etComment, btnSendComment);
                 });
 
                 btnCommentLocation.setOnClickListener(v -> {
@@ -613,7 +613,7 @@ public class NewsFragment extends Fragment {
                         });
             }
 
-            private void postComment(String announcementId, String text,
+            private void postComment(Announcement announcement, String text,
                                      EditText etComment, ImageButton btnSend) {
                 FirebaseUser user = mAuth.getCurrentUser();
                 if (user == null) {
@@ -629,6 +629,12 @@ public class NewsFragment extends Fragment {
                         .addOnSuccessListener(userDoc -> {
                             String userName = userDoc.getString("fullName");
                             String userAvatarUrl = userDoc.getString("profileImageUrl");
+                            if (userName == null || userName.isEmpty()) {
+                                userName = userDoc.getString("username");
+                            }
+                            if (userName == null || userName.isEmpty()) {
+                                userName = user.getDisplayName();
+                            }
                             if (userName == null || userName.isEmpty()) {
                                 userName = user.getEmail() != null ? user.getEmail() : "Resident";
                             }
@@ -659,7 +665,7 @@ public class NewsFragment extends Fragment {
                             final String finalUserAvatarUrl = userAvatarUrl != null ? userAvatarUrl : "";
 
                             db.collection("announcements")
-                                    .document(announcementId)
+                                    .document(announcement.id)
                                     .collection("comments")
                                     .add(commentData)
                                     .addOnSuccessListener(docRef -> {
@@ -688,6 +694,17 @@ public class NewsFragment extends Fragment {
                                         rvComments.scrollToPosition(comments.size() - 1);
                                         updateCommentCount(comments.size());
                                         tvNoComments.setVisibility(View.GONE);
+
+                                        // Send notification to Admin
+                                        Map<String, Object> notification = new HashMap<>();
+                                        notification.put("title", "New Comment");
+                                        notification.put("message", finalUserName + " commented on: " + announcement.title);
+                                        notification.put("type", "new_comment");
+                                        notification.put("referenceId", announcement.id);
+                                        notification.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+                                        notification.put("isRead", false);
+
+                                        db.collection("admin_notifications").add(notification);
                                     })
                                     .addOnFailureListener(e -> {
                                         btnSend.setEnabled(true);
