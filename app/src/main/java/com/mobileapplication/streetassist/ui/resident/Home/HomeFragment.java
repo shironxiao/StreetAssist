@@ -88,7 +88,7 @@ public class HomeFragment extends Fragment {
 
         // Submit report card
         cardSubmitReport.setOnClickListener(v ->
-                Navigation.findNavController(requireView()).navigate(R.id.reportFragment));
+                Navigation.findNavController(requireView()).navigate(R.id.report));
 
         // Notification bell
         view.findViewById(R.id.ivNotification).setOnClickListener(v ->
