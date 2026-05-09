@@ -97,7 +97,9 @@ public class HomeFragment extends Fragment {
         // See all → Reports tab
         tvSeeAll.setOnClickListener(v -> {
             if (getActivity() != null) {
-                getActivity().findViewById(R.id.report).performClick();
+                com.google.android.material.bottomnavigation.BottomNavigationView nav = 
+                    getActivity().findViewById(R.id.bottom_navigation);
+                if (nav != null) nav.setSelectedItemId(R.id.report);
             }
         });
 
@@ -241,10 +243,9 @@ public class HomeFragment extends Fragment {
             // Navigate to Reports fragment on click
             card.setOnClickListener(v -> {
                 if (getActivity() != null) {
-                    View reportTab = getActivity().findViewById(R.id.report);
-                    if (reportTab != null) {
-                        reportTab.performClick();
-                    }
+                    com.google.android.material.bottomnavigation.BottomNavigationView nav = 
+                        getActivity().findViewById(R.id.bottom_navigation);
+                    if (nav != null) nav.setSelectedItemId(R.id.report);
                 }
             });
 

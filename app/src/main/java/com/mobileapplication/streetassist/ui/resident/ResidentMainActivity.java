@@ -47,10 +47,13 @@ public class ResidentMainActivity extends AppCompatActivity {
 
     private void checkIntent(android.content.Intent intent) {
         if (intent != null && intent.getBooleanExtra("nav_to_report", false)) {
+            // Clear the extra so it doesn't trigger again (e.g. on rotation)
+            intent.putExtra("nav_to_report", false);
+
             if (binding.bottomNavigation != null) {
                 binding.bottomNavigation.post(() -> {
-                    android.view.View reportTab = binding.bottomNavigation.findViewById(R.id.report);
-                    if (reportTab != null) reportTab.performClick();
+                    // Switch to the report tab programmatically
+                    binding.bottomNavigation.setSelectedItemId(R.id.report);
                 });
             }
         }
