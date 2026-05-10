@@ -83,8 +83,8 @@ public class NewsFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container,
-                             Bundle savedInstanceState) {
+            ViewGroup container,
+            Bundle savedInstanceState) {
         // Initialize OSMDroid configuration
         org.osmdroid.config.Configuration.getInstance().load(
                 requireContext(),
@@ -98,7 +98,7 @@ public class NewsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        org.osmdroid.config.Configuration.getInstance().load(requireContext(), 
+        org.osmdroid.config.Configuration.getInstance().load(requireContext(),
                 PreferenceManager.getDefaultSharedPreferences(requireContext()));
     }
 
@@ -137,7 +137,8 @@ public class NewsFragment extends Fragment {
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (layoutManager != null && layoutManager.findLastCompletelyVisibleItemPosition() == filteredAnnouncements.size() - 1) {
+                if (layoutManager != null
+                        && layoutManager.findLastCompletelyVisibleItemPosition() == filteredAnnouncements.size() - 1) {
                     if (!isLoadingMore && !isLastItemReached) {
                         loadAnnouncements(false);
                     }
@@ -148,11 +149,18 @@ public class NewsFragment extends Fragment {
 
     private void setupSearchAndFilter() {
         etSearchNews.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 filterList(s.toString());
             }
-            @Override public void afterTextChanged(android.text.Editable s) {}
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
         });
 
         swipeRefresh.setOnRefreshListener(() -> {
@@ -173,18 +181,22 @@ public class NewsFragment extends Fragment {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.length > 0
+                && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             showMapPickerAfterPermission();
         }
     }
 
     private void showMapPickerAfterPermission() {
         // This is a helper to find the ViewHolder that was requesting the map
-        // but since fragments can have multiple VHs, it's simpler to just let the user click again
+        // but since fragments can have multiple VHs, it's simpler to just let the user
+        // click again
         // or we can just open a generic picker. For now, a toast is safe.
-        Toast.makeText(getContext(), "Permission granted! Please tap the location icon again.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Permission granted! Please tap the location icon again.", Toast.LENGTH_SHORT)
+                .show();
     }
 
     private void showDateRangePicker() {
@@ -192,8 +204,7 @@ public class NewsFragment extends Fragment {
                 .setTitleText("Select Date Range")
                 .setSelection(new Pair<>(
                         MaterialDatePicker.todayInUtcMilliseconds(),
-                        MaterialDatePicker.todayInUtcMilliseconds()
-                ))
+                        MaterialDatePicker.todayInUtcMilliseconds()))
                 .build();
 
         picker.addOnPositiveButtonClickListener(selection -> {
@@ -221,13 +232,12 @@ public class NewsFragment extends Fragment {
         picker.show(getChildFragmentManager(), "DATE_RANGE_PICKER");
     }
 
-
     private void filterList(String query) {
         filteredAnnouncements.clear();
 
         for (Announcement a : allAnnouncements) {
             boolean matchesSearch = a.title != null && a.title.toLowerCase().contains(query.toLowerCase());
-            
+
             boolean matchesDate = true;
             if (startDate != null && endDate != null && a.timestamp != null) {
                 long time = a.timestamp.toDate().getTime();
@@ -241,7 +251,6 @@ public class NewsFragment extends Fragment {
         adapter.notifyDataSetChanged();
         tvEmpty.setVisibility(filteredAnnouncements.isEmpty() ? View.VISIBLE : View.GONE);
     }
-
 
     private void loadAnnouncements(boolean isInitial) {
         if (isInitial) {
@@ -317,14 +326,36 @@ public class NewsFragment extends Fragment {
     }
 
     private void showCreateAccountDialog(String message) {
-        if (getContext() == null) return;
+        if (getContext() == null)
+            return;
         new AlertDialog.Builder(requireContext())
                 .setTitle("Create Account")
                 .setMessage(message)
-                .setPositiveButton("Yes", (dialog, which) ->
-                        startActivity(new Intent(requireActivity(), RegisterActivity.class)))
+                .setPositiveButton("Yes",
+                        (dialog, which) -> startActivity(new Intent(requireActivity(), RegisterActivity.class)))
                 .setNegativeButton("No", null)
                 .show();
+    }
+
+    private void showLocationOnMap(double lat, double lng) {
+        if (getContext() == null)
+            return;
+        Dialog dialog = new Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_map_view);
+        MapView map = dialog.findViewById(R.id.mapViewOnly);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseMap);
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMultiTouchControls(true);
+        GeoPoint point = new GeoPoint(lat, lng);
+        map.getController().setZoom(17.0);
+        map.getController().setCenter(point);
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setTitle("Sighting Location");
+        map.getOverlays().add(marker);
+        btnClose.setOnClickListener(va -> dialog.dismiss());
+        dialog.show();
     }
 
     public static class Announcement {
@@ -342,7 +373,10 @@ public class NewsFragment extends Fragment {
 
     private class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapter.AnnouncementVH> {
         private final List<Announcement> items;
-        AnnouncementAdapter(List<Announcement> items) { this.items = items; }
+
+        AnnouncementAdapter(List<Announcement> items) {
+            this.items = items;
+        }
 
         @NonNull
         @Override
@@ -358,7 +392,9 @@ public class NewsFragment extends Fragment {
         }
 
         @Override
-        public int getItemCount() { return items.size(); }
+        public int getItemCount() {
+            return items.size();
+        }
 
         class AnnouncementVH extends RecyclerView.ViewHolder {
             TextView tvTitle, tvName, tvSubtitle, tvDate, tvContact, tvToggleComments, tvCommentCount, tvNoComments;
@@ -422,7 +458,7 @@ public class NewsFragment extends Fragment {
                 tvToggleComments.setText("💬 View Comments");
 
                 tvTitle.setText(announcement.title != null ? announcement.title : "");
-                
+
                 if (announcement.name != null && !announcement.name.isEmpty()) {
                     tvName.setVisibility(View.VISIBLE);
                     tvName.setText("Subject: " + announcement.name);
@@ -441,26 +477,29 @@ public class NewsFragment extends Fragment {
                 }
 
                 tvCategory.setText(announcement.category != null ? announcement.category : "ANNOUNCEMENT");
-                
+
                 // Bind Incident Info
                 boolean hasIncidentInfo = (announcement.incidentDate != null && !announcement.incidentDate.isEmpty())
                         || (announcement.locationAddress != null && !announcement.locationAddress.isEmpty());
-                
+
                 if (hasIncidentInfo) {
                     containerIncidentInfo.setVisibility(View.VISIBLE);
                     String dateTime = "";
-                    if (announcement.incidentDate != null && !announcement.incidentDate.isEmpty()) dateTime += "📅 " + announcement.incidentDate;
-                    if (announcement.incidentTime != null && !announcement.incidentTime.isEmpty()) dateTime += (dateTime.isEmpty() ? "" : " at ") + announcement.incidentTime;
-                    
+                    if (announcement.incidentDate != null && !announcement.incidentDate.isEmpty())
+                        dateTime += "📅 " + announcement.incidentDate;
+                    if (announcement.incidentTime != null && !announcement.incidentTime.isEmpty())
+                        dateTime += (dateTime.isEmpty() ? "" : " at ") + announcement.incidentTime;
+
                     tvIncidentDateTime.setVisibility(dateTime.isEmpty() ? View.GONE : View.VISIBLE);
                     tvIncidentDateTime.setText(dateTime);
-                    
+
                     if (announcement.locationAddress != null && !announcement.locationAddress.isEmpty()) {
                         tvLocation.setVisibility(View.VISIBLE);
                         tvLocation.setText("📍 " + announcement.locationAddress);
-                        
+
                         if (announcement.latitude != null && announcement.longitude != null) {
-                            tvLocation.setOnClickListener(v -> showLocationOnMap(announcement.latitude, announcement.longitude));
+                            tvLocation.setOnClickListener(
+                                    v -> showLocationOnMap(announcement.latitude, announcement.longitude));
                         } else {
                             tvLocation.setOnClickListener(null);
                         }
@@ -508,7 +547,8 @@ public class NewsFragment extends Fragment {
                         commentSection.setVisibility(View.VISIBLE);
                         tvToggleComments.setText("➖ Hide Comments");
                         commentsVisible = true;
-                        if (!commentsLoaded) loadComments(announcement.id);
+                        if (!commentsLoaded)
+                            loadComments(announcement.id);
                     } else {
                         commentSection.setVisibility(View.GONE);
                         tvToggleComments.setText("💬 View Comments");
@@ -526,6 +566,14 @@ public class NewsFragment extends Fragment {
                         etComment.setError("Write something first");
                         return;
                     }
+
+                    if (attachedLat == null || attachedLng == null) {
+                        Toast.makeText(requireContext(),
+                                "📍 Please attach a location sighting to your comment.", Toast.LENGTH_LONG)
+                                .show();
+                        return;
+                    }
+
                     postComment(announcement, text, etComment, btnSendComment);
                 });
 
@@ -534,8 +582,10 @@ public class NewsFragment extends Fragment {
                         showCreateAccountDialog("Create account to attach location?");
                         return;
                     }
-                    if (androidx.core.app.ActivityCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                        requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST);
+                    if (androidx.core.app.ActivityCompat.checkSelfPermission(requireContext(),
+                            android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[] { android.Manifest.permission.ACCESS_FINE_LOCATION },
+                                LOCATION_PERMISSION_REQUEST);
                     } else {
                         showMapPicker();
                     }
@@ -554,16 +604,17 @@ public class NewsFragment extends Fragment {
 
                 map.setTileSource(TileSourceFactory.MAPNIK);
                 map.setMultiTouchControls(true);
-                
+
                 final Marker marker = new Marker(map);
                 marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
                 map.getOverlays().add(marker);
 
-                final GeoPoint[] selectedPoint = {null};
+                final GeoPoint[] selectedPoint = { null };
 
                 // Auto-center on current location
                 FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(requireActivity());
-                if (androidx.core.app.ActivityCompat.checkSelfPermission(requireContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                if (androidx.core.app.ActivityCompat.checkSelfPermission(requireContext(),
+                        android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                     client.getLastLocation().addOnSuccessListener(location -> {
                         if (location != null) {
                             GeoPoint p = new GeoPoint(location.getLatitude(), location.getLongitude());
@@ -583,7 +634,8 @@ public class NewsFragment extends Fragment {
                 }
 
                 map.getOverlays().add(new MapEventsOverlay(new MapEventsReceiver() {
-                    @Override public boolean singleTapConfirmedHelper(GeoPoint p) {
+                    @Override
+                    public boolean singleTapConfirmedHelper(GeoPoint p) {
                         selectedPoint[0] = p;
                         marker.setPosition(p);
                         marker.setTitle("Pinned Sighting");
@@ -591,7 +643,11 @@ public class NewsFragment extends Fragment {
                         btnSelect.setEnabled(true);
                         return true;
                     }
-                    @Override public boolean longPressHelper(GeoPoint p) { return false; }
+
+                    @Override
+                    public boolean longPressHelper(GeoPoint p) {
+                        return false;
+                    }
                 }));
 
                 btnCurrent.setOnClickListener(v -> {
@@ -611,37 +667,43 @@ public class NewsFragment extends Fragment {
                     if (selectedPoint[0] != null) {
                         attachedLat = selectedPoint[0].getLatitude();
                         attachedLng = selectedPoint[0].getLongitude();
-                        
+
                         // Start reverse geocoding to get the address string
                         new Thread(() -> {
                             try {
-                                android.location.Geocoder geocoder = new android.location.Geocoder(requireContext(), Locale.getDefault());
-                                List<android.location.Address> addresses = geocoder.getFromLocation(attachedLat, attachedLng, 1);
+                                android.location.Geocoder geocoder = new android.location.Geocoder(requireContext(),
+                                        Locale.getDefault());
+                                List<android.location.Address> addresses = geocoder.getFromLocation(attachedLat,
+                                        attachedLng, 1);
                                 if (addresses != null && !addresses.isEmpty()) {
                                     android.location.Address addr = addresses.get(0);
                                     StringBuilder sb = new StringBuilder();
                                     for (int i = 0; i <= addr.getMaxAddressLineIndex(); i++) {
                                         sb.append(addr.getAddressLine(i));
-                                        if (i < addr.getMaxAddressLineIndex()) sb.append(", ");
+                                        if (i < addr.getMaxAddressLineIndex())
+                                            sb.append(", ");
                                     }
                                     attachedAddress = sb.toString();
                                 } else {
-                                    attachedAddress = String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f", attachedLat, attachedLng);
+                                    attachedAddress = String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
+                                            attachedLat, attachedLng);
                                 }
                                 requireActivity().runOnUiThread(() -> {
                                     tvAttachedLocation.setVisibility(View.VISIBLE);
                                     tvAttachedLocation.setText("📍 " + attachedAddress);
-                                    btnCommentLocation.setColorFilter(ContextCompat.getColor(requireContext(), R.color.blue_primary));
+                                    btnCommentLocation.setColorFilter(
+                                            ContextCompat.getColor(requireContext(), R.color.blue_primary));
                                 });
                             } catch (Exception e) {
-                                attachedAddress = String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f", attachedLat, attachedLng);
+                                attachedAddress = String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
+                                        attachedLat, attachedLng);
                                 requireActivity().runOnUiThread(() -> {
                                     tvAttachedLocation.setVisibility(View.VISIBLE);
                                     tvAttachedLocation.setText("📍 Location pinned");
                                 });
                             }
                         }).start();
-                        
+
                         dialog.dismiss();
                     }
                 });
@@ -687,7 +749,7 @@ public class NewsFragment extends Fragment {
             }
 
             private void postComment(Announcement announcement, String text,
-                                     EditText etComment, ImageButton btnSend) {
+                    EditText etComment, ImageButton btnSend) {
                 FirebaseUser user = mAuth.getCurrentUser();
                 if (user == null) {
                     Toast.makeText(itemView.getContext(),
@@ -712,27 +774,17 @@ public class NewsFragment extends Fragment {
                                 userName = user.getEmail() != null ? user.getEmail() : "Resident";
                             }
 
-                            if (text.isEmpty()) {
-                                etComment.setError("Comment cannot be empty");
-                                return;
-                            }
-                            
-                            if (attachedLat == null || attachedLng == null) {
-                                Toast.makeText(requireContext(), "📍 Please attach a location sighting to your comment.", Toast.LENGTH_LONG).show();
-                                return;
-                            }
-
                             Map<String, Object> commentData = new HashMap<>();
                             commentData.put("userId", user.getUid());
                             commentData.put("userName", userName);
                             commentData.put("userAvatarUrl", userAvatarUrl != null ? userAvatarUrl : "");
                             commentData.put("text", text);
                             commentData.put("timestamp", Timestamp.now());
-                            if (attachedLat != null) {
-                                commentData.put("latitude", attachedLat);
-                                commentData.put("longitude", attachedLng);
-                                commentData.put("locationAddress", attachedAddress);
-                            }
+
+                            // Location is guaranteed to be non-null here due to validation in listener
+                            commentData.put("latitude", attachedLat);
+                            commentData.put("longitude", attachedLng);
+                            commentData.put("locationAddress", attachedAddress);
 
                             final String finalUserName = userName;
                             final String finalUserAvatarUrl = userAvatarUrl != null ? userAvatarUrl : "";
@@ -754,14 +806,14 @@ public class NewsFragment extends Fragment {
                                         newComment.longitude = attachedLng;
                                         newComment.locationAddress = attachedAddress;
                                         newComment.timestamp = Timestamp.now();
-                                        
+
                                         // Reset attached location after post
                                         attachedLat = null;
                                         attachedLng = null;
                                         attachedAddress = null;
                                         tvAttachedLocation.setVisibility(View.GONE);
                                         btnCommentLocation.setColorFilter(null);
-                                        
+
                                         comments.add(newComment);
                                         commentAdapter.notifyItemInserted(comments.size() - 1);
                                         rvComments.scrollToPosition(comments.size() - 1);
@@ -771,10 +823,12 @@ public class NewsFragment extends Fragment {
                                         // Send notification to Admin
                                         Map<String, Object> notification = new HashMap<>();
                                         notification.put("title", "New Comment");
-                                        notification.put("message", finalUserName + " commented on: " + announcement.title);
+                                        notification.put("message",
+                                                finalUserName + " commented on: " + announcement.title);
                                         notification.put("type", "new_comment");
                                         notification.put("referenceId", announcement.id);
-                                        notification.put("createdAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+                                        notification.put("createdAt",
+                                                com.google.firebase.firestore.FieldValue.serverTimestamp());
                                         notification.put("isRead", false);
 
                                         db.collection("admin_notifications").add(notification);
@@ -797,7 +851,8 @@ public class NewsFragment extends Fragment {
             }
 
             private void showFullImageDialog(String imageUrl) {
-                if (getContext() == null) return;
+                if (getContext() == null)
+                    return;
                 Dialog dialog = new Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
                 dialog.setContentView(R.layout.dialog_fullscreen_image);
 
@@ -818,7 +873,10 @@ public class NewsFragment extends Fragment {
 
             private class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentVH> {
                 private final List<Comment> items;
-                CommentAdapter(List<Comment> items) { this.items = items; }
+
+                CommentAdapter(List<Comment> items) {
+                    this.items = items;
+                }
 
                 @NonNull
                 @Override
@@ -834,7 +892,9 @@ public class NewsFragment extends Fragment {
                 }
 
                 @Override
-                public int getItemCount() { return items.size(); }
+                public int getItemCount() {
+                    return items.size();
+                }
 
                 class CommentVH extends RecyclerView.ViewHolder {
                     ImageView ivAvatar;
@@ -856,7 +916,7 @@ public class NewsFragment extends Fragment {
                     void bind(Comment comment) {
                         tvName.setText(comment.userName != null ? comment.userName : "Resident");
                         tvText.setText(comment.text);
-                        
+
                         if (comment.timestamp != null) {
                             SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
                             tvTime.setText(sdf.format(comment.timestamp.toDate()));
@@ -873,7 +933,7 @@ public class NewsFragment extends Fragment {
 
                         btnDelete.setOnClickListener(v -> showDeleteConfirmation(comment));
                         btnEdit.setOnClickListener(v -> showEditDialog(comment));
-                        
+
                         if (comment.userAvatarUrl != null && !comment.userAvatarUrl.isEmpty()
                                 && comment.userAvatarUrl.startsWith("http")) {
                             Glide.with(itemView.getContext())
@@ -892,7 +952,8 @@ public class NewsFragment extends Fragment {
                             } else {
                                 btnViewLocation.setText("📍 View Sighting Location");
                             }
-                            btnViewLocation.setOnClickListener(v -> showLocationOnMap(comment.latitude, comment.longitude));
+                            btnViewLocation
+                                    .setOnClickListener(v -> showLocationOnMap(comment.latitude, comment.longitude));
                         } else {
                             btnViewLocation.setVisibility(View.GONE);
                         }
@@ -917,7 +978,8 @@ public class NewsFragment extends Fragment {
                                         comments.remove(pos);
                                         commentAdapter.notifyItemRemoved(pos);
                                         updateCommentCount(comments.size());
-                                        if (comments.isEmpty()) tvNoComments.setVisibility(View.VISIBLE);
+                                        if (comments.isEmpty())
+                                            tvNoComments.setVisibility(View.VISIBLE);
                                     }
                                 });
                     }
@@ -933,7 +995,8 @@ public class NewsFragment extends Fragment {
                                 .setView(etEdit)
                                 .setPositiveButton("Update", (dialog, which) -> {
                                     String newText = etEdit.getText().toString().trim();
-                                    if (!newText.isEmpty()) updateComment(comment, newText);
+                                    if (!newText.isEmpty())
+                                        updateComment(comment, newText);
                                 })
                                 .setNegativeButton("Cancel", null)
                                 .show();
@@ -946,28 +1009,11 @@ public class NewsFragment extends Fragment {
                                 .addOnSuccessListener(aVoid -> {
                                     comment.text = newText;
                                     int pos = comments.indexOf(comment);
-                                    if (pos != -1) commentAdapter.notifyItemChanged(pos);
+                                    if (pos != -1)
+                                        commentAdapter.notifyItemChanged(pos);
                                 });
                     }
 
-                    private void showLocationOnMap(double lat, double lng) {
-                        Dialog dialog = new Dialog(itemView.getContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-                        dialog.setContentView(R.layout.dialog_map_view);
-                        MapView map = dialog.findViewById(R.id.mapViewOnly);
-                        ImageButton btnClose = dialog.findViewById(R.id.btnCloseMap);
-                        map.setTileSource(TileSourceFactory.MAPNIK);
-                        map.setMultiTouchControls(true);
-                        GeoPoint point = new GeoPoint(lat, lng);
-                        map.getController().setZoom(17.0);
-                        map.getController().setCenter(point);
-                        Marker marker = new Marker(map);
-                        marker.setPosition(point);
-                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-                        marker.setTitle("Sighting Location");
-                        map.getOverlays().add(marker);
-                        btnClose.setOnClickListener(va -> dialog.dismiss());
-                        dialog.show();
-                    }
                 }
             }
         }
