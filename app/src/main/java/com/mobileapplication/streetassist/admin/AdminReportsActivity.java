@@ -62,6 +62,27 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
         db = FirebaseFirestore.getInstance();
 
+        // Security Guard
+        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            logout();
+            return;
+        }
+
+        // Verify Admin Role
+        db.collection("users").document(user.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String role = documentSnapshot.getString("role");
+                    if (!"admin".equalsIgnoreCase(role)) {
+                        Toast.makeText(this, "Access Denied: Admin role required", Toast.LENGTH_LONG).show();
+                        logout();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Role verification failed", e);
+                    Toast.makeText(this, "Error verifying role: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -127,6 +148,21 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
         });
         rvReports.setAdapter(adapter);
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                } else {
+                    startActivity(new Intent(AdminReportsActivity.this, AdminDashboardActivity.class));
+                    finish();
+                }
+            }
+        });
+
+        // Check for deep link on start
+        checkDeepLink();
     }
 
     @Override
@@ -214,6 +250,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
         }
         adapter.updateList(filteredList);
+        checkDeepLink();
     }
 
     private void showFilterPopup() {
@@ -239,6 +276,21 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             return true;
         });
         popup.show();
+    }
+
+    private void checkDeepLink() {
+        String targetId = getIntent().getStringExtra("reportId");
+        if (targetId != null && !filteredList.isEmpty()) {
+            for (Map<String, Object> report : filteredList) {
+                String docId = (String) report.get("documentId");
+                String rId = (String) report.get("reportId");
+                if (targetId.equals(docId) || targetId.equals(rId)) {
+                    getIntent().removeExtra("reportId");
+                    showReportDetails(report);
+                    break;
+                }
+            }
+        }
     }
 
     public void showReportDetails(Map<String, Object> report) {
@@ -621,13 +673,11 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             // Already here
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminAnnouncementsActivity.class));
-            finish();
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();
         } else if (id == R.id.nav_notifications) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminNotificationActivity.class));
-            finish();
         } else if (id == R.id.nav_logout) {
             logout();
         }
@@ -639,6 +689,11 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     }
 
     private void logout() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            db.collection("users").document(uid)
+                    .update("fcmToken", com.google.firebase.firestore.FieldValue.delete());
+        }
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, IntroductionUserLevel.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

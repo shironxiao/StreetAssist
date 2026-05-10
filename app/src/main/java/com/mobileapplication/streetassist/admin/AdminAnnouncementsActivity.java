@@ -9,6 +9,23 @@ import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.app.Dialog;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
+
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.events.MapEventsReceiver;
+import org.osmdroid.views.overlay.MapEventsOverlay;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import java.util.Calendar;
+import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -20,6 +37,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.mobileapplication.streetassist.R;
@@ -57,6 +75,11 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
     private static final String API_KEY = "938268411726485";
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
+    private String selectedDate = "";
+    private String selectedTime = "";
+    private double selectedLat = 0, selectedLng = 0;
+    private String selectedAddress = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +95,26 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
         db = FirebaseFirestore.getInstance();
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            logout();
+            return;
+        }
+
+        // Verify Admin Role
+        db.collection("users").document(user.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String role = documentSnapshot.getString("role");
+                    if (!"admin".equals(role)) {
+                        Toast.makeText(this, "Access Denied: Admin role required", Toast.LENGTH_LONG).show();
+                        logout();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Role verification failed", e);
+                    Toast.makeText(this, "Error verifying role: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
 
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -143,7 +186,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();
         } else if (id == R.id.nav_notifications) {
-            startActivity(new Intent(this, AdminNotificationActivity.class));
+            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminNotificationActivity.class));
             finish();
         } else if (id == R.id.nav_logout) {
             logout();
@@ -158,6 +201,11 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
     }
 
     private void logout() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            db.collection("users").document(uid)
+                    .update("fcmToken", com.google.firebase.firestore.FieldValue.delete());
+        }
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, IntroductionUserLevel.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -168,31 +216,42 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
     private void showAddAnnouncementDialog() {
         android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_announcement, null);
         android.widget.EditText etTitle = dialogView.findViewById(R.id.etTitle);
-        android.widget.EditText etCategory = dialogView.findViewById(R.id.etCategory);
+        android.widget.EditText etName = dialogView.findViewById(R.id.etName);
         android.widget.EditText etSubtitle = dialogView.findViewById(R.id.etSubtitle);
         android.widget.EditText etContact = dialogView.findViewById(R.id.etContact);
+        android.widget.EditText etDate = dialogView.findViewById(R.id.etDate);
+        android.widget.EditText etTime = dialogView.findViewById(R.id.etTime);
+        android.widget.EditText etLocation = dialogView.findViewById(R.id.etLocation);
         android.view.View containerUpload = dialogView.findViewById(R.id.containerUpload);
         tvUploadStatus = dialogView.findViewById(R.id.tvUploadStatus);
         android.view.View btnClose = dialogView.findViewById(R.id.btnClose);
         android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         android.widget.Button btnPost = dialogView.findViewById(R.id.btnPost);
 
-        selectedImageUri = null; // Reset for new dialog
+        selectedImageUri = null;
+        selectedDate = "";
+        selectedTime = "";
+        selectedLat = 0;
+        selectedLng = 0;
+        selectedAddress = "";
+
+
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_StreetAssist)
                 .setView(dialogView)
                 .setCancelable(true)
                 .create();
 
-        // Make background transparent to show card corners
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
-        btnClose.setOnClickListener(v -> {
-            Log.d(TAG, "Close button clicked");
-            dialog.dismiss();
-        });
+        // Pickers
+        etDate.setOnClickListener(v -> showDatePicker(etDate));
+        etTime.setOnClickListener(v -> showTimePicker(etTime));
+        etLocation.setOnClickListener(v -> showMapPicker(etLocation));
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         containerUpload.setOnClickListener(v -> {
@@ -203,18 +262,19 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
         btnPost.setOnClickListener(v -> {
             String title = etTitle.getText().toString();
-            String category = etCategory.getText().toString();
+            String name = etName.getText().toString();
+            String category = "MISSING PERSON";
             String subtitle = etSubtitle.getText().toString();
             String contact = etContact.getText().toString();
 
-            if (!title.isEmpty() && !category.isEmpty()) {
+            if (!title.isEmpty()) {
                 if (selectedImageUri != null) {
-                    uploadToCloudinary(selectedImageUri, title, category, subtitle, contact, dialog);
+                    uploadToCloudinary(selectedImageUri, title, name, category, subtitle, contact, dialog);
                 } else {
-                    postToFirestore(title, category, subtitle, contact, "", dialog);
+                    postToFirestore(title, name, category, subtitle, contact, "", dialog);
                 }
             } else {
-                Toast.makeText(this, "Title and Category are required", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -223,15 +283,123 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(dm);
             int dialogWidth = (int) (dm.widthPixels * 0.94f);
-            int dialogHeight = (int) (dm.heightPixels * 0.88f);
-            dialog.getWindow().setLayout(
-                    dialogWidth,
-                    dialogHeight
-            );
+            // Allow height to wrap content but with max constraint
+            dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
 
-    private void uploadToCloudinary(Uri imageUri, String title, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
+    private void showDatePicker(EditText et) {
+        Calendar cal = Calendar.getInstance();
+        new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+            selectedDate = String.format(Locale.getDefault(), "%02d/%02d/%d", month + 1, dayOfMonth, year);
+            et.setText(selectedDate);
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show();
+    }
+
+    private void showTimePicker(EditText et) {
+        Calendar cal = Calendar.getInstance();
+        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+            String amPm = hourOfDay < 12 ? "AM" : "PM";
+            int hour = hourOfDay % 12;
+            if (hour == 0) hour = 12;
+            selectedTime = String.format(Locale.getDefault(), "%d:%02d %s", hour, minute, amPm);
+            et.setText(selectedTime);
+        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show();
+    }
+
+    private void showMapPicker(EditText et) {
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_map_picker);
+
+        MapView map = dialog.findViewById(R.id.mapViewPicker);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseMap);
+        com.google.android.material.button.MaterialButton btnSelect = dialog.findViewById(R.id.btnSelectLocation);
+        com.google.android.material.button.MaterialButton btnCurrent = dialog.findViewById(R.id.btnCurrentLocation);
+
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMultiTouchControls(true);
+
+        final Marker marker = new Marker(map);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        map.getOverlays().add(marker);
+
+        final GeoPoint[] selectedPoint = {null};
+
+        FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
+        if (androidx.core.app.ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            client.getLastLocation().addOnSuccessListener(location -> {
+                if (location != null) {
+                    GeoPoint p = new GeoPoint(location.getLatitude(), location.getLongitude());
+                    selectedPoint[0] = p;
+                    marker.setPosition(p);
+                    map.getController().setZoom(17.0);
+                    map.getController().setCenter(p);
+                    btnSelect.setEnabled(true);
+                } else {
+                    map.getController().setZoom(15.0);
+                    map.getController().setCenter(new GeoPoint(14.6760, 121.0437));
+                }
+            });
+        } else {
+            map.getController().setZoom(15.0);
+            map.getController().setCenter(new GeoPoint(14.6760, 121.0437));
+        }
+
+        map.getOverlays().add(new MapEventsOverlay(new MapEventsReceiver() {
+            @Override public boolean singleTapConfirmedHelper(GeoPoint p) {
+                selectedPoint[0] = p;
+                marker.setPosition(p);
+                map.invalidate();
+                btnSelect.setEnabled(true);
+                return true;
+            }
+            @Override public boolean longPressHelper(GeoPoint p) { return false; }
+        }));
+
+        btnCurrent.setOnClickListener(v -> {
+            if (androidx.core.app.ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                client.getLastLocation().addOnSuccessListener(location -> {
+                    if (location != null) {
+                        GeoPoint p = new GeoPoint(location.getLatitude(), location.getLongitude());
+                        selectedPoint[0] = p;
+                        marker.setPosition(p);
+                        map.getController().animateTo(p);
+                        map.invalidate();
+                        btnSelect.setEnabled(true);
+                    }
+                });
+            }
+        });
+
+        btnSelect.setOnClickListener(v -> {
+            if (selectedPoint[0] != null) {
+                selectedLat = selectedPoint[0].getLatitude();
+                selectedLng = selectedPoint[0].getLongitude();
+                
+                new Thread(() -> {
+                    try {
+                        android.location.Geocoder geocoder = new android.location.Geocoder(this, Locale.getDefault());
+                        List<android.location.Address> addresses = geocoder.getFromLocation(selectedLat, selectedLng, 1);
+                        if (addresses != null && !addresses.isEmpty()) {
+                            selectedAddress = addresses.get(0).getAddressLine(0);
+                        } else {
+                            selectedAddress = String.format(Locale.getDefault(), "%.5f, %.5f", selectedLat, selectedLng);
+                        }
+                        runOnUiThread(() -> et.setText(selectedAddress));
+                    } catch (Exception e) {
+                        selectedAddress = String.format(Locale.getDefault(), "%.5f, %.5f", selectedLat, selectedLng);
+                        runOnUiThread(() -> et.setText(selectedAddress));
+                    }
+                }).start();
+                dialog.dismiss();
+            }
+        });
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void uploadToCloudinary(Uri imageUri, String title, String name, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
         Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
         executor.execute(() -> {
             try {
@@ -278,7 +446,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 JSONObject json = new JSONObject(new String(responseBytes));
                 if (status == 200 && json.has("secure_url")) {
                     String imageUrl = json.getString("secure_url");
-                    runOnUiThread(() -> postToFirestore(title, category, subtitle, contact, imageUrl, dialog));
+                    runOnUiThread(() -> postToFirestore(title, name, category, subtitle, contact, imageUrl, dialog));
                 } else {
                     String error = json.optString("error", "Upload failed");
                     runOnUiThread(() -> Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show());
@@ -289,22 +457,34 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         });
     }
 
-    private void postToFirestore(String title, String category, String subtitle, String contact, String imageUrl, androidx.appcompat.app.AlertDialog dialog) {
+    private void postToFirestore(String title, String name, String category, String subtitle, String contact, String imageUrl, androidx.appcompat.app.AlertDialog dialog) {
         java.util.Map<String, Object> post = new java.util.HashMap<>();
         post.put("title", title);
+        post.put("name", name);
         post.put("category", category);
         post.put("subtitle", subtitle);
         post.put("contact", contact);
         post.put("imageUrl", imageUrl);
+        post.put("status", "Verified by Police"); // Default status
         post.put("date", new java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(new java.util.Date()));
         post.put("timestamp", com.google.firebase.Timestamp.now());
+
+        // New fields from pickers
+        post.put("incidentDate", selectedDate);
+        post.put("incidentTime", selectedTime);
+        post.put("locationAddress", selectedAddress);
+        post.put("latitude", selectedLat);
+        post.put("longitude", selectedLng);
 
         db.collection("announcements").add(post)
                 .addOnSuccessListener(doc -> {
                     Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to post", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to post announcement", e);
+                    Toast.makeText(this, "Failed to post: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 
     private byte[] readAllBytes(InputStream inputStream) throws Exception {
@@ -381,10 +561,17 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     tvTime.setText(new java.text.SimpleDateFormat("MMM d, yyyy · h:mm a", java.util.Locale.getDefault()).format(ts.toDate()));
                 }
 
-                String address = (String) comment.get("lastSeenAddress");
+                String address = (String) comment.get("locationAddress");
+                Double lat = (Double) comment.get("latitude");
+                Double lng = (Double) comment.get("longitude");
+
                 if (address != null && !address.isEmpty()) {
                     tvLocation.setVisibility(android.view.View.VISIBLE);
-                    tvLocation.setText("📍 Last seen: " + address);
+                    tvLocation.setText("📍 Sighting: " + address);
+                    if (lat != null && lng != null) {
+                        tvLocation.setOnClickListener(v -> showLocationOnMap(lat, lng));
+                        tvLocation.setTextColor(getResources().getColor(R.color.blue_primary, getTheme()));
+                    }
                 } else {
                     tvLocation.setVisibility(android.view.View.GONE);
                 }
@@ -435,5 +622,68 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         dialog.show();
     }
 
+    public void deleteAnnouncement(String id) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Announcement")
+                .setMessage("Are you sure you want to delete this announcement?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    db.collection("announcements").document(id).delete()
+                            .addOnSuccessListener(aVoid -> Toast.makeText(this, "Deleted successfully", Toast.LENGTH_SHORT).show())
+                            .addOnFailureListener(e -> Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 
-}
+    public void showUpdateStatusDialog(String id, String currentStatus) {
+        String[] statuses = {"Verified by Police", "Search Ongoing", "Located Safely / Resolved", "Case Closed"};
+        int checkedItem = -1;
+        for (int i = 0; i < statuses.length; i++) {
+            if (statuses[i].equals(currentStatus)) {
+                checkedItem = i;
+                break;
+            }
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Update Status")
+                .setSingleChoiceItems(statuses, checkedItem, (dialog, which) -> {
+                    String newStatus = statuses[which];
+                    db.collection("announcements").document(id)
+                            .update("status", newStatus)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "Status updated to: " + newStatus, Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to update status", e);
+                                Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                            });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showLocationOnMap(double lat, double lng) {
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_map_view);
+        MapView map = dialog.findViewById(R.id.mapViewOnly);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseMap);
+
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMultiTouchControls(true);
+
+        GeoPoint point = new GeoPoint(lat, lng);
+        map.getController().setZoom(17.0);
+        map.getController().setCenter(point);
+
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setTitle("Sighting Location");
+        map.getOverlays().add(marker);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+}

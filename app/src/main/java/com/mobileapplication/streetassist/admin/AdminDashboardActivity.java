@@ -20,11 +20,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.admin.RecentReportAdapter;
 import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +51,27 @@ public class AdminDashboardActivity extends AppCompatActivity
         setContentView(R.layout.admin_dashboard);
 
         db = FirebaseFirestore.getInstance();
+
+        // Security Guard
+        com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            logout();
+            return;
+        }
+
+        // Verify Admin Role
+        db.collection("users").document(user.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String role = documentSnapshot.getString("role");
+                    if (!"admin".equalsIgnoreCase(role)) {
+                        Toast.makeText(this, "Access Denied: Admin role required", Toast.LENGTH_LONG).show();
+                        logout();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Role verification failed", e);
+                    Toast.makeText(this, "Error verifying role: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
 
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
@@ -109,6 +132,36 @@ public class AdminDashboardActivity extends AppCompatActivity
     protected void onStart() {
         super.onStart();
         startRealtimeListeners();
+        requestNotificationPermission();
+        updateFCMToken();
+    }
+
+    private void requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) 
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                androidx.core.app.ActivityCompat.requestPermissions(this, 
+                        new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
+    }
+
+    private void updateFCMToken() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid == null) return;
+
+        // Subscribe to admins topic to receive all admin notifications
+        FirebaseMessaging.getInstance().subscribeToTopic("admins")
+            .addOnSuccessListener(aVoid -> Log.d(TAG, "Subscribed to 'admins' topic"))
+            .addOnFailureListener(e -> Log.e(TAG, "Failed to subscribe to topic: " + e.getMessage()));
+
+        FirebaseMessaging.getInstance().getToken()
+            .addOnSuccessListener(token -> {
+                db.collection("users").document(uid)
+                    .update("fcmToken", token)
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "FCM Token updated"))
+                    .addOnFailureListener(e -> Log.e(TAG, "Failed to update FCM Token"));
+            });
     }
 
     @Override
@@ -227,13 +280,11 @@ public class AdminDashboardActivity extends AppCompatActivity
             finish();
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminAnnouncementsActivity.class));
-            finish();
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();
         } else if (id == R.id.nav_notifications) {
             startActivity(new Intent(this, AdminNotificationActivity.class));
-            finish();
         } else if (id == R.id.nav_logout) {
             logout();
         } else {
@@ -247,6 +298,16 @@ public class AdminDashboardActivity extends AppCompatActivity
     }
 
     private void logout() {
+        String uid = FirebaseAuth.getInstance().getUid();
+        if (uid != null) {
+            // Unsubscribe from topic on logout
+            FirebaseMessaging.getInstance().unsubscribeFromTopic("admins");
+
+            // Clear token on logout
+            db.collection("users").document(uid)
+                .update("fcmToken", com.google.firebase.firestore.FieldValue.delete());
+        }
+
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(this, IntroductionUserLevel.class);
         intent.addFlags(

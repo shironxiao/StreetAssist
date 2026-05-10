@@ -279,6 +279,13 @@ public class NewsFragment extends Fragment {
                         a.contact = doc.getString("contact");
                         a.date = doc.getString("date");
                         a.imageUrl = doc.getString("imageUrl");
+                        a.status = doc.getString("status");
+                        a.name = doc.getString("name");
+                        a.incidentDate = doc.getString("incidentDate");
+                        a.incidentTime = doc.getString("incidentTime");
+                        a.locationAddress = doc.getString("locationAddress");
+                        a.latitude = doc.getDouble("latitude");
+                        a.longitude = doc.getDouble("longitude");
                         a.timestamp = doc.getTimestamp("timestamp");
                         allAnnouncements.add(a);
                     }
@@ -321,7 +328,9 @@ public class NewsFragment extends Fragment {
     }
 
     public static class Announcement {
-        public String id, title, subtitle, category, contact, date, imageUrl;
+        public String id, title, subtitle, category, contact, date, imageUrl, status, name;
+        public String incidentDate, incidentTime, locationAddress;
+        public Double latitude, longitude;
         public Timestamp timestamp;
     }
 
@@ -352,15 +361,15 @@ public class NewsFragment extends Fragment {
         public int getItemCount() { return items.size(); }
 
         class AnnouncementVH extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvSubtitle, tvContact, tvDate;
+            TextView tvTitle, tvName, tvSubtitle, tvDate, tvContact, tvToggleComments, tvCommentCount, tvNoComments;
             ImageView ivBanner;
-            RecyclerView rvComments;
-            TextView tvCommentCount, tvNoComments, tvToggleComments;
+            androidx.recyclerview.widget.RecyclerView rvComments;
             EditText etComment;
             ImageButton btnSendComment, btnCommentLocation;
-            LinearLayout commentSection;
+            LinearLayout commentSection, containerAddComment;
             ProgressBar commentsProgress;
-            TextView tvAttachedLocation;
+            TextView tvAttachedLocation, tvCategory, tvStatusBadge, tvIncidentDateTime, tvLocation;
+            LinearLayout containerIncidentInfo;
 
             private Double attachedLat = null, attachedLng = null;
             private String attachedAddress = null;
@@ -375,6 +384,7 @@ public class NewsFragment extends Fragment {
             AnnouncementVH(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTitle);
+                tvName = itemView.findViewById(R.id.tvName);
                 tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
                 tvContact = itemView.findViewById(R.id.tvContact);
                 tvDate = itemView.findViewById(R.id.tvDate);
@@ -386,7 +396,13 @@ public class NewsFragment extends Fragment {
                 btnSendComment = itemView.findViewById(R.id.btnSendComment);
                 btnCommentLocation = itemView.findViewById(R.id.btnCommentLocation);
                 tvAttachedLocation = itemView.findViewById(R.id.tvAttachedLocation);
+                tvCategory = itemView.findViewById(R.id.tvCategory);
+                tvStatusBadge = itemView.findViewById(R.id.tvStatusBadge);
+                tvIncidentDateTime = itemView.findViewById(R.id.tvIncidentDateTime);
+                tvLocation = itemView.findViewById(R.id.tvLocation);
+                containerIncidentInfo = itemView.findViewById(R.id.containerIncidentInfo);
                 commentSection = itemView.findViewById(R.id.commentSection);
+                containerAddComment = itemView.findViewById(R.id.containerAddComment);
                 tvToggleComments = itemView.findViewById(R.id.tvToggleComments);
                 commentsProgress = itemView.findViewById(R.id.commentsProgress);
 
@@ -406,6 +422,14 @@ public class NewsFragment extends Fragment {
                 tvToggleComments.setText("💬 View Comments");
 
                 tvTitle.setText(announcement.title != null ? announcement.title : "");
+                
+                if (announcement.name != null && !announcement.name.isEmpty()) {
+                    tvName.setVisibility(View.VISIBLE);
+                    tvName.setText("Subject: " + announcement.name);
+                } else {
+                    tvName.setVisibility(View.GONE);
+                }
+
                 tvSubtitle.setText(announcement.subtitle != null ? announcement.subtitle : "");
                 tvDate.setText(announcement.date != null ? announcement.date : "");
 
@@ -414,6 +438,54 @@ public class NewsFragment extends Fragment {
                     tvContact.setText("📞 " + announcement.contact);
                 } else {
                     tvContact.setVisibility(View.GONE);
+                }
+
+                tvCategory.setText(announcement.category != null ? announcement.category : "ANNOUNCEMENT");
+                
+                // Bind Incident Info
+                boolean hasIncidentInfo = (announcement.incidentDate != null && !announcement.incidentDate.isEmpty())
+                        || (announcement.locationAddress != null && !announcement.locationAddress.isEmpty());
+                
+                if (hasIncidentInfo) {
+                    containerIncidentInfo.setVisibility(View.VISIBLE);
+                    String dateTime = "";
+                    if (announcement.incidentDate != null && !announcement.incidentDate.isEmpty()) dateTime += "📅 " + announcement.incidentDate;
+                    if (announcement.incidentTime != null && !announcement.incidentTime.isEmpty()) dateTime += (dateTime.isEmpty() ? "" : " at ") + announcement.incidentTime;
+                    
+                    tvIncidentDateTime.setVisibility(dateTime.isEmpty() ? View.GONE : View.VISIBLE);
+                    tvIncidentDateTime.setText(dateTime);
+                    
+                    if (announcement.locationAddress != null && !announcement.locationAddress.isEmpty()) {
+                        tvLocation.setVisibility(View.VISIBLE);
+                        tvLocation.setText("📍 " + announcement.locationAddress);
+                        
+                        if (announcement.latitude != null && announcement.longitude != null) {
+                            tvLocation.setOnClickListener(v -> showLocationOnMap(announcement.latitude, announcement.longitude));
+                        } else {
+                            tvLocation.setOnClickListener(null);
+                        }
+                    } else {
+                        tvLocation.setVisibility(View.GONE);
+                        tvLocation.setOnClickListener(null);
+                    }
+                } else {
+                    containerIncidentInfo.setVisibility(View.GONE);
+                }
+
+                if (announcement.status != null && !announcement.status.isEmpty()) {
+                    tvStatusBadge.setVisibility(View.VISIBLE);
+                    tvStatusBadge.setText(announcement.status);
+                } else {
+                    // Default status if missing
+                    tvStatusBadge.setVisibility(View.VISIBLE);
+                    tvStatusBadge.setText("Verified by Police");
+                }
+
+                // Handle Case Closed - Disable new comments
+                if ("Case Closed".equalsIgnoreCase(announcement.status)) {
+                    containerAddComment.setVisibility(View.GONE);
+                } else {
+                    containerAddComment.setVisibility(View.VISIBLE);
                 }
 
                 if (announcement.imageUrl != null && !announcement.imageUrl.isEmpty()
@@ -426,7 +498,8 @@ public class NewsFragment extends Fragment {
                             .into(ivBanner);
                     ivBanner.setOnClickListener(v -> showFullImageDialog(announcement.imageUrl));
                 } else {
-                    ivBanner.setVisibility(View.GONE);
+                    ivBanner.setImageResource(R.drawable.ic_image_placeholder);
+                    ivBanner.setVisibility(View.VISIBLE); // Keep visible to show placeholder with badges
                     ivBanner.setOnClickListener(null);
                 }
 
