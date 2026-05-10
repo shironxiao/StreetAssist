@@ -177,7 +177,12 @@ public class HomeFragment extends Fragment {
                         return 0;
                     });
 
+                    java.util.List<DocumentSnapshot> filteredDocs = new java.util.ArrayList<>();
                     for (DocumentSnapshot doc : docs) {
+                        Boolean isHidden = doc.getBoolean("isHiddenByResident");
+                        if (isHidden != null && isHidden) continue;
+
+                        filteredDocs.add(doc);
                         total++;
                         String status = doc.getString("status");
                         if ("Pending".equalsIgnoreCase(status))  pending++;
@@ -188,7 +193,7 @@ public class HomeFragment extends Fragment {
                     tvPendingCount.setText(String.valueOf(pending));
                     tvResolvedCount.setText(String.valueOf(resolved));
 
-                    buildRecentReports(docs);
+                    buildRecentReports(filteredDocs);
                 });
     }
 

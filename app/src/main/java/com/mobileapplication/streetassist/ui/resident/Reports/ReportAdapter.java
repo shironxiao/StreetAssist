@@ -70,7 +70,16 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         holder.tvSeenAt.setText("Seen: " + seenAtFormatted);
 
         holder.tvViewDetails.setOnClickListener(v -> showDetailsBottomSheet(report));
-        holder.btnDelete.setOnClickListener(v -> showDeleteConfirmation(report));
+
+        // Only show Remove button for Resolved reports
+        if ("Resolved".equals(status)) {
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnDelete.setText("Remove");
+            holder.btnDelete.setOnClickListener(v -> showRemoveConfirmation(report));
+        } else {
+            holder.btnDelete.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> showDetailsBottomSheet(report));
     }
 
@@ -122,50 +131,44 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         MaterialButton btnClose = sheetView.findViewById(R.id.dialogBtnClose);
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
-        MaterialButton btnDelete = sheetView.findViewById(R.id.dialogBtnDelete);
-        btnDelete.setOnClickListener(v -> {
-            dialog.dismiss();
-            showDeleteConfirmation(report);
-        });
+        MaterialButton btnRemove = sheetView.findViewById(R.id.dialogBtnDelete);
+        if ("Resolved".equals(status)) {
+            btnRemove.setVisibility(View.VISIBLE);
+            btnRemove.setText("Remove Report");
+            btnRemove.setOnClickListener(v -> {
+                dialog.dismiss();
+                showRemoveConfirmation(report);
+            });
+        } else {
+            btnRemove.setVisibility(View.GONE);
+        }
 
         dialog.show();
     }
 
-    private void showDeleteConfirmation(Map<String, Object> report) {
+    private void showRemoveConfirmation(Map<String, Object> report) {
         new android.app.AlertDialog.Builder(context)
-                .setTitle("Delete Report")
-                .setMessage("Are you sure you want to delete this report permanently?")
-                .setPositiveButton("Delete", (dialog, which) -> deleteReport(report))
+                .setTitle("Remove Report")
+                .setMessage("This report will be removed from your list, but will remain in our records. Continue?")
+                .setPositiveButton("Remove", (dialog, which) -> removeReport(report))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void deleteReport(Map<String, Object> report) {
+    private void removeReport(Map<String, Object> report) {
         String docId = (String) report.get("reportId");
         if (docId == null) return;
 
         com.google.firebase.firestore.FirebaseFirestore db = com.google.firebase.firestore.FirebaseFirestore.getInstance();
-        
+
+        // Instead of deleting, we set a flag to hide it from the resident's view
         db.collection("reports").document(docId)
-                .delete()
+                .update("isHiddenByResident", true)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(context, "Report deleted successfully", Toast.LENGTH_SHORT).show();
-                    
-                    // Also delete all notifications linked to this report
-                    db.collection("notifications")
-                            .whereEqualTo("reportId", docId)
-                            .get()
-                            .addOnSuccessListener(snapshots -> {
-                                if (snapshots.isEmpty()) return;
-                                com.google.firebase.firestore.WriteBatch batch = db.batch();
-                                for (com.google.firebase.firestore.DocumentSnapshot d : snapshots) {
-                                    batch.delete(d.getReference());
-                                }
-                                batch.commit();
-                            });
+                    Toast.makeText(context, "Report removed from view", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(context, "Error deleting report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Error removing report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
