@@ -105,9 +105,9 @@
                     android:id="@+id/ivNotification"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:src="@drawable/bell"
                     android:clickable="true"
                     android:focusable="true"
+                    android:src="@drawable/notif"
                     app:tint="@android:color/white" />
 
                 <TextView
