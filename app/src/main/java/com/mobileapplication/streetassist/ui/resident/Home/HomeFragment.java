@@ -90,6 +90,21 @@ public class HomeFragment extends Fragment {
         cardSubmitReport.setOnClickListener(v ->
                 Navigation.findNavController(requireView()).navigate(R.id.report));
 
+        // Profile navigation
+        View.OnClickListener profileClick = v -> {
+            if (getActivity() != null) {
+                com.google.android.material.bottomnavigation.BottomNavigationView nav =
+                        getActivity().findViewById(R.id.bottom_navigation);
+                if (nav != null) {
+                    nav.setSelectedItemId(R.id.profile);
+                } else {
+                    Navigation.findNavController(requireView()).navigate(R.id.profile);
+                }
+            }
+        };
+        ivAvatar.setOnClickListener(profileClick);
+        tvInitialsAvatar.setOnClickListener(profileClick);
+
         // Notification bell
         view.findViewById(R.id.ivNotification).setOnClickListener(v ->
                 startActivity(new Intent(getActivity(), NotificationActivity.class)));

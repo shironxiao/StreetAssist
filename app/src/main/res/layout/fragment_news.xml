@@ -38,7 +38,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="News, alerts &amp; missing person bulletins"
+                    android:text="Latest updates and active missing person bulletins"
                     android:textColor="#D1D9FF"
                     android:textSize="14sp" />
             </LinearLayout>

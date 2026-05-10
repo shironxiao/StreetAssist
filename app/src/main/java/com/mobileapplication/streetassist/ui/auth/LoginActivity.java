@@ -12,6 +12,7 @@ import android.text.style.ClickableSpan;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,7 +36,8 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etEmail, etPassword;
     private MaterialButton btnGetStarted;
     private CheckBox cbRememberMe;
-    private TextView tvSignUpPrompt, tvForgotPassword, tvContinueAsGuest, tvBackToMenu;
+    private TextView tvSignUpPrompt, tvForgotPassword, tvContinueAsGuest;
+    private ImageButton btnBack;
 
     // ── Firebase ─────────────────────────────────────────────────────────────
     private FirebaseAuth mAuth;
@@ -64,7 +66,7 @@ public class LoginActivity extends AppCompatActivity {
         tvSignUpPrompt  = findViewById(R.id.tvSignUpPrompt);
         tvForgotPassword = findViewById(R.id.tvForgotPassword);
         tvContinueAsGuest = findViewById(R.id.tvContinueAsGuest);
-        tvBackToMenu     = findViewById(R.id.tvBackToMenu);
+        btnBack          = findViewById(R.id.btnBack);
 
         // ── Auto-login: if user is already signed in, skip to main ───────────
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -86,7 +88,7 @@ public class LoginActivity extends AppCompatActivity {
 
         tvForgotPassword.setOnClickListener(v -> handleForgotPassword());
         tvContinueAsGuest.setOnClickListener(v -> continueAsGuest());
-        tvBackToMenu.setOnClickListener(v -> {
+        btnBack.setOnClickListener(v -> {
             startActivity(new Intent(LoginActivity.this, IntroductionUserLevel.class));
             finish();
         });
