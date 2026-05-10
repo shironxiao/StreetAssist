@@ -182,7 +182,9 @@ public class ReportFragment extends Fragment {
             String status = report.get("status") != null
                     ? report.get("status").toString() : "";
 
-            if (currentFilter.equals("All") || currentFilter.equals(status)) {
+            boolean isHidden = report.get("isHiddenByResident") != null && (boolean) report.get("isHiddenByResident");
+
+            if (!isHidden && (currentFilter.equals("All") || currentFilter.equals(status))) {
                 filtered.add(report);
             }
         }
