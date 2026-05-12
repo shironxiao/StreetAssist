@@ -215,13 +215,20 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
     private void showAddAnnouncementDialog() {
         android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_announcement, null);
-        android.widget.EditText etTitle = dialogView.findViewById(R.id.etTitle);
         android.widget.EditText etName = dialogView.findViewById(R.id.etName);
+        android.widget.EditText etAge = dialogView.findViewById(R.id.etAge);
+        android.widget.AutoCompleteTextView etSex = dialogView.findViewById(R.id.etSex);
         android.widget.EditText etSubtitle = dialogView.findViewById(R.id.etSubtitle);
         android.widget.EditText etContact = dialogView.findViewById(R.id.etContact);
         android.widget.EditText etDate = dialogView.findViewById(R.id.etDate);
         android.widget.EditText etTime = dialogView.findViewById(R.id.etTime);
         android.widget.EditText etLocation = dialogView.findViewById(R.id.etLocation);
+
+        // Set up Sex Dropdown
+        String[] sexOptions = {"Male", "Female"};
+        android.widget.ArrayAdapter<String> adapterSex = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, sexOptions);
+        etSex.setAdapter(adapterSex);
+        etSex.setText("Male", false); // Default
         android.view.View containerUpload = dialogView.findViewById(R.id.containerUpload);
         tvUploadStatus = dialogView.findViewById(R.id.tvUploadStatus);
         android.view.View btnClose = dialogView.findViewById(R.id.btnClose);
@@ -261,20 +268,22 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         });
 
         btnPost.setOnClickListener(v -> {
-            String title = etTitle.getText().toString();
             String name = etName.getText().toString();
+            String age = etAge.getText().toString();
+            String sex = etSex.getText().toString();
+            String title = name; // Use name as title
             String category = "MISSING PERSON";
             String subtitle = etSubtitle.getText().toString();
             String contact = etContact.getText().toString();
 
-            if (!title.isEmpty()) {
+            if (!name.isEmpty()) {
                 if (selectedImageUri != null) {
-                    uploadToCloudinary(selectedImageUri, title, name, category, subtitle, contact, dialog);
+                    uploadToCloudinary(selectedImageUri, title, name, age, sex, category, subtitle, contact, dialog);
                 } else {
-                    postToFirestore(title, name, category, subtitle, contact, "", dialog);
+                    postToFirestore(title, name, age, sex, category, subtitle, contact, "", dialog);
                 }
             } else {
-                Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Name is required", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -399,7 +408,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         dialog.show();
     }
 
-    private void uploadToCloudinary(Uri imageUri, String title, String name, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
+    private void uploadToCloudinary(Uri imageUri, String title, String name, String age, String sex, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
         Toast.makeText(this, "Uploading image...", Toast.LENGTH_SHORT).show();
         executor.execute(() -> {
             try {
@@ -446,7 +455,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 JSONObject json = new JSONObject(new String(responseBytes));
                 if (status == 200 && json.has("secure_url")) {
                     String imageUrl = json.getString("secure_url");
-                    runOnUiThread(() -> postToFirestore(title, name, category, subtitle, contact, imageUrl, dialog));
+                    runOnUiThread(() -> postToFirestore(title, name, age, sex, category, subtitle, contact, imageUrl, dialog));
                 } else {
                     String error = json.optString("error", "Upload failed");
                     runOnUiThread(() -> Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show());
@@ -457,10 +466,12 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         });
     }
 
-    private void postToFirestore(String title, String name, String category, String subtitle, String contact, String imageUrl, androidx.appcompat.app.AlertDialog dialog) {
+    private void postToFirestore(String title, String name, String age, String sex, String category, String subtitle, String contact, String imageUrl, androidx.appcompat.app.AlertDialog dialog) {
         java.util.Map<String, Object> post = new java.util.HashMap<>();
         post.put("title", title);
         post.put("name", name);
+        post.put("age", age);
+        post.put("sex", sex);
         post.put("category", category);
         post.put("subtitle", subtitle);
         post.put("contact", contact);
@@ -531,6 +542,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         android.widget.ProgressBar progressBar = dialogView.findViewById(R.id.progressBar);
         android.widget.TextView tvNoComments = dialogView.findViewById(R.id.tvNoComments);
         android.widget.ImageButton btnClose = dialogView.findViewById(R.id.btnClose);
+        com.google.android.material.chip.ChipGroup cgSort = dialogView.findViewById(R.id.cgSort);
 
         rvComments.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
         List<Map<String, Object>> commentList = new ArrayList<>();
@@ -589,6 +601,25 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         };
         rvComments.setAdapter(commentAdapter);
 
+        cgSort.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.chipNewest) {
+                commentList.sort((c1, c2) -> {
+                    com.google.firebase.Timestamp t1 = (com.google.firebase.Timestamp) c1.get("timestamp");
+                    com.google.firebase.Timestamp t2 = (com.google.firebase.Timestamp) c2.get("timestamp");
+                    if (t1 == null || t2 == null) return 0;
+                    return t2.compareTo(t1); // Descending
+                });
+            } else if (checkedId == R.id.chipOldest) {
+                commentList.sort((c1, c2) -> {
+                    com.google.firebase.Timestamp t1 = (com.google.firebase.Timestamp) c1.get("timestamp");
+                    com.google.firebase.Timestamp t2 = (com.google.firebase.Timestamp) c2.get("timestamp");
+                    if (t1 == null || t2 == null) return 0;
+                    return t1.compareTo(t2); // Ascending
+                });
+            }
+            commentAdapter.notifyDataSetChanged();
+        });
+
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setView(dialogView)
                 .create();
@@ -611,6 +642,13 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         commentList.add(doc.getData());
                     }
+                    // Sort by newest initially
+                    commentList.sort((c1, c2) -> {
+                        com.google.firebase.Timestamp t1 = (com.google.firebase.Timestamp) c1.get("timestamp");
+                        com.google.firebase.Timestamp t2 = (com.google.firebase.Timestamp) c2.get("timestamp");
+                        if (t1 == null || t2 == null) return 0;
+                        return t2.compareTo(t1);
+                    });
                     commentAdapter.notifyDataSetChanged();
                     tvNoComments.setVisibility(commentList.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
                 })
@@ -686,4 +724,4 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
-}
+}

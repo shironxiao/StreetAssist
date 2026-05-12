@@ -109,7 +109,7 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
             }
 
             @Override
-            public void onExportClick() {
+            public void onExportPdfClick() {
                 Toast.makeText(AdminTrashActivity.this, "Export is not available in Trash", Toast.LENGTH_SHORT).show();
             }
 

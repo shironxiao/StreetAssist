@@ -83,8 +83,8 @@ public class NewsFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-            ViewGroup container,
-            Bundle savedInstanceState) {
+                             ViewGroup container,
+                             Bundle savedInstanceState) {
         // Initialize OSMDroid configuration
         org.osmdroid.config.Configuration.getInstance().load(
                 requireContext(),
@@ -182,7 +182,7 @@ public class NewsFragment extends Fragment {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-            @NonNull int[] grantResults) {
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST && grantResults.length > 0
                 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -569,7 +569,7 @@ public class NewsFragment extends Fragment {
 
                     if (attachedLat == null || attachedLng == null) {
                         Toast.makeText(requireContext(),
-                                "📍 Please attach a location sighting to your comment.", Toast.LENGTH_LONG)
+                                        "📍 Please attach a location sighting to your comment.", Toast.LENGTH_LONG)
                                 .show();
                         return;
                     }
@@ -749,7 +749,7 @@ public class NewsFragment extends Fragment {
             }
 
             private void postComment(Announcement announcement, String text,
-                    EditText etComment, ImageButton btnSend) {
+                                     EditText etComment, ImageButton btnSend) {
                 FirebaseUser user = mAuth.getCurrentUser();
                 if (user == null) {
                     Toast.makeText(itemView.getContext(),
