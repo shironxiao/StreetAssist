@@ -4,40 +4,65 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="#F8FAFC"
     tools:context=".ui.resident.Home.HomeFragment">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:fillViewport="true">
 
-        <!-- ROYAL BLUE HEADER PANEL -->
-        <RelativeLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:background="#4169E1"
-            android:padding="24dp">
+            android:layout_height="wrap_content">
 
-            <!-- Left: Avatar + Welcome text -->
-            <LinearLayout
+            <!-- HEADER BACKGROUND -->
+            <View
+                android:id="@+id/headerBackground"
+                android:layout_width="0dp"
+                android:layout_height="240dp"
+                android:background="#4169E1"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- DECORATIVE CIRCLE -->
+            <View
+                android:id="@+id/decorativeCircle"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_marginTop="-60dp"
+                android:layout_marginEnd="-60dp"
+                android:background="@drawable/circle_bg_light_blue"
+                android:backgroundTint="#20FFFFFF"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- USER INFO SECTION -->
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/layoutUserInfo"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:paddingTop="64dp"
+                app:layout_constraintEnd_toStartOf="@+id/layoutNotification"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-                <!-- Avatar frame -->
+                <!-- Avatar Frame -->
                 <FrameLayout
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="14dp">
+                    android:id="@+id/avatarFrame"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <de.hdodenhof.circleimageview.CircleImageView
                         android:id="@+id/ivAvatar"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
                         android:clickable="true"
                         android:focusable="true"
                         android:src="@drawable/ic_default_avatar"
@@ -46,24 +71,29 @@
 
                     <TextView
                         android:id="@+id/tvInitialsAvatar"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
                         android:background="@drawable/circle_bg_light_blue"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
                         android:text="U"
                         android:textColor="@android:color/white"
-                        android:textSize="20sp"
+                        android:textSize="22sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
                 </FrameLayout>
 
-                <!-- Welcome text -->
+                <!-- Welcome Text Column -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/avatarFrame"
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <TextView
                         android:id="@+id/tvWelcomeName"
@@ -76,41 +106,31 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="220dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Help make our community better by reporting homeless cases today."
-                        android:textColor="#D1D9FF"
+                        android:layout_marginTop="2dp"
+                        android:alpha="0.8"
+                        android:text="Making our community better together."
+                        android:textColor="#FFFFFF"
                         android:textSize="12sp" />
                 </LinearLayout>
-            </LinearLayout>
 
-            <!-- Decorative circle -->
-            <View
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="-40dp"
-                android:layout_marginEnd="-40dp"
-                android:background="@drawable/circle_bg_light_blue"
-                android:backgroundTint="#30FFFFFF" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <!-- Notification Bell -->
+            <!-- NOTIFICATION ICON -->
             <RelativeLayout
                 android:id="@+id/layoutNotification"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="4dp"
-                android:padding="8dp">
+                android:layout_marginEnd="16dp"
+                android:padding="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/layoutUserInfo">
 
                 <ImageView
                     android:id="@+id/ivNotification"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:clickable="true"
-                    android:focusable="true"
                     android:src="@drawable/notif"
                     app:tint="@android:color/white" />
 
@@ -131,35 +151,35 @@
                     android:visibility="gone" />
             </RelativeLayout>
 
-        </RelativeLayout>
-
-        <!-- SCROLLABLE CONTENT AREA -->
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="-40dp"
-            android:background="@drawable/rounded_top_corners"
-            android:padding="20dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <!-- MAIN CONTENT CONTAINER -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/contentContainer"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_marginTop="-40dp"
+                android:background="@drawable/rounded_top_corners"
+                android:padding="20dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/headerBackground">
 
                 <!-- Action Card: Submit New Report -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardSubmitReport"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:clickable="true"
                     android:focusable="true"
                     app:cardBackgroundColor="@android:color/white"
                     app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
-                    app:strokeColor="#E0E0E0"
+                    app:cardElevation="6dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:strokeColor="#F1F5F9"
                     app:strokeWidth="1dp">
 
-                    <RelativeLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:padding="20dp">
@@ -168,9 +188,12 @@
                             android:id="@+id/iconContainer"
                             android:layout_width="56dp"
                             android:layout_height="56dp"
-                            app:cardBackgroundColor="#EDF2FF"
+                            app:cardBackgroundColor="#EFF6FF"
                             app:cardCornerRadius="28dp"
-                            app:cardElevation="0dp">
+                            app:cardElevation="0dp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
 
                             <ImageView
                                 android:layout_width="24dp"
@@ -181,68 +204,85 @@
                         </com.google.android.material.card.MaterialCardView>
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:id="@+id/textContainer"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_centerVertical="true"
                             android:layout_marginStart="16dp"
-                            android:layout_toEndOf="@id/iconContainer"
-                            android:orientation="vertical">
+                            android:layout_marginEnd="8dp"
+                            android:orientation="vertical"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/ivArrow"
+                            app:layout_constraintStart_toEndOf="@id/iconContainer"
+                            app:layout_constraintTop_toTopOf="parent">
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-medium"
                                 android:text="Submit New Report"
-                                android:textColor="#1A1A1A"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
+                                android:textColor="#1E293B"
+                                android:textSize="18sp" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Click here to report a case"
-                                android:textColor="#666666"
+                                android:textColor="#64748B"
                                 android:textSize="13sp" />
                         </LinearLayout>
 
                         <ImageView
+                            android:id="@+id/ivArrow"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:layout_alignParentEnd="true"
-                            android:layout_centerVertical="true"
                             android:src="@android:drawable/ic_media_play"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
                             app:tint="#4169E1" />
-                    </RelativeLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- YOUR ACTIVITY Section -->
                 <TextView
+                    android:id="@+id/tvActivityTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
                     android:layout_marginStart="4dp"
+                    android:layout_marginTop="28dp"
+                    android:letterSpacing="0.1"
                     android:text="YOUR ACTIVITY"
-                    android:textStyle="bold"
-                    android:textColor="#555555"
+                    android:textColor="#64748B"
                     android:textSize="12sp"
-                    android:letterSpacing="0.1" />
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/cardSubmitReport" />
 
                 <!-- Stats Row -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/layoutStats"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:orientation="horizontal"
-                    android:weightSum="3">
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvActivityTitle">
 
-                    <!-- Total -->
+                    <!-- Total Card -->
                     <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardTotal"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
                         app:cardBackgroundColor="@android:color/white"
                         app:cardCornerRadius="16dp"
-                        app:cardElevation="2dp">
+                        app:cardElevation="3dp"
+                        app:layout_constraintEnd_toStartOf="@+id/cardPending"
+                        app:layout_constraintHorizontal_weight="1"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:strokeColor="#F1F5F9"
+                        app:strokeWidth="1dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -264,20 +304,27 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Total"
-                                android:textColor="#757575"
+                                android:textColor="#64748B"
                                 android:textSize="10sp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Pending -->
+                    <!-- Pending Card -->
                     <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardPending"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="3dp"
-                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
                         app:cardBackgroundColor="@android:color/white"
                         app:cardCornerRadius="16dp"
-                        app:cardElevation="2dp">
+                        app:cardElevation="3dp"
+                        app:layout_constraintEnd_toStartOf="@+id/cardResolved"
+                        app:layout_constraintHorizontal_weight="1"
+                        app:layout_constraintStart_toEndOf="@+id/cardTotal"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:strokeColor="#F1F5F9"
+                        app:strokeWidth="1dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -291,7 +338,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
-                                android:textColor="#FFC107"
+                                android:textColor="#F59E0B"
                                 android:textSize="22sp"
                                 android:textStyle="bold" />
 
@@ -299,20 +346,26 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Pending"
-                                android:textColor="#757575"
+                                android:textColor="#64748B"
                                 android:textSize="10sp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Resolved -->
+                    <!-- Resolved Card -->
                     <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardResolved"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
                         app:cardBackgroundColor="@android:color/white"
                         app:cardCornerRadius="16dp"
-                        app:cardElevation="2dp">
+                        app:cardElevation="3dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_weight="1"
+                        app:layout_constraintStart_toEndOf="@+id/cardPending"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:strokeColor="#F1F5F9"
+                        app:strokeWidth="1dp">
 
                         <LinearLayout
                             android:layout_width="match_parent"
@@ -326,7 +379,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
-                                android:textColor="#4CAF50"
+                                android:textColor="#10B981"
                                 android:textSize="22sp"
                                 android:textStyle="bold" />
 
@@ -334,85 +387,113 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="Resolved"
-                                android:textColor="#757575"
+                                android:textColor="#64748B"
                                 android:textSize="10sp" />
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <!-- ── RECENT REPORTS SECTION ── -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <!-- RECENT REPORTS SECTION -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/layoutRecentHeader"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="28dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="32dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/layoutStats">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginStart="4dp"
+                        android:letterSpacing="0.1"
                         android:text="RECENT REPORTS"
-                        android:textStyle="bold"
-                        android:textColor="#555555"
+                        android:textColor="#64748B"
                         android:textSize="12sp"
-                        android:letterSpacing="0.1" />
+                        android:textStyle="bold"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tvSeeAll"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <TextView
                         android:id="@+id/tvSeeAll"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="4dp"
                         android:text="See all →"
                         android:textColor="#4169E1"
                         android:textSize="12sp"
                         android:textStyle="bold"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:padding="4dp" />
-                </LinearLayout>
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <!-- Empty state for recent reports -->
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:id="@+id/layoutRecentEmpty"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:background="@android:color/white"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="24dp"
-                    android:visibility="gone">
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@android:color/white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/layoutRecentHeader"
+                    app:strokeColor="#F1F5F9"
+                    app:strokeWidth="1dp">
 
-                    <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@android:drawable/ic_menu_mylocation"
-                        app:tint="#CCCCCC" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="No reports submitted yet."
-                        android:textColor="#AAAAAA"
-                        android:textSize="13sp" />
-                </LinearLayout>
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="32dp">
 
-                <!-- Recent Reports List (up to 3 items) -->
+                        <ImageView
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:alpha="0.3"
+                            android:src="@android:drawable/ic_menu_mylocation"
+                            app:tint="#64748B" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="No reports submitted yet."
+                            android:textColor="#94A3B8"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Recent Reports List -->
                 <LinearLayout
                     android:id="@+id/layoutRecentReports"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:orientation="vertical" />
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/layoutRecentHeader" />
 
                 <!-- Bottom space -->
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="40dp" />
+                    android:layout_height="80dp"
+                    app:layout_constraintTop_toBottomOf="@id/layoutRecentReports" />
 
-            </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
-    </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

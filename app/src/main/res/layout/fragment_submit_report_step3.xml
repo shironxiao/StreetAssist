@@ -19,15 +19,6 @@
             android:background="#4169E1"
             android:padding="24dp">
 
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@drawable/circle_bg_light_blue"
-                android:backgroundTint="#5A7FE6"
-                android:src="@android:drawable/ic_menu_revert"
-                app:tint="@android:color/white" />
-
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -68,21 +59,22 @@
                 android:gravity="center_horizontal"
                 android:orientation="vertical">
 
-                <!-- STEP INDICATOR (All Completed) -->
+                <!-- STEP INDICATOR (All Completed - Now Blue with Numbers) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="16dp">
 
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="@drawable/circle_bg_light_blue"
-                        android:backgroundTint="#4CAF50"
-                        android:padding="6dp"
-                        android:src="@android:drawable/checkbox_on_background"
-                        app:tint="@android:color/white" />
+                    <TextView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/step_completed"
+                        android:gravity="center"
+                        android:text="1"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <View
                         android:layout_width="40dp"
@@ -90,14 +82,15 @@
                         android:background="#4CAF50"
                         android:layout_marginHorizontal="8dp" />
 
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="@drawable/circle_bg_light_blue"
-                        android:backgroundTint="#4CAF50"
-                        android:padding="6dp"
-                        android:src="@android:drawable/checkbox_on_background"
-                        app:tint="@android:color/white" />
+                    <TextView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/step_completed"
+                        android:gravity="center"
+                        android:text="2"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <View
                         android:layout_width="40dp"
@@ -105,31 +98,25 @@
                         android:background="#4CAF50"
                         android:layout_marginHorizontal="8dp" />
 
-                    <ImageView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="@drawable/circle_bg_light_blue"
-                        android:backgroundTint="#4CAF50"
-                        android:padding="6dp"
-                        android:src="@android:drawable/checkbox_on_background"
-                        app:tint="@android:color/white" />
+                    <TextView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/step_completed"
+                        android:gravity="center"
+                        android:text="3"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <!-- SUCCESS ANIMATION/ICON -->
-                <FrameLayout
+                <!-- SUCCESS ICON -->
+                <ImageView
+                    android:id="@+id/ivSuccessIcon"
                     android:layout_width="120dp"
                     android:layout_height="120dp"
                     android:layout_marginTop="30dp"
-                    android:background="@drawable/circle_bg_light_blue"
-                    android:backgroundTint="#E8F5E9">
-
-                    <ImageView
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
-                        android:layout_gravity="center"
-                        android:src="@android:drawable/checkbox_on_background"
-                        app:tint="#4CAF50" />
-                </FrameLayout>
+                    android:src="@drawable/check"
+                    android:scaleType="fitCenter" />
 
                 <TextView
                     android:layout_width="wrap_content"

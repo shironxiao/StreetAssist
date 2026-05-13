@@ -75,13 +75,13 @@
                     android:padding="16dp">
 
                     <TextView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="@drawable/circle_bg_light_blue"
-                        android:backgroundTint="#4169E1"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/step_active"
                         android:gravity="center"
                         android:text="1"
                         android:textColor="@android:color/white"
+                        android:textSize="14sp"
                         android:textStyle="bold" />
 
                     <View
@@ -91,13 +91,14 @@
                         android:background="#D1D9FF" />
 
                     <TextView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="@drawable/circle_bg_light_blue"
-                        android:backgroundTint="#E0E0E0"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/step_inactive"
                         android:gravity="center"
                         android:text="2"
-                        android:textColor="#757575" />
+                        android:textColor="#757575"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <View
                         android:layout_width="40dp"
@@ -106,13 +107,14 @@
                         android:background="#D1D9FF" />
 
                     <TextView
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="@drawable/circle_bg_light_blue"
-                        android:backgroundTint="#E0E0E0"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="@drawable/step_inactive"
                         android:gravity="center"
                         android:text="3"
-                        android:textColor="#757575" />
+                        android:textColor="#757575"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
                 <!-- MAP SECTION LABEL -->
@@ -269,7 +271,7 @@
                         android:id="@+id/etAge"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g. 10-50 years old" />
+                        android:hint="e.g 3-120 years old" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- SEX -->

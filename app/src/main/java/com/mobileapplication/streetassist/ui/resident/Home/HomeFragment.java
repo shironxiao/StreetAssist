@@ -44,7 +44,7 @@ public class HomeFragment extends Fragment {
     private TextView tvTotalCount, tvPendingCount, tvResolvedCount;
     private TextView tvSeeAll;
     private LinearLayout layoutRecentReports;
-    private LinearLayout layoutRecentEmpty;
+    private View layoutRecentEmpty;
     private com.google.android.material.card.MaterialCardView cardSubmitReport;
 
     // Firebase
@@ -88,7 +88,7 @@ public class HomeFragment extends Fragment {
 
         // Submit report card
         cardSubmitReport.setOnClickListener(v ->
-                Navigation.findNavController(requireView()).navigate(R.id.report));
+                Navigation.findNavController(requireView()).navigate(R.id.action_home_to_submitReportStep1Fragment));
 
         // Profile navigation
         View.OnClickListener profileClick = v -> {

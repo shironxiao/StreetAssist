@@ -10,7 +10,11 @@
         android:id="@+id/home"
         android:name="com.mobileapplication.streetassist.ui.resident.Home.HomeFragment"
         android:label="Home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_home_to_submitReportStep1Fragment"
+            app:destination="@id/submitReportStep1Fragment" />
+    </fragment>
 
     <!-- Report Destination -->
     <fragment

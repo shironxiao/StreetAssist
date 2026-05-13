@@ -28,13 +28,16 @@ public class IntroScreen3Fragment extends Fragment {
         // Initialize button
         MaterialButton btnGetStarted = view.findViewById(R.id.btnGetStarted);
 
-        new SessionManager(requireContext()).setIntroSeen();
+        btnGetStarted.setOnClickListener(v -> {
+            // Mark intro as seen
+            new SessionManager(requireContext()).setIntroSeen();
 
-        // Navigate to Login, clear back stack
-        Intent intent = new Intent(requireActivity(), LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        requireActivity().finish();
+            // Navigate to Login, clear back stack
+            Intent intent = new Intent(requireActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            requireActivity().finish();
+        });
 
         return view;
     }
