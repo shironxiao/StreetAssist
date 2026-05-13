@@ -208,6 +208,19 @@ public class AdminNotificationActivity extends AppCompatActivity {
             return new VH(v);
         }
 
+        private void deleteNotification(String id, View contextView) {
+            new androidx.appcompat.app.AlertDialog.Builder(contextView.getContext())
+                    .setTitle("Delete Notification")
+                    .setMessage("Are you sure you want to delete this notification?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        FirebaseFirestore.getInstance().collection("admin_notifications").document(id).delete()
+                                .addOnSuccessListener(aVoid -> Toast.makeText(contextView.getContext(), "Notification deleted", Toast.LENGTH_SHORT).show())
+                                .addOnFailureListener(e -> Toast.makeText(contextView.getContext(), "Failed to delete notification", Toast.LENGTH_SHORT).show());
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        }
+
         @Override
         public void onBindViewHolder(@NonNull VH holder, int position) {
             NotificationItem item = items.get(position);
@@ -217,6 +230,9 @@ public class AdminNotificationActivity extends AppCompatActivity {
 
             holder.itemView.setBackgroundColor(item.isRead ? 0xFFFFFFFF : 0xFFEDF2FF);
             holder.dotUnread.setVisibility(item.isRead ? View.GONE : View.VISIBLE);
+            
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnDelete.setOnClickListener(v -> deleteNotification(item.id, v));
 
             holder.itemView.setOnClickListener(v -> {
                 if (v.getContext() instanceof AdminNotificationActivity) {
@@ -254,7 +270,7 @@ public class AdminNotificationActivity extends AppCompatActivity {
             TextView tvTitle;
             TextView tvMessage;
             TextView tvTime;
-            View dotUnread;
+            View dotUnread, btnDelete;
 
             VH(View view) {
                 super(view);
@@ -262,6 +278,7 @@ public class AdminNotificationActivity extends AppCompatActivity {
                 tvMessage = view.findViewById(R.id.tvNotifMessage);
                 tvTime = view.findViewById(R.id.tvNotifTime);
                 dotUnread = view.findViewById(R.id.dotUnread);
+                btnDelete = view.findViewById(R.id.btnDeleteNotif);
             }
         }
     }

@@ -78,14 +78,14 @@
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnExport"
+                android:id="@+id/btnExportPdf"
                 style="@style/Widget.MaterialComponents.Button.Icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/blue_primary"
+                android:backgroundTint="#FF5722"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:text="@string/export"
+                android:text="EXPORT PDF"
                 android:textAllCaps="false"
                 android:textSize="13sp"
                 app:cornerRadius="8dp"

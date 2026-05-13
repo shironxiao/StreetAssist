@@ -57,7 +57,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_centerInParent="true"
-                    android:src="@android:drawable/ic_popup_reminder"
+                    android:src="@drawable/ic_nav_notifications"
                     app:tint="@color/text_primary" />
 
                 <TextView
@@ -94,7 +94,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dashboard"
+                    android:text="Dashboard Overview"
                     android:textColor="@color/text_primary"
                     android:textSize="24sp"
                     android:textStyle="bold" />
@@ -102,7 +102,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Overview of homeless case reports and statistics"
+                    android:layout_marginTop="2dp"
+                    android:text="Real-time case metrics and management"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
@@ -131,12 +132,13 @@
                             android:orientation="vertical"
                             android:padding="16dp">
                             <ImageView
-                                android:layout_width="32dp"
-                                android:layout_height="32dp"
-                                android:background="@color/blue_bg"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/circle_bg_light_blue"
+                                android:backgroundTint="@color/blue_bg"
                                 android:contentDescription="Total Reports Icon"
-                                android:padding="6dp"
-                                android:src="@android:drawable/ic_menu_agenda"
+                                android:padding="12dp"
+                                android:src="@drawable/ic_nav_reports"
                                 app:tint="@color/blue_primary" />
                             <TextView
                                 android:id="@+id/tvCountTotal"
@@ -173,12 +175,13 @@
                             android:orientation="vertical"
                             android:padding="16dp">
                             <ImageView
-                                android:layout_width="32dp"
-                                android:layout_height="32dp"
-                                android:background="@color/yellow_bg"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/circle_bg_light_blue"
+                                android:backgroundTint="@color/yellow_bg"
                                 android:contentDescription="Pending Icon"
-                                android:padding="6dp"
-                                android:src="@android:drawable/ic_menu_recent_history"
+                                android:padding="12dp"
+                                android:src="@drawable/ic_stat_pending"
                                 app:tint="@color/yellow_primary" />
                             <TextView
                                 android:id="@+id/tvCountPending"
@@ -215,12 +218,13 @@
                             android:orientation="vertical"
                             android:padding="16dp">
                             <ImageView
-                                android:layout_width="32dp"
-                                android:layout_height="32dp"
-                                android:background="@color/purple_bg"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/circle_bg_light_blue"
+                                android:backgroundTint="@color/purple_bg"
                                 android:contentDescription="In Progress Icon"
-                                android:padding="6dp"
-                                android:src="@android:drawable/ic_menu_send"
+                                android:padding="12dp"
+                                android:src="@drawable/ic_stat_progress"
                                 app:tint="@color/purple_primary" />
                             <TextView
                                 android:id="@+id/tvCountInProgress"
@@ -257,12 +261,13 @@
                             android:orientation="vertical"
                             android:padding="16dp">
                             <ImageView
-                                android:layout_width="32dp"
-                                android:layout_height="32dp"
-                                android:background="@color/green_bg"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:background="@drawable/circle_bg_light_blue"
+                                android:backgroundTint="@color/green_bg"
                                 android:contentDescription="Resolved Icon"
-                                android:padding="6dp"
-                                android:src="@android:drawable/checkbox_on_background"
+                                android:padding="12dp"
+                                android:src="@drawable/ic_stat_resolved"
                                 app:tint="@color/green_primary" />
                             <TextView
                                 android:id="@+id/tvCountResolved"

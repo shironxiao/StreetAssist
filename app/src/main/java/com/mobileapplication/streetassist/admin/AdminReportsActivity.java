@@ -121,8 +121,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
 
             @Override
-            public void onExportClick() {
-                exportFilteredReports();
+            public void onExportPdfClick() {
+                exportToPdf();
             }
 
             @Override
@@ -563,93 +563,100 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
                         Toast.makeText(this, "Failed to restore: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
-    private void exportFilteredReports() {
+    private void exportToPdf() {
         if (filteredList.isEmpty()) {
             Toast.makeText(this, "No reports to export", Toast.LENGTH_SHORT).show();
             return;
         }
 
         try {
-            String csv = buildCsvFromReports(filteredList);
-            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                    .format(new Date());
+            android.graphics.pdf.PdfDocument document = new android.graphics.pdf.PdfDocument();
+            android.graphics.pdf.PdfDocument.PageInfo pageInfo = new android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
+            android.graphics.pdf.PdfDocument.Page page = document.startPage(pageInfo);
+            android.graphics.Canvas canvas = page.getCanvas();
+            android.graphics.Paint paint = new android.graphics.Paint();
+            android.graphics.Paint titlePaint = new android.graphics.Paint();
+            titlePaint.setTextSize(18f);
+            titlePaint.setFakeBoldText(true);
+
+            float y = 40;
+            canvas.drawText("StreetAssist Reports Export", 40, y, titlePaint);
+            y += 30;
+
+            paint.setTextSize(12f);
+            canvas.drawText("Total Reports: " + filteredList.size(), 40, y, paint);
+            y += 20;
+            canvas.drawText("Generated on: " + new java.util.Date().toString(), 40, y, paint);
+            y += 40;
+
+            for (Map<String, Object> report : filteredList) {
+                if (y > 780) { // New page if near bottom
+                    document.finishPage(page);
+                    pageInfo = new android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, document.getPages().size() + 1).create();
+                    page = document.startPage(pageInfo);
+                    canvas = page.getCanvas();
+                    y = 40;
+                }
+
+                String id = safeString(report.get("id"));
+                String desc = safeString(report.get("description"));
+                String loc = safeString(report.get("locationAddress"));
+                String status = safeString(report.get("status"));
+                String time = "";
+                Object ts = report.get("timestamp");
+                if (ts instanceof com.google.firebase.Timestamp) {
+                    time = new java.text.SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(((com.google.firebase.Timestamp) ts).toDate());
+                }
+
+                paint.setFakeBoldText(true);
+                canvas.drawText("ID: " + id, 40, y, paint);
+                y += 15;
+                paint.setFakeBoldText(false);
+                canvas.drawText("Status: " + status + " | Time: " + time, 40, y, paint);
+                y += 15;
+                canvas.drawText("Location: " + loc, 40, y, paint);
+                y += 15;
+                
+                // Wrap text for description (simple wrap)
+                int maxLength = 80;
+                if (desc.length() > maxLength) {
+                    canvas.drawText("Description: " + desc.substring(0, maxLength), 40, y, paint);
+                    y += 15;
+                    canvas.drawText(desc.substring(maxLength), 60, y, paint);
+                } else {
+                    canvas.drawText("Description: " + desc, 40, y, paint);
+                }
+                
+                y += 30;
+                canvas.drawLine(40, y - 10, 555, y - 10, paint);
+                y += 10;
+            }
+
+            document.finishPage(page);
+
+            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             java.io.File exportDir = new java.io.File(getCacheDir(), "exports");
-            if (!exportDir.exists() && !exportDir.mkdirs()) {
-                Toast.makeText(this, "Failed to prepare export folder", Toast.LENGTH_LONG).show();
-                return;
-            }
+            if (!exportDir.exists()) exportDir.mkdirs();
+            java.io.File pdfFile = new java.io.File(exportDir, "reports_" + timestamp + ".pdf");
+            
+            document.writeTo(new java.io.FileOutputStream(pdfFile));
+            document.close();
 
-            java.io.File csvFile = new java.io.File(exportDir, "reports_export_" + timestamp + ".csv");
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(csvFile)) {
-                fos.write(csv.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            }
-
-            android.net.Uri fileUri = FileProvider.getUriForFile(
-                    this,
-                    getPackageName() + ".fileprovider",
-                    csvFile
-            );
-
+            android.net.Uri fileUri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", pdfFile);
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/csv");
+            shareIntent.setType("application/pdf");
             shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "StreetAssist Reports Export");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Exported " + filteredList.size() + " reports.");
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Share PDF Report"));
 
-            startActivity(Intent.createChooser(shareIntent, "Export reports"));
         } catch (Exception e) {
-            Log.e(TAG, "Export failed", e);
-            Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e(TAG, "PDF Export failed", e);
+            Toast.makeText(this, "PDF Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    private String buildCsvFromReports(List<Map<String, Object>> reports) {
-        StringBuilder sb = new StringBuilder();
-        sb.append('\uFEFF');
-        sb.append("Document ID,Report ID,Status,Description,Location,Latitude,Longitude,Timestamp,User ID\n");
-
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        for (Map<String, Object> report : reports) {
-            String documentId = safeString(report.get("documentId"));
-            String reportId = safeString(report.get("reportId"));
-            String status = safeString(report.get("status"));
-            String description = safeString(report.get("description"));
-            String location = safeString(report.get("locationAddress"));
-            String latitude = safeString(report.get("latitude"));
-            String longitude = safeString(report.get("longitude"));
-            String userId = safeString(report.get("userId"));
-
-            String timestamp = "";
-            Object ts = report.get("timestamp");
-            if (ts instanceof com.google.firebase.Timestamp) {
-                timestamp = sdf.format(((com.google.firebase.Timestamp) ts).toDate());
-            } else if (ts != null) {
-                timestamp = ts.toString();
-            }
-
-            sb.append(csvCell(documentId)).append(',')
-                    .append(csvCell(reportId)).append(',')
-                    .append(csvCell(status)).append(',')
-                    .append(csvCell(description)).append(',')
-                    .append(csvCell(location)).append(',')
-                    .append(csvCell(latitude)).append(',')
-                    .append(csvCell(longitude)).append(',')
-                    .append(csvCell(timestamp)).append(',')
-                    .append(csvCell(userId))
-                    .append('\n');
-        }
-
-        return sb.toString();
-    }
-
-    private String safeString(Object value) {
-        return value == null ? "" : String.valueOf(value);
-    }
-
-    private String csvCell(String value) {
-        String escaped = value.replace("\"", "\"\"");
-        return "\"" + escaped + "\"";
+    private String safeString(Object obj) {
+        return obj == null ? "" : String.valueOf(obj);
     }
 
     private void updateReportStatus(String docId, String newStatus, android.app.AlertDialog dialog) {

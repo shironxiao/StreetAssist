@@ -35,7 +35,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public interface OnHeaderActionListener {
         void onSearch(String query);
         void onFilterClick();
-        void onExportClick();
+        void onExportPdfClick();
         void onDeleteSelected(Set<String> selectedIds);
         void onRestoreSelected(Set<String> selectedIds);
         void onCancelSelection();
@@ -80,8 +80,8 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if (holder instanceof HeaderViewHolder) {
             HeaderViewHolder h = (HeaderViewHolder) holder;
 
-            h.btnExport.setOnClickListener(v -> {
-                if (headerListener != null) headerListener.onExportClick();
+            h.btnExportPdf.setOnClickListener(v -> {
+                if (headerListener != null) headerListener.onExportPdfClick();
             });
             h.btnFilter.setOnClickListener(v -> {
                 if (headerListener != null) headerListener.onFilterClick();
@@ -291,13 +291,13 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
-        View btnExport, btnFilter, btnDeleteSelected, btnCancelSelection, btnRestoreSelected;
+        View btnExportPdf, btnFilter, btnDeleteSelected, btnCancelSelection, btnRestoreSelected;
         android.widget.EditText etSearch;
         TextView tvShowingResults;
 
         public HeaderViewHolder(@NonNull View itemView) {
             super(itemView);
-            btnExport = itemView.findViewById(R.id.btnExport);
+            btnExportPdf = itemView.findViewById(R.id.btnExportPdf);
             btnFilter = itemView.findViewById(R.id.btnFilterStatus);
             btnDeleteSelected = itemView.findViewById(R.id.btnDeleteSelected);
             btnCancelSelection = itemView.findViewById(R.id.btnCancelSelection);

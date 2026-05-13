@@ -56,6 +56,21 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
             holder.tvName.setVisibility(View.GONE);
         }
 
+        String age = (String) announcement.get("age");
+        String sex = (String) announcement.get("sex");
+        if ((age != null && !age.isEmpty()) || (sex != null && !sex.isEmpty())) {
+            holder.tvAgeSex.setVisibility(View.VISIBLE);
+            StringBuilder sb = new StringBuilder();
+            if (age != null && !age.isEmpty()) sb.append("Age: ").append(age);
+            if (sex != null && !sex.isEmpty()) {
+                if (sb.length() > 0) sb.append(" | ");
+                sb.append("Sex: ").append(sex);
+            }
+            holder.tvAgeSex.setText(sb.toString());
+        } else {
+            holder.tvAgeSex.setVisibility(View.GONE);
+        }
+
         // Status logic for all announcements
         holder.tvStatusBadge.setVisibility(View.VISIBLE);
         holder.tvStatusBadge.setText(status != null ? status : "Verified by Police");
@@ -132,7 +147,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
-        TextView tvCategory, tvStatusBadge, tvTitle, tvName, tvSubtitle, tvContact, tvDate, tvIncidentDateTime, tvLocation;
+        TextView tvCategory, tvStatusBadge, tvTitle, tvName, tvAgeSex, tvSubtitle, tvContact, tvDate, tvIncidentDateTime, tvLocation;
         View btnViewComments, btnUpdateStatus, btnDelete, containerIncidentInfo;
 
         public ViewHolder(@NonNull View itemView) {
@@ -142,6 +157,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
             tvStatusBadge = itemView.findViewById(R.id.tvStatusBadge);
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvName = itemView.findViewById(R.id.tvName);
+            tvAgeSex = itemView.findViewById(R.id.tvAgeSex);
             tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
             tvContact = itemView.findViewById(R.id.tvContact);
             tvDate = itemView.findViewById(R.id.tvDate);
