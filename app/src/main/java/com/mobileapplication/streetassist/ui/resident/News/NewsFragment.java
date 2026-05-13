@@ -416,6 +416,7 @@ public class NewsFragment extends Fragment {
             private boolean commentsLoaded = false;
 
             private String currentAnnouncementId;
+            private String currentAnnouncementStatus;
 
             AnnouncementVH(@NonNull View itemView) {
                 super(itemView);
@@ -450,6 +451,7 @@ public class NewsFragment extends Fragment {
 
             void bind(Announcement announcement) {
                 this.currentAnnouncementId = announcement.id;
+                this.currentAnnouncementStatus = announcement.status;
                 commentsLoaded = false;
                 commentsVisible = false;
                 comments.clear();
@@ -923,7 +925,10 @@ public class NewsFragment extends Fragment {
                         }
 
                         String currentUid = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : "";
-                        if (comment.userId != null && comment.userId.equals(currentUid)) {
+                        boolean isAuthor = comment.userId != null && comment.userId.equals(currentUid);
+                        boolean isClosed = "Case Closed".equalsIgnoreCase(currentAnnouncementStatus);
+
+                        if (isAuthor && !isClosed) {
                             btnEdit.setVisibility(View.VISIBLE);
                             btnDelete.setVisibility(View.VISIBLE);
                         } else {
