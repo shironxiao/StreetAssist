@@ -61,7 +61,9 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:startIconDrawable="@drawable/ic_person"
+                app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFullName"
@@ -89,7 +91,9 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:startIconDrawable="@drawable/ic_email"
+                app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEmail"
@@ -117,7 +121,9 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:startIconDrawable="@drawable/ic_phone"
+                app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etContactNumber"
@@ -161,7 +167,7 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
                 app:hintEnabled="false"
-                app:startIconDrawable="@android:drawable/ic_menu_manage"
+                app:startIconDrawable="@drawable/ic_city"
                 app:startIconTint="#757575">
 
                 <AutoCompleteTextView
@@ -192,7 +198,7 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
                 app:hintEnabled="false"
-                app:startIconDrawable="@drawable/abc_ic_menu_selectall_mtrl_alpha"
+                app:startIconDrawable="@drawable/ic_barangay"
                 app:startIconTint="#757575">
 
                 <AutoCompleteTextView
@@ -222,7 +228,9 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
                 app:endIconMode="password_toggle"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:startIconDrawable="@drawable/ic_lock"
+                app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPassword"
@@ -251,7 +259,9 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
                 app:endIconMode="password_toggle"
-                app:hintEnabled="false">
+                app:hintEnabled="false"
+                app:startIconDrawable="@drawable/ic_lock"
+                app:startIconTint="#757575">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etConfirmPassword"
