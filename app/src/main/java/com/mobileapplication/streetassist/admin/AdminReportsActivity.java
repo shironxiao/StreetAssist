@@ -1,9 +1,13 @@
 package com.mobileapplication.streetassist.admin;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
@@ -12,28 +16,32 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 public class AdminReportsActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -46,7 +54,13 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     private FirebaseFirestore db;
     private String currentSearchQuery = "";
     private String currentStatusFilter = "All";
-    private com.google.firebase.firestore.ListenerRegistration reportsListener;
+    private String currentMunicipalityFilter = "All";
+    private String currentBarangayFilter = "All";
+    private String currentSortOrder = "Newest";
+    private ListenerRegistration reportsListener;
+
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location adminLocation;
 
     private interface TrashMoveCallback {
         void onComplete(boolean success, String errorMessage);
@@ -55,12 +69,144 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     private final android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private Runnable searchRunnable;
 
+    private static final Map<String, List<String>> CITY_BARANGAY_MAP = new TreeMap<>();
+
+    static {
+        CITY_BARANGAY_MAP.put("Basud", Arrays.asList(
+                "Aguit-it", "Backong", "Bagaobawan", "Calangcawan Norte", "Calangcawan Sur",
+                "Culayculay", "Dagang", "Gahonon", "Gubat Norte", "Gubat Sur",
+                "Ignit", "Kaibigan", "Langa-langa", "Laniton", "Lastic",
+                "Mabini", "Manlimonsito", "Matango", "Mocong", "Oloapaen",
+                "Ombao Heights", "Ombao Tibang", "Omboy", "Pagsangahan", "Pambuhan",
+                "Pinagwarasan", "Plaridel", "Poblacion", "Salvacion", "San Isidro",
+                "San Roque", "Santa Rosa Norte", "Santa Rosa Sur", "Taba-taba",
+                "Tacad", "Taisan", "Tambongon", "Tenerife", "Yapak"
+        ));
+        CITY_BARANGAY_MAP.put("Capalonga", Arrays.asList(
+                "Alayao", "Binawangan", "Calabaca", "Calagbagang", "Catabaguangan",
+                "Catioan", "Del Pilar", "Gilong", "Guayabo", "Ligñon",
+                "Mabini", "Magsaysay", "Mantalongon", "Milagrosa", "Plaridel",
+                "Poblacion", "Quirino", "Roosevelt", "Salvacion", "San Antonio",
+                "San Francisco", "San Isidro", "Santa Cruz", "Santa Elena",
+                "Santa Maria", "Santo Niño", "Sinagapos", "Vista Hermosa"
+        ));
+        CITY_BARANGAY_MAP.put("Daet", Arrays.asList(
+                "Alawihao", "Awitan", "Bagasbas", "Barangay I (Pob.)", "Barangay II (Pob.)",
+                "Barangay III (Pob.)", "Barangay IV (Pob.)", "Barangay V (Pob.)",
+                "Barangay VI (Pob.)", "Barangay VII (Pob.)", "Barangay VIII (Pob.)",
+                "Bibirao", "Borabod", "Calasgasan", "Camambugan", "Cobangbang (Sto. Niño)",
+                "Dogongan", "Garcia", "Gahonon", "Gubat", "Lag-on",
+                "Lucrecia", "Magang", "Mancruz (San Juan)", "Pamorangon", "San Isidro"
+        ));
+        CITY_BARANGAY_MAP.put("Jose Panganiban", Arrays.asList(
+                "Bagong Bayan", "Calero", "Dahican", "Dayhagan", "Estacion",
+                "Lag-on", "Larap", "Loreña", "Luyos", "Mabini",
+                "Mabungabon", "Managpi", "Manaringon", "Mercedes", "Napaod",
+                "Parang", "Placer", "Poblacion I", "Poblacion II", "Poblacion III",
+                "Port Junction Norte", "Port Junction Sur", "Santa Milagrosa",
+                "Tacay", "Tambo", "Trinidad", "Viñas", "Wawa"
+        ));
+        CITY_BARANGAY_MAP.put("Labo", Arrays.asList(
+                "Abella", "Agusigin", "Balangcawan Norte", "Balangcawan Sur", "Balite",
+                "Bautista", "Bayabas", "Bena", "Binanuahan East", "Binanuahan West",
+                "Bulacan", "Caayunan", "Calibunan", "Camambugan", "Candawan",
+                "Capalogan", "Catabaguangan", "Catioan", "Codon", "Colacling",
+                "Colomio", "Corucao", "Del Pilar", "Gahonon", "Guadalupe",
+                "Guinabonan", "Herrera", "Hoyohoy", "Imelda", "Inauayan",
+                "J. Milan (Catanggalan)", "Kaibigan", "Lag-on", "Lictingtung",
+                "Ligñon", "Lumbangan", "Luna Norte", "Luna Sur", "Mabini",
+                "Mabolo", "Macabug", "Magang", "Magsaysay", "Manuangan",
+                "Maria", "Masalong Norte", "Masalong Sur", "Mataque", "Mercedes",
+                "Napaod", "Niabonan", "Obaliw Recto", "Ocampo", "Ola Norte",
+                "Ola Sur", "Osmeña", "Oyon", "Pag-asa", "Palong",
+                "Pancucuran", "Pawili", "Plaridel", "Poblacion", "Pola",
+                "Pood", "Quezon", "Quirino", "Roosevelt", "Rosario",
+                "Salvacion", "San Antonio Norte", "San Antonio Sur", "San Isidro",
+                "San Lorenzo", "San Miguel", "San Pablo Norte", "San Pablo Sur",
+                "San Patricio Norte", "San Patricio Sur", "San Ramon",
+                "San Vicente", "Santa Cruz", "Sapang Palay", "Sumaoy",
+                "Tamban", "Tulay", "Tungmalaong", "Vega", "Villasol"
+        ));
+        CITY_BARANGAY_MAP.put("Mercedes", Arrays.asList(
+                "Apuao", "Barangay I (Pob.)", "Barangay II (Pob.)", "Barangay III (Pob.)",
+                "Barangay IV (Pob.)", "Barangay V (Pob.)", "Barangay VI (Pob.)",
+                "Barangay VII (Pob.)", "Boot", "Casagsagan", "Comadaycaday",
+                "Comadogcadog", "Daculang Bolo", "Daguit", "Danao",
+                "Guayabo", "Himanag", "Lagha", "Lanot", "Lañgon",
+                "Libas", "Mabini", "Macolabo Island", "Malinis",
+                "Maot", "Masikla", "Matnog", "Mobo", "Nacawit",
+                "Pambuhan", "Patag", "Patrol", "Quinapaguian", "Salingogon",
+                "Sirangan", "Taba", "Tawig", "Tugos", "Yabo"
+        ));
+        CITY_BARANGAY_MAP.put("Paracale", Arrays.asList(
+                "Awitan", "Bagumbayan", "Bakal Norte", "Bakal Sur", "Batobalani",
+                "Calaburnay", "Capacuan", "Casagsagan", "Caypandan", "Colasi",
+                "Gahonon", "Guinabonan", "Jose Panganiban", "Lag-on", "Larap",
+                "Luklukan Norte", "Luklukan Sur", "Mabini", "Madlawon",
+                "Mananao", "Mancuartira", "Mangkasuy", "Maot", "Masalong",
+                "Minalabac", "Nakalaya", "Norte", "Obo", "Pag-asa",
+                "Pangarairan", "Peñafrancia", "Poblacion", "Tabugon",
+                "Tagas", "Talisay", "Tambong", "Tigbinan", "Tulay Na Lupa"
+        ));
+        CITY_BARANGAY_MAP.put("San Lorenzo Ruiz", Arrays.asList(
+                "Alegria", "Anahawan", "Anonang", "Bagong Silang", "Calangcawan",
+                "Guinabonan", "Iligan", "Inductan", "Km. 891 Pob. (Tulay)",
+                "Lamon", "Mabilo I", "Mabilo II", "Nakalaya", "Northern Poblacion",
+                "Placer", "Salvacion", "San Antonio", "San Francisco", "San Isidro",
+                "San Jose", "San Martin", "San Pedro", "Santa Cruz",
+                "Santa Elena", "Santiago", "Southern Poblacion", "Talahib",
+                "Talisay", "Tamban", "Tambo", "Tandoc", "Tison"
+        ));
+        CITY_BARANGAY_MAP.put("San Vicente", Arrays.asList(
+                "Bugtong na Pulo", "Calwit", "Labnig", "Mabini", "Madlawon",
+                "Pag-asa", "Poblacion", "San Antonio", "San Francisco",
+                "San Isidro", "San Ramon", "Santa Cruz", "Santa Elena",
+                "Santo Niño", "Taguilid"
+        ));
+        CITY_BARANGAY_MAP.put("Santa Elena", Arrays.asList(
+                "Angga", "Bactas", "Binanwaanan", "Bulhao", "Busak",
+                "Caawigan", "Caayunan", "Calabaca", "Calagbagang", "Calaocan",
+                "Camambugan", "Candawan", "Catabaguangan", "Cataroan", "Caugmayan",
+                "Cayucay", "Del Pilar", "Guadalupe", "Hawak", "Itulan",
+                "Laniton", "Lastic", "Mabini", "Magsaysay",
+                "Manlimonsito", "Matango", "Mocong", "Oloapaen",
+                "Pagsangahan", "Pambuhan", "Pinagwarasan", "Plaridel",
+                "Poblacion", "Puro", "Salvacion", "San Antonio",
+                "San Francisco", "San Isidro", "San Jose", "San Martin",
+                "San Miguel", "San Pedro", "San Ramon", "San Roque",
+                "Santa Cruz", "Santa Elena", "Santo Niño", "Tacad",
+                "Taisan", "Talisay", "Tambongon", "Tenerife"
+        ));
+        CITY_BARANGAY_MAP.put("Talisay", Arrays.asList(
+                "Bagong Bayan", "Bautista", "Calasag", "Catagbacan", "Codon",
+                "Hampas", "Laniton", "Limaong", "Mabini", "Magang",
+                "Mataque", "Maugat East", "Maugat West", "Pag-asa", "Poblacion",
+                "Salvacion", "San Antonio", "San Isidro", "San Jose",
+                "San Miguel", "San Pablo", "San Roque", "Santa Cruz",
+                "Santo Niño", "Tapihan", "Tulatula"
+        ));
+        CITY_BARANGAY_MAP.put("Vinzons", Arrays.asList(
+                "Alaban", "Algaran", "Balagba", "Binobong", "Burabod",
+                "Cagbanaba", "Calabagas", "Calangcawan Norte", "Calangcawan Sur",
+                "Cawayan Pola", "Cawayan Sapa", "Colasi", "Del Pilar",
+                "Gubat Norte", "Gubat Sur", "Himaao", "Indangan",
+                "La Purisima", "Labo", "Laga", "Mabini", "Masalong",
+                "Maulawin", "Nakalaya", "Pag-asa", "Pambuhan", "Pinit",
+                "Pob. I (Barangay I)", "Pob. II (Barangay II)", "Pob. III (Barangay III)",
+                "Pob. IV (Barangay IV)", "Potot", "Sabang", "Salvacion",
+                "San Antonio", "San Francisco", "San Isidro", "San Jose",
+                "San Pascual", "Santa Cruz", "Santo Niño", "Taisan",
+                "Tambongon", "Tulay Na Lupa"
+        ));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.admin_reports);
 
         db = FirebaseFirestore.getInstance();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         // Security Guard
         com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -88,25 +234,21 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_all_reports);
 
-        // Fix Sidebar Obscuration
         navigationView.bringToFront();
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
         ImageButton btnMenu = findViewById(R.id.btnMenu);
         btnMenu.setOnClickListener(v -> {
-            Log.d(TAG, "Menu button clicked");
             if (drawerLayout != null) {
                 drawerLayout.openDrawer(GravityCompat.START);
-            } else {
-                Log.e(TAG, "DrawerLayout is null!");
             }
         });
 
         rvReports = findViewById(R.id.rvAllReports);
         rvReports.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new com.mobileapplication.streetassist.admin.RecentReportAdapter(this, filteredList);
-        adapter.setHeaderListener(new com.mobileapplication.streetassist.admin.RecentReportAdapter.OnHeaderActionListener() {
+        adapter = new RecentReportAdapter(this, filteredList);
+        adapter.setHeaderListener(new RecentReportAdapter.OnHeaderActionListener() {
             @Override
             public void onSearch(String query) {
                 currentSearchQuery = query;
@@ -121,26 +263,32 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
 
             @Override
+            public void onMunicipalityFilterClick() {
+                showMunicipalityFilterPopup();
+            }
+
+            @Override
+            public void onBarangayFilterClick() {
+                showBarangayFilterPopup();
+            }
+
+            @Override
+            public void onSortClick() {
+                showSortPopup();
+            }
+
+            @Override
             public void onExportPdfClick() {
                 exportToPdf();
             }
 
             @Override
             public void onDeleteSelected(java.util.Set<String> selectedIds) {
-                new android.app.AlertDialog.Builder(AdminReportsActivity.this)
-                        .setTitle("Move Selected to Trash")
-                        .setMessage("Move " + selectedIds.size() + " selected reports to Trash?")
-                        .setPositiveButton("Move to Trash", (d, which) -> {
-                            deleteMultipleReports(selectedIds);
-                        })
-                        .setNegativeButton(R.string.cancel, null)
-                        .show();
+                deleteMultipleReports(selectedIds);
             }
 
             @Override
-            public void onRestoreSelected(java.util.Set<String> selectedIds) {
-                // Restore action is supported in AdminTrashActivity.
-            }
+            public void onRestoreSelected(java.util.Set<String> selectedIds) {}
 
             @Override
             public void onCancelSelection() {
@@ -152,8 +300,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
-                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
                 } else {
                     startActivity(new Intent(AdminReportsActivity.this, AdminDashboardActivity.class));
                     finish();
@@ -161,8 +309,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
         });
 
-        // Check for deep link on start
-        checkDeepLink();
+        requestAdminLocation();
     }
 
     @Override
@@ -182,27 +329,10 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         }
     }
 
-    private void checkForIntentExtras() {
-        String targetId = getIntent().getStringExtra("reportId");
-        if (targetId != null && !targetId.isEmpty()) {
-            getIntent().removeExtra("reportId"); // Clear it so it only shows once
-            db.collection("reports").document(targetId).get()
-                    .addOnSuccessListener(documentSnapshot -> {
-                        if (documentSnapshot.exists()) {
-                            Map<String, Object> data = documentSnapshot.getData();
-                            if (data != null) {
-                                data.put("documentId", documentSnapshot.getId());
-                                showReportDetails(data);
-                            }
-                        }
-                    });
-        }
-    }
-
-    private com.google.firebase.firestore.ListenerRegistration fetchAllReports() {
+    private ListenerRegistration fetchAllReports() {
         return db.collection("reports")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(100)
+                .limit(200)
                 .addSnapshotListener((value, error) -> {
                     if (error != null) {
                         Log.e(TAG, "Listen failed.", error);
@@ -212,16 +342,12 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
                         reportList.clear();
                         for (QueryDocumentSnapshot doc : value) {
                             Map<String, Object> data = doc.getData();
-                            if (data != null) {
-                                // Only active reports should appear in Reports screen.
-                                if (data.get("deletedAt") != null) continue;
+                            if (data != null && data.get("deletedAt") == null) {
                                 data.put("documentId", doc.getId());
                                 reportList.add(data);
                             }
                         }
                         applyFilters();
-                        // Handle opening a specific report if we came from a notification
-                        checkForIntentExtras();
                     }
                 });
     }
@@ -229,338 +355,176 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
     private void applyFilters() {
         filteredList.clear();
         for (Map<String, Object> report : reportList) {
+            String address = String.valueOf(report.getOrDefault("locationAddress", "")).toLowerCase();
+            
             boolean matchesSearch = true;
             if (!currentSearchQuery.isEmpty()) {
                 String desc = String.valueOf(report.get("description")).toLowerCase();
-                String loc = String.valueOf(report.get("locationAddress")).toLowerCase();
                 String id = String.valueOf(report.get("reportId")).toLowerCase();
                 matchesSearch = desc.contains(currentSearchQuery.toLowerCase()) ||
-                        loc.contains(currentSearchQuery.toLowerCase()) ||
+                        address.contains(currentSearchQuery.toLowerCase()) ||
                         id.contains(currentSearchQuery.toLowerCase());
             }
 
-            boolean matchesStatus = true;
-            if (!currentStatusFilter.equals("All")) {
-                String status = String.valueOf(report.get("status"));
-                matchesStatus = status.equalsIgnoreCase(currentStatusFilter);
-            }
+            boolean matchesStatus = currentStatusFilter.equals("All") || 
+                    String.valueOf(report.get("status")).equalsIgnoreCase(currentStatusFilter);
 
-            if (matchesSearch && matchesStatus) {
+            boolean matchesMunicipality = currentMunicipalityFilter.equals("All") || 
+                    address.contains(currentMunicipalityFilter.toLowerCase());
+
+            boolean matchesBarangay = currentBarangayFilter.equals("All") || 
+                    address.contains(currentBarangayFilter.toLowerCase());
+
+            if (matchesSearch && matchesStatus && matchesMunicipality && matchesBarangay) {
                 filteredList.add(report);
             }
         }
+
+        // Apply Sorting
+        if (currentSortOrder.equals("Newest")) {
+            filteredList.sort((a, b) -> compareTimestamps(b, a));
+        } else if (currentSortOrder.equals("Oldest")) {
+            filteredList.sort((a, b) -> compareTimestamps(a, b));
+        } else if (currentSortOrder.equals("Distance (Nearest)") && adminLocation != null) {
+            filteredList.sort(this::compareDistances);
+        } else if (currentSortOrder.equals("Municipality (A-Z)")) {
+            filteredList.sort((a, b) -> {
+                String m1 = detectMunicipality(String.valueOf(a.getOrDefault("locationAddress", "")));
+                String m2 = detectMunicipality(String.valueOf(b.getOrDefault("locationAddress", "")));
+                return m1.compareToIgnoreCase(m2);
+            });
+        }
+
         adapter.updateList(filteredList);
-        checkDeepLink();
+    }
+
+    private int compareTimestamps(Map<String, Object> a, Map<String, Object> b) {
+        Object t1 = a.get("timestamp");
+        Object t2 = b.get("timestamp");
+        if (t1 instanceof com.google.firebase.Timestamp && t2 instanceof com.google.firebase.Timestamp) {
+            return ((com.google.firebase.Timestamp) t1).compareTo((com.google.firebase.Timestamp) t2);
+        }
+        return 0;
+    }
+
+    private int compareDistances(Map<String, Object> a, Map<String, Object> b) {
+        double lat1 = (double) a.getOrDefault("latitude", 0.0);
+        double lon1 = (double) a.getOrDefault("longitude", 0.0);
+        double lat2 = (double) b.getOrDefault("latitude", 0.0);
+        double lon2 = (double) b.getOrDefault("longitude", 0.0);
+
+        float[] res1 = new float[1];
+        Location.distanceBetween(adminLocation.getLatitude(), adminLocation.getLongitude(), lat1, lon1, res1);
+        float[] res2 = new float[1];
+        Location.distanceBetween(adminLocation.getLatitude(), adminLocation.getLongitude(), lat2, lon2, res2);
+
+        return Float.compare(res1[0], res2[0]);
+    }
+
+    private String detectMunicipality(String address) {
+        if (address == null || address.isEmpty()) return "Unknown";
+        for (String m : CITY_BARANGAY_MAP.keySet()) {
+            if (address.toLowerCase().contains(m.toLowerCase())) return m;
+        }
+        return "Unknown";
     }
 
     private void showFilterPopup() {
-        RecyclerView.ViewHolder headerHolder = rvReports.findViewHolderForAdapterPosition(0);
-        if (!(headerHolder instanceof RecentReportAdapter.HeaderViewHolder)) return;
-
-        android.view.View filterBtn = ((RecentReportAdapter.HeaderViewHolder) headerHolder).btnFilter;
-        if (filterBtn == null) return;
-
-        PopupMenu popup = new PopupMenu(this, filterBtn);
+        RecyclerView.ViewHolder header = rvReports.findViewHolderForAdapterPosition(0);
+        if (header == null) return;
+        View anchor = header.itemView.findViewById(R.id.btnFilterStatus);
+        PopupMenu popup = new PopupMenu(this, anchor);
         popup.getMenu().add("All");
         popup.getMenu().add("Pending");
         popup.getMenu().add("In Progress");
         popup.getMenu().add("Resolved");
-
         popup.setOnMenuItemClickListener(item -> {
             currentStatusFilter = item.getTitle().toString();
             applyFilters();
-
-            android.widget.TextView filterLabel = filterBtn.findViewById(R.id.tvFilterLabel);
-            if (filterLabel != null) filterLabel.setText(currentStatusFilter);
-
+            ((TextView) anchor.findViewById(R.id.tvFilterLabel)).setText("Status: " + currentStatusFilter);
             return true;
         });
         popup.show();
     }
 
-    private void checkDeepLink() {
-        String targetId = getIntent().getStringExtra("reportId");
-        if (targetId != null && !filteredList.isEmpty()) {
-            for (Map<String, Object> report : filteredList) {
-                String docId = (String) report.get("documentId");
-                String rId = (String) report.get("reportId");
-                if (targetId.equals(docId) || targetId.equals(rId)) {
-                    getIntent().removeExtra("reportId");
-                    showReportDetails(report);
-                    break;
-                }
-            }
-        }
+    private void showMunicipalityFilterPopup() {
+        RecyclerView.ViewHolder header = rvReports.findViewHolderForAdapterPosition(0);
+        if (header == null) return;
+        View anchor = header.itemView.findViewById(R.id.btnFilterMunicipality);
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add("All");
+        for (String m : CITY_BARANGAY_MAP.keySet()) popup.getMenu().add(m);
+        popup.setOnMenuItemClickListener(item -> {
+            currentMunicipalityFilter = item.getTitle().toString();
+            currentBarangayFilter = "All";
+            applyFilters();
+            ((TextView) anchor.findViewById(R.id.tvMunicipalityLabel)).setText("Muni: " + currentMunicipalityFilter);
+            View brgyBtn = header.itemView.findViewById(R.id.btnFilterBarangay);
+            ((TextView) brgyBtn.findViewById(R.id.tvBarangayLabel)).setText("Brgy: All");
+            return true;
+        });
+        popup.show();
     }
 
-    public void showReportDetails(Map<String, Object> report) {
-        // Update adminSeenAt if not already set for admin tracking
-        if (report.get("adminSeenAt") == null) {
-            String docId = (String) report.get("documentId");
-            if (docId != null) {
-                db.collection("reports").document(docId)
-                        .update("adminSeenAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
-            }
-        }
-
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_admin_report_details, null);
-        builder.setView(dialogView);
-        android.app.AlertDialog dialog = builder.create();
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-
-        TextView tvId = dialogView.findViewById(R.id.tvReportId);
-        TextView tvStatus = dialogView.findViewById(R.id.tvDetailStatus);
-        TextView tvTime = dialogView.findViewById(R.id.tvDetailTime);
-        TextView tvDesc = dialogView.findViewById(R.id.tvDetailDescription);
-        TextView tvLoc = dialogView.findViewById(R.id.tvDetailLocation);
-        TextView tvSubject = dialogView.findViewById(R.id.tvDetailSubject);
-        TextView tvAssistance = dialogView.findViewById(R.id.tvDetailAssistance);
-        TextView tvName = dialogView.findViewById(R.id.tvReporterName);
-        TextView tvContact = dialogView.findViewById(R.id.tvReporterContact);
-        TextView tvAddress = dialogView.findViewById(R.id.tvReporterAddress);
-        ImageButton btnClose = dialogView.findViewById(R.id.btnClose);
-        Button btnInProgress = dialogView.findViewById(R.id.btnSetInProgress);
-        Button btnResolved = dialogView.findViewById(R.id.btnSetResolved);
-        Button btnMap = dialogView.findViewById(R.id.btnViewLocation);
-        ImageButton btnDelete = dialogView.findViewById(R.id.btnDelete);
-
-        String docId = String.valueOf(report.get("documentId"));
-        String reportId = String.valueOf(report.get("reportId"));
-        String status = String.valueOf(report.get("status"));
-
-        tvId.setText(reportId.startsWith("RPT-") ? reportId : "RPT-" + reportId);
-        tvDesc.setText(String.valueOf(report.getOrDefault("description", "No description provided")));
-        tvLoc.setText(String.valueOf(report.getOrDefault("locationAddress", "Unknown Location")));
-        tvStatus.setText(status.toUpperCase());
-
-        // Set Subject and Assistance details
-        String age = String.valueOf(report.getOrDefault("approximateAge", "N/A"));
-        String sex = String.valueOf(report.getOrDefault("sex", "N/A"));
-        tvSubject.setText("Age: " + age + ", Sex: " + sex);
-
-        String assistance = String.valueOf(report.getOrDefault("assistanceDescription", "No assistance details provided"));
-        tvAssistance.setText(assistance);
-
-        // Fetch Reporter Details
-        updateReporterInfo(report, tvName, tvContact, tvAddress);
-
-        // Format Time
-        Object ts = report.get("timestamp");
-        if (ts instanceof com.google.firebase.Timestamp) {
-            java.util.Date date = ((com.google.firebase.Timestamp) ts).toDate();
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM dd, yyyy • hh:mm a", java.util.Locale.getDefault());
-            tvTime.setText(sdf.format(date));
-        }
-
-        // Hide update buttons if already resolved
-        if ("Resolved".equalsIgnoreCase(status)) {
-            btnInProgress.setVisibility(android.view.View.GONE);
-            btnResolved.setVisibility(android.view.View.GONE);
-        } else if ("In Progress".equalsIgnoreCase(status)) {
-            btnInProgress.setVisibility(android.view.View.GONE);
-        }
-
-        btnInProgress.setOnClickListener(v -> updateReportStatus(docId, "In Progress", dialog));
-        btnResolved.setOnClickListener(v -> updateReportStatus(docId, "Resolved", dialog));
-        btnClose.setOnClickListener(v -> dialog.dismiss());
-
-        btnMap.setOnClickListener(v -> {
-            Object lat = report.get("latitude");
-            Object lon = report.get("longitude");
-            if (lat != null && lon != null) {
-                String uri = "geo:" + lat + "," + lon + "?q=" + lat + "," + lon + "(Incident)";
-                startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri)));
-            }
-        });
-
-        btnDelete.setOnClickListener(v -> {
-            new android.app.AlertDialog.Builder(this)
-                    .setTitle("Move to Trash")
-                    .setMessage("Move this report to Trash? You can restore it later.")
-                    .setPositiveButton("Move to Trash", (d, which) -> {
-                        deleteReport(docId, dialog);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        });
-
-        dialog.show();
-    }
-
-    private void updateReporterInfo(Map<String, Object> report, TextView tvName, TextView tvContact, TextView tvAddress) {
-        String reporterId = report.get("userId") != null ? String.valueOf(report.get("userId")) : "";
-        String reportEmail = report.get("userEmail") != null ? String.valueOf(report.get("userEmail")) : "";
-        String reportContact = report.get("contactNumber") != null ? String.valueOf(report.get("contactNumber")) : "";
-        String reportFullName = report.get("fullName") != null ? String.valueOf(report.get("fullName")) : "";
-
-        // 1. Initial display from report data
-        if (!reportContact.isEmpty() && !reportContact.equalsIgnoreCase("null")) {
-            tvContact.setText("Contact: " + reportContact);
-            tvContact.setVisibility(android.view.View.VISIBLE);
+    private void showBarangayFilterPopup() {
+        RecyclerView.ViewHolder header = rvReports.findViewHolderForAdapterPosition(0);
+        if (header == null) return;
+        View anchor = header.itemView.findViewById(R.id.btnFilterBarangay);
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add("All");
+        if (!currentMunicipalityFilter.equals("All")) {
+            List<String> brgys = CITY_BARANGAY_MAP.get(currentMunicipalityFilter);
+            if (brgys != null) for (String b : brgys) popup.getMenu().add(b);
         } else {
-            tvContact.setVisibility(android.view.View.GONE);
+            popup.getMenu().add("(Select Municipality First)");
         }
-        
-        tvAddress.setVisibility(android.view.View.GONE);
-
-        // Priority: Use full name from report if it exists, otherwise email, otherwise "Resident"
-        if (!reportFullName.isEmpty() && !reportFullName.equalsIgnoreCase("null")) {
-            tvName.setText(reportFullName);
-        } else if (!reportEmail.isEmpty() && !reportEmail.equalsIgnoreCase("null")) {
-            tvName.setText(reportEmail);
-        } else {
-            tvName.setText("Resident");
-        }
-
-        // 2. Fetch additional user details if not anonymous to get the latest fullName
-        if (!reporterId.isEmpty() && !reporterId.equalsIgnoreCase("anonymous") && !reporterId.equalsIgnoreCase("null")) {
-            if (reporterId.contains("@")) {
-                // Case where email might be stored in userId field
-                db.collection("users").whereEqualTo("email", reporterId).get()
-                        .addOnSuccessListener(qs -> {
-                            if (!qs.isEmpty()) {
-                                populateUserDetails(qs.getDocuments().get(0), tvName, tvContact, tvAddress);
-                            }
-                        });
-            } else {
-                // Priority 1: Lookup by UID
-                db.collection("users").document(reporterId).get()
-                        .addOnSuccessListener(doc -> {
-                            if (doc.exists()) {
-                                populateUserDetails(doc, tvName, tvContact, tvAddress);
-                            } else if (reportEmail.contains("@")) {
-                                // Priority 2: Lookup by Email if UID not found
-                                db.collection("users").whereEqualTo("email", reportEmail).get()
-                                        .addOnSuccessListener(qs -> {
-                                            if (!qs.isEmpty()) {
-                                                populateUserDetails(qs.getDocuments().get(0), tvName, tvContact, tvAddress);
-                                            }
-                                        });
-                            }
-                        });
-            }
-        } else if (reportEmail.contains("@")) {
-            db.collection("users").whereEqualTo("email", reportEmail).get()
-                    .addOnSuccessListener(qs -> {
-                        if (!qs.isEmpty()) {
-                            populateUserDetails(qs.getDocuments().get(0), tvName, tvContact, tvAddress);
-                        }
-                    });
-        }
-    }
-
-    private void populateUserDetails(com.google.firebase.firestore.DocumentSnapshot doc, TextView tvName, TextView tvContact, TextView tvAddress) {
-        // 1. Resolve Name
-        String name = doc.getString("fullName");
-        if (name == null || name.isEmpty()) name = doc.getString("fullname");
-        if (name == null || name.isEmpty()) name = doc.getString("username");
-        if (name == null || name.isEmpty()) name = doc.getString("email");
-        tvName.setText(name != null && !name.isEmpty() ? name : "Resident");
-
-        // 2. Resolve Contact (overwrites report contact if available in profile)
-        String contact = doc.getString("contactNumber");
-        if (contact == null || contact.isEmpty()) contact = doc.getString("phoneNumber");
-        if (contact != null && !contact.isEmpty()) {
-            tvContact.setText("Contact: " + contact);
-            tvContact.setVisibility(android.view.View.VISIBLE);
-        }
-
-        // 3. Resolve Address
-        Object addrObj = doc.get("address");
-        if (addrObj instanceof Map) {
-            Map<String, Object> addrMap = (Map<String, Object>) addrObj;
-            String brgy = String.valueOf(addrMap.getOrDefault("barangay", ""));
-            String city = String.valueOf(addrMap.getOrDefault("city", ""));
-            if (!brgy.isEmpty() || !city.isEmpty()) {
-                String fullAddr = brgy + (brgy.isEmpty() || city.isEmpty() ? "" : ", ") + city;
-                tvAddress.setText("Address: " + fullAddr);
-                tvAddress.setVisibility(android.view.View.VISIBLE);
-            }
-        } else if (addrObj instanceof String && !((String) addrObj).isEmpty()) {
-            tvAddress.setText("Address: " + addrObj);
-            tvAddress.setVisibility(android.view.View.VISIBLE);
-        }
-    }
-
-    private void deleteMultipleReports(java.util.Set<String> selectedIds) {
-        if (selectedIds.isEmpty()) return;
-        java.util.List<String> idList = new java.util.ArrayList<>(selectedIds);
-        processTrashMoveSequentially(idList, 0, 0, 0);
-    }
-
-    private void deleteReport(String docId, android.app.AlertDialog detailsDialog) {
-        moveReportToTrash(docId, (success, errorMessage) -> {
-            if (success) {
-                Toast.makeText(this, "Report moved to Trash", Toast.LENGTH_SHORT).show();
-                showRestoreSnackbar(java.util.Collections.singleton(docId), "Report moved to Trash");
-                if (detailsDialog != null) detailsDialog.dismiss();
-            } else {
-                Toast.makeText(this, "Failed to move report to Trash: " + errorMessage, Toast.LENGTH_LONG).show();
-            }
+        popup.setOnMenuItemClickListener(item -> {
+            String sel = item.getTitle().toString();
+            if (sel.startsWith("(")) return false;
+            currentBarangayFilter = sel;
+            applyFilters();
+            ((TextView) anchor.findViewById(R.id.tvBarangayLabel)).setText("Brgy: " + (sel.length() > 10 ? sel.substring(0, 8) + ".." : sel));
+            return true;
         });
+        popup.show();
     }
 
-    private void processTrashMoveSequentially(java.util.List<String> ids, int index, int successCount, int failCount) {
-        if (index >= ids.size()) {
-            if (failCount == 0) {
-                Toast.makeText(this, successCount + " reports moved to Trash", Toast.LENGTH_SHORT).show();
-                showRestoreSnackbar(new java.util.HashSet<>(ids), successCount + " reports moved to Trash");
-            } else {
-                Toast.makeText(this, "Moved " + successCount + ", failed " + failCount, Toast.LENGTH_LONG).show();
-            }
-            adapter.clearSelection();
+    private void showSortPopup() {
+        RecyclerView.ViewHolder header = rvReports.findViewHolderForAdapterPosition(0);
+        if (header == null) return;
+        View anchor = header.itemView.findViewById(R.id.btnSortLocation);
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add("Newest");
+        popup.getMenu().add("Oldest");
+        popup.getMenu().add("Distance (Nearest)");
+        popup.getMenu().add("Municipality (A-Z)");
+        popup.setOnMenuItemClickListener(item -> {
+            currentSortOrder = item.getTitle().toString();
+            if ("Distance (Nearest)".equals(currentSortOrder) && adminLocation == null) requestAdminLocation();
+            applyFilters();
+            ((TextView) anchor.findViewById(R.id.tvSortLabel)).setText("Sort: " + currentSortOrder);
+            return true;
+        });
+        popup.show();
+    }
+
+    private void requestAdminLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1002);
             return;
         }
-
-        moveReportToTrash(ids.get(index), (success, errorMessage) -> {
-            int nextSuccess = success ? successCount + 1 : successCount;
-            int nextFail = success ? failCount : failCount + 1;
-            processTrashMoveSequentially(ids, index + 1, nextSuccess, nextFail);
+        fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+            if (location != null) adminLocation = location;
+            if ("Distance (Nearest)".equals(currentSortOrder)) applyFilters();
         });
     }
 
-    private void moveReportToTrash(String docId, TrashMoveCallback callback) {
-        if (docId == null || docId.trim().isEmpty() || "null".equalsIgnoreCase(docId)) {
-            callback.onComplete(false, "Invalid report id");
-            return;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1002 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            requestAdminLocation();
         }
-
-        com.google.firebase.firestore.DocumentReference reportRef = db.collection("reports").document(docId);
-
-        reportRef.get()
-                .addOnSuccessListener(snapshot -> {
-                    if (!snapshot.exists() || snapshot.getData() == null) {
-                        callback.onComplete(false, "Report not found");
-                        return;
-                    }
-
-                    reportRef.update("deletedAt", com.google.firebase.Timestamp.now())
-                            .addOnSuccessListener(unused -> callback.onComplete(true, null))
-                            .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
-                })
-                .addOnFailureListener(e -> callback.onComplete(false, e.getMessage()));
-    }
-
-    private void showRestoreSnackbar(java.util.Set<String> docIds, String message) {
-        if (docIds == null || docIds.isEmpty()) return;
-        Snackbar.make(rvReports, message, Snackbar.LENGTH_LONG)
-                .setAction("Restore", v -> restoreReports(docIds))
-                .show();
-    }
-
-    private void restoreReports(java.util.Set<String> docIds) {
-        com.google.firebase.firestore.WriteBatch batch = db.batch();
-        for (String id : docIds) {
-            if (id != null && !id.trim().isEmpty()) {
-                batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.delete());
-            }
-        }
-        batch.commit()
-                .addOnSuccessListener(unused ->
-                        Toast.makeText(this, "Report restored", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to restore: " + e.getMessage(), Toast.LENGTH_LONG).show());
     }
 
     private void exportToPdf() {
@@ -568,145 +532,109 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             Toast.makeText(this, "No reports to export", Toast.LENGTH_SHORT).show();
             return;
         }
-
         try {
             android.graphics.pdf.PdfDocument document = new android.graphics.pdf.PdfDocument();
-            android.graphics.pdf.PdfDocument.PageInfo pageInfo = new android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
+            android.graphics.pdf.PdfDocument.PageInfo pageInfo = new android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create();
             android.graphics.pdf.PdfDocument.Page page = document.startPage(pageInfo);
             android.graphics.Canvas canvas = page.getCanvas();
             android.graphics.Paint paint = new android.graphics.Paint();
             android.graphics.Paint titlePaint = new android.graphics.Paint();
-            titlePaint.setTextSize(18f);
-            titlePaint.setFakeBoldText(true);
-
-            float y = 40;
-            canvas.drawText("StreetAssist Reports Export", 40, y, titlePaint);
-            y += 30;
-
-            paint.setTextSize(12f);
-            canvas.drawText("Total Reports: " + filteredList.size(), 40, y, paint);
-            y += 20;
-            canvas.drawText("Generated on: " + new java.util.Date().toString(), 40, y, paint);
-            y += 40;
-
+            titlePaint.setTextSize(18f); titlePaint.setFakeBoldText(true);
+            float y = 40; canvas.drawText("StreetAssist Reports Export", 40, y, titlePaint);
+            y += 30; paint.setTextSize(12f); canvas.drawText("Total Reports: " + filteredList.size(), 40, y, paint);
+            y += 20; canvas.drawText("Generated on: " + new Date().toString(), 40, y, paint); y += 40;
             for (Map<String, Object> report : filteredList) {
-                if (y > 780) { // New page if near bottom
+                if (y > 780) {
                     document.finishPage(page);
                     pageInfo = new android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, document.getPages().size() + 1).create();
-                    page = document.startPage(pageInfo);
-                    canvas = page.getCanvas();
-                    y = 40;
+                    page = document.startPage(pageInfo); canvas = page.getCanvas(); y = 40;
                 }
-
-                String id = safeString(report.get("id"));
-                String desc = safeString(report.get("description"));
-                String loc = safeString(report.get("locationAddress"));
-                String status = safeString(report.get("status"));
-                String time = "";
-                Object ts = report.get("timestamp");
-                if (ts instanceof com.google.firebase.Timestamp) {
-                    time = new java.text.SimpleDateFormat("MMM d, yyyy HH:mm", Locale.getDefault()).format(((com.google.firebase.Timestamp) ts).toDate());
-                }
-
-                paint.setFakeBoldText(true);
-                canvas.drawText("ID: " + id, 40, y, paint);
-                y += 15;
-                paint.setFakeBoldText(false);
-                canvas.drawText("Status: " + status + " | Time: " + time, 40, y, paint);
-                y += 15;
-                canvas.drawText("Location: " + loc, 40, y, paint);
-                y += 15;
-                
-                // Wrap text for description (simple wrap)
-                int maxLength = 80;
-                if (desc.length() > maxLength) {
-                    canvas.drawText("Description: " + desc.substring(0, maxLength), 40, y, paint);
-                    y += 15;
-                    canvas.drawText(desc.substring(maxLength), 60, y, paint);
-                } else {
-                    canvas.drawText("Description: " + desc, 40, y, paint);
-                }
-                
-                y += 30;
-                canvas.drawLine(40, y - 10, 555, y - 10, paint);
-                y += 10;
+                String id = String.valueOf(report.getOrDefault("reportId", "N/A"));
+                String desc = String.valueOf(report.getOrDefault("description", ""));
+                String loc = String.valueOf(report.getOrDefault("locationAddress", ""));
+                String status = String.valueOf(report.getOrDefault("status", ""));
+                paint.setFakeBoldText(true); canvas.drawText("ID: " + id, 40, y, paint); y += 15;
+                paint.setFakeBoldText(false); canvas.drawText("Status: " + status, 40, y, paint); y += 15;
+                canvas.drawText("Location: " + loc, 40, y, paint); y += 15;
+                canvas.drawText("Description: " + (desc.length() > 60 ? desc.substring(0, 60) + "..." : desc), 40, y, paint);
+                y += 30; canvas.drawLine(40, y - 10, 555, y - 10, paint); y += 10;
             }
-
             document.finishPage(page);
-
-            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            java.io.File exportDir = new java.io.File(getCacheDir(), "exports");
-            if (!exportDir.exists()) exportDir.mkdirs();
-            java.io.File pdfFile = new java.io.File(exportDir, "reports_" + timestamp + ".pdf");
-            
-            document.writeTo(new java.io.FileOutputStream(pdfFile));
+            java.io.File file = new java.io.File(getCacheDir(), "reports_" + System.currentTimeMillis() + ".pdf");
+            document.writeTo(new java.io.FileOutputStream(file));
             document.close();
-
-            android.net.Uri fileUri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", pdfFile);
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("application/pdf");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(shareIntent, "Share PDF Report"));
-
-        } catch (Exception e) {
-            Log.e(TAG, "PDF Export failed", e);
-            Toast.makeText(this, "PDF Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/pdf"); share.putExtra(Intent.EXTRA_STREAM, uri);
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(share, "Share PDF Report"));
+        } catch (Exception e) { Toast.makeText(this, "Export failed: " + e.getMessage(), Toast.LENGTH_LONG).show(); }
     }
 
-    private String safeString(Object obj) {
-        return obj == null ? "" : String.valueOf(obj);
+    private void deleteMultipleReports(java.util.Set<String> selectedIds) {
+        if (selectedIds.isEmpty()) return;
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
+        for (String id : selectedIds) batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.serverTimestamp());
+        batch.commit().addOnSuccessListener(unused -> {
+            Toast.makeText(this, "Reports moved to trash", Toast.LENGTH_SHORT).show();
+            adapter.clearSelection();
+        });
     }
 
-    private void updateReportStatus(String docId, String newStatus, android.app.AlertDialog dialog) {
-        db.collection("reports").document(docId)
-                .update("status", newStatus)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Status updated to " + newStatus, Toast.LENGTH_SHORT).show();
-                    dialog.dismiss();
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to update status", Toast.LENGTH_SHORT).show());
+    public void showReportDetails(Map<String, Object> report) {
+        String docId = String.valueOf(report.get("documentId"));
+        if (report.get("adminSeenAt") == null) db.collection("reports").document(docId).update("adminSeenAt", FieldValue.serverTimestamp());
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_admin_report_details, null);
+        builder.setView(view);
+        android.app.AlertDialog dialog = builder.create();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        ((TextView) view.findViewById(R.id.tvReportId)).setText("ID: " + report.get("reportId"));
+        ((TextView) view.findViewById(R.id.tvDetailDescription)).setText(String.valueOf(report.get("description")));
+        ((TextView) view.findViewById(R.id.tvDetailLocation)).setText(String.valueOf(report.get("locationAddress")));
+        ((TextView) view.findViewById(R.id.tvDetailStatus)).setText(String.valueOf(report.get("status")).toUpperCase());
+        updateReporterInfo(report, view.findViewById(R.id.tvReporterName), view.findViewById(R.id.tvReporterContact), view.findViewById(R.id.tvReporterAddress));
+        view.findViewById(R.id.btnSetInProgress).setOnClickListener(v -> updateReportStatus(docId, "In Progress", dialog));
+        view.findViewById(R.id.btnSetResolved).setOnClickListener(v -> updateReportStatus(docId, "Resolved", dialog));
+        view.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
+        view.findViewById(R.id.btnViewLocation).setOnClickListener(v -> {
+            Object lat = report.get("latitude"), lon = report.get("longitude");
+            if (lat != null && lon != null) startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:" + lat + "," + lon + "?q=" + lat + "," + lon)));
+        });
+        view.findViewById(R.id.btnDelete).setOnClickListener(v -> {
+            db.collection("reports").document(docId).update("deletedAt", FieldValue.serverTimestamp()).addOnSuccessListener(unused -> dialog.dismiss());
+        });
+        dialog.show();
+    }
+
+    private void updateReportStatus(String docId, String status, android.app.AlertDialog dialog) {
+        db.collection("reports").document(docId).update("status", status).addOnSuccessListener(unused -> {
+            Toast.makeText(this, "Status updated", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+    }
+
+    private void updateReporterInfo(Map<String, Object> report, TextView tvName, TextView tvContact, TextView tvAddress) {
+        tvName.setText(String.valueOf(report.getOrDefault("fullName", "Resident")));
+        String contact = String.valueOf(report.getOrDefault("contactNumber", ""));
+        if (!contact.isEmpty()) { tvContact.setVisibility(View.VISIBLE); tvContact.setText("Contact: " + contact); }
+        tvAddress.setVisibility(View.GONE);
+    }
+
+    private void logout() {
+        FirebaseAuth.getInstance().signOut();
+        startActivity(new Intent(this, IntroductionUserLevel.class));
+        finish();
     }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-
-        if (id == R.id.nav_dashboard) {
-            startActivity(new Intent(this, AdminDashboardActivity.class));
-            finish();
-        } else if (id == R.id.nav_all_reports) {
-            // Already here
-        } else if (id == R.id.nav_announcements) {
-            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminAnnouncementsActivity.class));
-        } else if (id == R.id.nav_trash) {
-            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
-            finish();
-        } else if (id == R.id.nav_notifications) {
-            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminNotificationActivity.class));
-        } else if (id == R.id.nav_logout) {
-            logout();
-        }
-
-        if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        }
+        if (id == R.id.nav_dashboard) { startActivity(new Intent(this, AdminDashboardActivity.class)); finish(); }
+        else if (id == R.id.nav_announcements) startActivity(new Intent(this, AdminAnnouncementsActivity.class));
+        else if (id == R.id.nav_trash) startActivity(new Intent(this, AdminTrashActivity.class));
+        else if (id == R.id.nav_logout) logout();
+        drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
-
-    private void logout() {
-        String uid = FirebaseAuth.getInstance().getUid();
-        if (uid != null) {
-            db.collection("users").document(uid)
-                    .update("fcmToken", com.google.firebase.firestore.FieldValue.delete());
-        }
-        FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(this, IntroductionUserLevel.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-
-
 }

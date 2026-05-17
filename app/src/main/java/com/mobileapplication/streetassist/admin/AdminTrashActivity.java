@@ -95,7 +95,7 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         rvTrash = findViewById(R.id.rvTrashReports);
         rvTrash.setLayoutManager(new LinearLayoutManager(this));
 
-        // Using RecentReportAdapter for consistency, but we might want to disable selection or change actions
+        // Using RecentReportAdapter for consistency
         adapter = new RecentReportAdapter(this, trashList);
         adapter.setHeaderListener(new RecentReportAdapter.OnHeaderActionListener() {
             @Override
@@ -106,6 +106,21 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
             @Override
             public void onFilterClick() {
                 Toast.makeText(AdminTrashActivity.this, "No filters available in Trash yet", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onMunicipalityFilterClick() {
+                Toast.makeText(AdminTrashActivity.this, "No municipality filters in Trash yet", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onBarangayFilterClick() {
+                Toast.makeText(AdminTrashActivity.this, "No barangay filters in Trash yet", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onSortClick() {
+                Toast.makeText(AdminTrashActivity.this, "No sorting options available in Trash yet", Toast.LENGTH_SHORT).show();
             }
 
             @Override

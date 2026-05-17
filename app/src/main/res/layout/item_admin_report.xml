@@ -93,6 +93,20 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvDetectedBarangay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/chip_bg_blue"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="Barangay"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/tvRecentLocation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
