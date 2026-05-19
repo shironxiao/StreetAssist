@@ -318,8 +318,8 @@ public class RegisterActivity extends AppCompatActivity {
             etContactNumber.requestFocus();
             return false;
         }
-        if (!contactNumber.matches("^(\\+63|0)9\\d{9}$")) {
-            etContactNumber.setError("Enter a valid PH number (e.g. 09XXXXXXXXX)");
+        if (!contactNumber.matches("^09\\d{9}$")) {
+            etContactNumber.setError("Enter a valid 11-digit number starting with 09 (e.g. 09XXXXXXXXX)");
             etContactNumber.requestFocus();
             return false;
         }
@@ -490,19 +490,25 @@ public class RegisterActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Terms & Privacy Policy")
                 .setMessage(
-                        "Terms of Service – StreetAssist\n" +
-                                "By using StreetAssist you agree to:\n\n" +
-                                "1. Purpose – report homelessness concerns.\n" +
-                                "2. User Responsibility – provide accurate info; no false reports.\n" +
-                                "3. Appropriate Use – no harassment.\n" +
-                                "4. Availability – student project, may change.\n" +
-                                "5. Acceptance – registering means you agree.\n\n" +
-                                "──────────────────────\n\n" +
-                                "Privacy Policy – StreetAssist\n" +
-                                "1. We collect: Name, Email, Location, Reports.\n" +
-                                "2. Used for identification and reporting.\n" +
-                                "3. Not shared with third parties.\n" +
-                                "4. Location used only during report submission.\n")
+                        "TERMS OF SERVICE\n\n" +
+                        "1. Acceptance of Terms\n" +
+                        "By creating an account or accessing StreetAssist, you agree to be bound by these Terms of Service. If you do not agree, please do not use the application.\n\n" +
+                        "2. Purpose and Service Description\n" +
+                        "StreetAssist is a community reporting application designed to assist in highlighting community welfare and street sighting concerns. The service is provided to facilitate reporting and community support coordination.\n\n" +
+                        "3. User Conduct & Accuracy\n" +
+                        "You agree to submit only truthful, accurate, and constructive information. False reporting, malicious submissions, or any form of harassment within the platform is strictly prohibited and will lead to immediate account termination.\n\n" +
+                        "4. Platform Availability\n" +
+                        "StreetAssist reserves the right to modify, suspend, or discontinue any aspect of the application at any time without notice.\n\n" +
+                        "──────────────────────────────────\n\n" +
+                        "PRIVACY POLICY\n\n" +
+                        "1. Information We Collect\n" +
+                        "We collect personal information necessary for identification and community service facilitation, including your full name, email address, phone number, and geographic location address when a report is submitted.\n\n" +
+                        "2. Use of Data\n" +
+                        "Your information is utilized solely to manage user accounts, verify reporting details, and coordinate sightings. Location data is only accessed when you actively pin or submit a sighting.\n\n" +
+                        "3. Information Sharing\n" +
+                        "We do not sell, trade, or distribute your personal data to third-parties. Information may only be disclosed if required by law or local public safety authorities.\n\n" +
+                        "4. Security Measures\n" +
+                        "We implement standard technical and organizational security measures to protect your personal data from unauthorized access, loss, or alteration.\n")
                 .setPositiveButton("I Have Read & Understand", (d, w) -> {
                     hasReadTerms = true;
                     cbTerms.setEnabled(true);

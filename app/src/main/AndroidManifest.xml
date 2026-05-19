@@ -36,6 +36,9 @@
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.auth.ResetPassword"
+            android:exported="false" />
+        <activity
             android:name=".ui.resident.Profile.ProfileEdit"
             android:parentActivityName=".ui.resident.ResidentMainActivity"
             android:windowSoftInputMode="adjustResize" />

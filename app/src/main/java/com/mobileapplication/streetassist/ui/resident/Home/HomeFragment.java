@@ -262,6 +262,7 @@ public class HomeFragment extends Fragment {
 
             // Navigate to Reports fragment on click
             card.setOnClickListener(v -> {
+                com.mobileapplication.streetassist.ui.resident.Reports.ReportFragment.targetFilterStatus = status;
                 if (getActivity() != null) {
                     com.google.android.material.bottomnavigation.BottomNavigationView nav = 
                         getActivity().findViewById(R.id.bottom_navigation);

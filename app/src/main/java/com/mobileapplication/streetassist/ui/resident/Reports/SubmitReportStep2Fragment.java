@@ -35,6 +35,10 @@ public class SubmitReportStep2Fragment extends Fragment {
 
         TextInputEditText etAssistanceDescription = view.findViewById(R.id.etAssistanceDescription);
         TextInputEditText etContactNumber         = view.findViewById(R.id.etContactNumber);
+        
+        etContactNumber.setFocusable(false);
+        etContactNumber.setFocusableInTouchMode(false);
+        etContactNumber.setClickable(false);
 
         // ── Retrieve data from Step 1 via Bundle ──────────────────────────────
         Bundle args = getArguments();

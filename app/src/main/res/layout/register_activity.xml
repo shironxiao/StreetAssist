@@ -129,9 +129,9 @@
                     android:id="@+id/etContactNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="+63 9XX XXX XXXX"
+                    android:hint="09XXXXXXXXX"
                     android:inputType="phone"
-                    android:maxLength="13" />
+                    android:maxLength="11" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- ADDRESS SECTION HEADER -->

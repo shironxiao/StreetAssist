@@ -167,8 +167,11 @@
                         android:id="@+id/etContactNumber"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="e.g. 0917-000-0000"
-                        android:inputType="phone" />
+                        android:hint="Contact Number"
+                        android:inputType="phone"
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:cursorVisible="false" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView

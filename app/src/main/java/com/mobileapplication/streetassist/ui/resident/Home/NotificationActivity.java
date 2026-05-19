@@ -38,6 +38,7 @@ public class NotificationActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
+    private com.google.firebase.firestore.ListenerRegistration notificationListenerRegistration;
 
     private final List<NotificationItem> notificationList = new ArrayList<>();
     private NotificationAdapter adapter;
@@ -68,6 +69,14 @@ public class NotificationActivity extends AppCompatActivity {
         loadNotifications();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (notificationListenerRegistration != null) {
+            notificationListenerRegistration.remove();
+        }
+    }
+
     private void loadNotifications() {
         String uid = mAuth.getCurrentUser() != null
                 ? mAuth.getCurrentUser().getUid() : null;
@@ -86,71 +95,77 @@ public class NotificationActivity extends AppCompatActivity {
                         existingReportIds.add(rId);
                     }
 
-                    // 2. Load notifications and filter out those for non-existent reports
-                    db.collection("notifications")
+                    // 2. Load notifications and filter dynamically in real-time
+                    if (notificationListenerRegistration != null) {
+                        notificationListenerRegistration.remove();
+                    }
+
+                    notificationListenerRegistration = db.collection("notifications")
                             .whereEqualTo("userId", uid)
-                            .get()
-                            .addOnSuccessListener(snapshots -> {
-                                notificationList.clear();
-                                com.google.firebase.firestore.WriteBatch batch = db.batch();
-                                boolean needsCleanup = false;
+                            .addSnapshotListener((snapshots, error) -> {
+                                if (error != null) {
+                                    Toast.makeText(this, "Sync error: " + error.getMessage(),
+                                            Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
 
-                                for (QueryDocumentSnapshot doc : snapshots) {
-                                    String  reportId  = doc.getString("reportId");
+                                if (snapshots != null) {
+                                    notificationList.clear();
+                                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                                    boolean needsCleanup = false;
 
-                                    // If notification is linked to a report that no longer exists, delete it from DB
-                                    if (reportId != null && !existingReportIds.contains(reportId)) {
-                                        batch.delete(doc.getReference());
-                                        needsCleanup = true;
-                                        continue;
+                                    for (QueryDocumentSnapshot doc : snapshots) {
+                                        String reportId = doc.getString("reportId");
+
+                                        // If notification is linked to a report that no longer exists, delete it from DB
+                                        if (reportId != null && !existingReportIds.contains(reportId)) {
+                                            batch.delete(doc.getReference());
+                                            needsCleanup = true;
+                                            continue;
+                                        }
+
+                                        String title = doc.getString("title");
+                                        String message = doc.getString("message");
+                                        Boolean isRead = doc.getBoolean("isRead");
+                                        Date createdAt = doc.getDate("createdAt");
+                                        String status = doc.getString("status");
+
+                                        notificationList.add(new NotificationItem(
+                                                doc.getId(),
+                                                title != null ? title : "Notification",
+                                                message != null ? message : "",
+                                                isRead != null && isRead,
+                                                createdAt,
+                                                status,
+                                                reportId));
                                     }
 
-                                    String  title     = doc.getString("title");
-                                    String  message   = doc.getString("message");
-                                    Boolean isRead    = doc.getBoolean("isRead");
-                                    Date    createdAt = doc.getDate("createdAt");
-                                    String  status    = doc.getString("status");
-
-                                    notificationList.add(new NotificationItem(
-                                            doc.getId(),
-                                            title   != null ? title   : "Notification",
-                                            message != null ? message : "",
-                                            isRead  != null && isRead,
-                                            createdAt,
-                                            status,
-                                            reportId));
-
-                                }
-
-                                if (needsCleanup) {
-                                    batch.commit();
-                                }
-
-                                // Manual sort: newest first
-                                notificationList.sort((a, b) -> {
-                                    if (a.createdAt == null || b.createdAt == null) return 0;
-                                    return b.createdAt.compareTo(a.createdAt);
-                                });
-
-                                adapter.notifyDataSetChanged();
-                                tvEmpty.setVisibility(
-                                        notificationList.isEmpty() ? View.VISIBLE : View.GONE);
-                                rvNotifications.setVisibility(
-                                        notificationList.isEmpty() ? View.GONE : View.VISIBLE);
-                                btnClearAll.setVisibility(
-                                        notificationList.isEmpty() ? View.GONE : View.VISIBLE);
-
-                                int unreadCount = 0;
-                                for (NotificationItem item : notificationList) {
-                                    if (!item.isRead) {
-                                        unreadCount++;
+                                    if (needsCleanup) {
+                                        batch.commit();
                                     }
+
+                                    // Manual sort: newest first
+                                    notificationList.sort((a, b) -> {
+                                        if (a.createdAt == null || b.createdAt == null) return 0;
+                                        return b.createdAt.compareTo(a.createdAt);
+                                    });
+
+                                    adapter.notifyDataSetChanged();
+                                    tvEmpty.setVisibility(
+                                            notificationList.isEmpty() ? View.VISIBLE : View.GONE);
+                                    rvNotifications.setVisibility(
+                                            notificationList.isEmpty() ? View.GONE : View.VISIBLE);
+                                    btnClearAll.setVisibility(
+                                            notificationList.isEmpty() ? View.GONE : View.VISIBLE);
+
+                                    int unreadCount = 0;
+                                    for (NotificationItem item : notificationList) {
+                                        if (!item.isRead) {
+                                            unreadCount++;
+                                        }
+                                    }
+                                    updateMarkAllAsReadUI(unreadCount);
                                 }
-                                updateMarkAllAsReadUI(unreadCount);
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Failed to load: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show();
                             });
                 })
                 .addOnFailureListener(e -> {
@@ -329,6 +344,7 @@ public class NotificationActivity extends AppCompatActivity {
 
                 android.content.Intent intent = new android.content.Intent(v.getContext(), com.mobileapplication.streetassist.ui.resident.ResidentMainActivity.class);
                 intent.putExtra("nav_to_report", true);
+                intent.putExtra("filter_status", item.status);
                 intent.setFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 v.getContext().startActivity(intent);
                 if (v.getContext() instanceof android.app.Activity) {

@@ -43,6 +43,7 @@ public class ReportFragment extends Fragment {
     private ReportAdapter adapter;
 
     // Data
+    public static String targetFilterStatus = null;
     private final List<Map<String, Object>> allReports = new ArrayList<>();
     private String currentFilter = "All";
 
@@ -76,10 +77,21 @@ public class ReportFragment extends Fragment {
         recyclerReports = root.findViewById(R.id.recyclerReports);
         emptyState      = root.findViewById(R.id.emptyState);
 
+        if (targetFilterStatus != null) {
+            currentFilter = targetFilterStatus;
+            // Map Verified status reports to the Pending tab
+            if ("Verified".equalsIgnoreCase(currentFilter)) {
+                currentFilter = "Pending";
+            }
+        }
+
         setupRecyclerView();
         setupChipFilters(root);
         setupButtons(root);
         loadReports();
+
+        // Reset so it doesn't trigger again on subsequent layout re-entry
+        targetFilterStatus = null;
     }
 
     // ── RecyclerView ───────────────────────────────────────────────────────────
@@ -159,6 +171,18 @@ public class ReportFragment extends Fragment {
 
     private void setupChipFilters(View root) {
         ChipGroup chipGroup = root.findViewById(R.id.chipGroupFilters);
+
+        // Programmatically select/check the chip matching currentFilter
+        if ("Pending".equals(currentFilter)) {
+            chipGroup.check(R.id.chipPending);
+        } else if ("In Progress".equals(currentFilter)) {
+            chipGroup.check(R.id.chipInProgress);
+        } else if ("Resolved".equals(currentFilter)) {
+            chipGroup.check(R.id.chipResolved);
+        } else {
+            chipGroup.check(R.id.chipAll);
+        }
+
         chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
             if (checkedIds.isEmpty()) return;
 
@@ -184,8 +208,18 @@ public class ReportFragment extends Fragment {
 
             boolean isHidden = report.get("isHiddenByResident") != null && (boolean) report.get("isHiddenByResident");
 
-            if (!isHidden && (currentFilter.equals("All") || currentFilter.equals(status))) {
-                filtered.add(report);
+            if (!isHidden) {
+                if (currentFilter.equals("All")) {
+                    filtered.add(report);
+                } else if (currentFilter.equals("Pending")) {
+                    if (status.equals("Pending") || status.equals("Verified")) {
+                        filtered.add(report);
+                    }
+                } else {
+                    if (currentFilter.equals(status)) {
+                        filtered.add(report);
+                    }
+                }
             }
         }
 

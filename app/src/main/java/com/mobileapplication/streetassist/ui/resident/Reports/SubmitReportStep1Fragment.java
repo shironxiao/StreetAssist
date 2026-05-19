@@ -580,8 +580,14 @@ public class SubmitReportStep1Fragment extends Fragment {
                     Toast.LENGTH_SHORT).show();
             return false;
         }
-        if (etAge.getText() == null || etAge.getText().toString().trim().isEmpty()) {
+        String ageStr = etAge.getText() != null ? etAge.getText().toString().trim() : "";
+        if (ageStr.isEmpty()) {
             etAge.setError("Please enter approximate age.");
+            etAge.requestFocus();
+            return false;
+        }
+        if (!ageStr.matches("^\\d{1,3}$")) {
+            etAge.setError("Age must be a valid number of up to 3 digits.");
             etAge.requestFocus();
             return false;
         }
