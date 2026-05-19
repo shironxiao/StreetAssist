@@ -56,6 +56,7 @@
 
         <!-- FORM SECTION -->
         <androidx.core.widget.NestedScrollView
+            android:id="@+id/nestedScrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="-20dp"
@@ -143,7 +144,7 @@
                     app:endIconMode="clear_text"
                     app:hintEnabled="false">
 
-                    <com.google.android.material.textfield.TextInputEditText
+                    <AutoCompleteTextView
                         android:id="@+id/etSearch"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"

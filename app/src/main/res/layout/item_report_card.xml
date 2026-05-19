@@ -33,7 +33,7 @@
                 android:fontFamily="monospace"
                 android:text="RPT-—"
                 android:textColor="#4169E1"
-                android:textSize="11sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -41,10 +41,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/badge_pending"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="4dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="5dp"
                 android:text="Pending"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -53,19 +53,19 @@
             android:id="@+id/tvDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:ellipsize="end"
             android:maxLines="2"
             android:text="Description of the individual..."
             android:textColor="#222222"
-            android:textSize="14sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <!-- DIVIDER -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginVertical="10dp"
+            android:layout_marginVertical="12dp"
             android:background="#F0F0F0" />
 
         <!-- ROW: Age + Sex -->
@@ -82,8 +82,8 @@
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:src="@android:drawable/ic_menu_info_details"
                     app:tint="#4169E1" />
 
@@ -91,10 +91,10 @@
                     android:id="@+id/tvAge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="6dp"
                     android:text="Age: —"
                     android:textColor="#555555"
-                    android:textSize="12sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -105,8 +105,8 @@
                 android:orientation="horizontal">
 
                 <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
                     android:src="@android:drawable/ic_menu_myplaces"
                     app:tint="#4169E1" />
 
@@ -114,10 +114,10 @@
                     android:id="@+id/tvSex"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
+                    android:layout_marginStart="6dp"
                     android:text="Sex: —"
                     android:textColor="#555555"
-                    android:textSize="12sp" />
+                    android:textSize="15sp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -125,13 +125,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:src="@android:drawable/ic_menu_mylocation"
                 app:tint="#E53935" />
 
@@ -139,26 +139,26 @@
                 android:id="@+id/tvLocation"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Location not set"
                 android:textColor="#555555"
-                android:textSize="12sp" />
+                android:textSize="15sp" />
         </LinearLayout>
 
         <!-- ROW: Assistance -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="14dp"
-                android:layout_height="14dp"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:src="@android:drawable/ic_menu_agenda"
                 app:tint="#4169E1" />
 
@@ -166,26 +166,26 @@
                 android:id="@+id/tvAssistance"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:text="Assistance: —"
                 android:textColor="#555555"
-                android:textSize="12sp" />
+                android:textSize="15sp" />
         </LinearLayout>
 
         <!-- BOTTOM ROW: Timestamp + View Details -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:src="@android:drawable/ic_menu_recent_history"
                 app:tint="#AAAAAA" />
 
@@ -193,11 +193,11 @@
                 android:id="@+id/tvTimestamp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:layout_weight="1"
                 android:text="Submitted: —"
                 android:textColor="#AAAAAA"
-                android:textSize="11sp" />
+                android:textSize="13sp" />
 
             <!-- Delete clickable text -->
             <TextView
@@ -210,7 +210,7 @@
                 android:padding="4dp"
                 android:text="Delete"
                 android:textColor="#FF5252"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
 
             <!-- View Details clickable text -->
@@ -223,16 +223,16 @@
                 android:padding="4dp"
                 android:text="View details →"
                 android:textColor="#4169E1"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
         <TextView
             android:id="@+id/tvSeenAt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:drawablePadding="4dp"
+            android:layout_marginTop="4dp"
+            android:drawablePadding="6dp"
             android:textColor="#555555"
-            android:textSize="12sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -79,6 +79,11 @@ public class AdminNotificationActivity extends AppCompatActivity {
             btnClearAll.setOnClickListener(v -> clearAllNotifications());
         }
 
+        View btnMarkRead = findViewById(R.id.btnMarkRead);
+        if (btnMarkRead != null) {
+            btnMarkRead.setVisibility(View.GONE);
+        }
+
         btnBack.setOnClickListener(v -> {
             startActivity(new Intent(AdminNotificationActivity.this, AdminDashboardActivity.class));
             finish();

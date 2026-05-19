@@ -33,6 +33,8 @@ public class NotificationActivity extends AppCompatActivity {
     private TextView tvEmpty;
     private ImageButton btnBack;
     private TextView btnClearAll;
+    private TextView btnMarkRead;
+    private View cardMarkRead;
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
@@ -52,9 +54,12 @@ public class NotificationActivity extends AppCompatActivity {
         tvEmpty         = findViewById(R.id.tvEmpty);
         btnBack         = findViewById(R.id.btnBack);
         btnClearAll     = findViewById(R.id.btnClearAll);
+        btnMarkRead     = findViewById(R.id.btnMarkRead);
+        cardMarkRead    = findViewById(R.id.cardMarkRead);
 
         btnBack.setOnClickListener(v -> finish());
         btnClearAll.setOnClickListener(v -> clearAllNotifications());
+        btnMarkRead.setOnClickListener(v -> markAllAsRead());
 
         adapter = new NotificationAdapter(notificationList);
         rvNotifications.setLayoutManager(new LinearLayoutManager(this));
@@ -115,10 +120,6 @@ public class NotificationActivity extends AppCompatActivity {
                                             status,
                                             reportId));
 
-                                    // Mark as read
-                                    if (Boolean.FALSE.equals(isRead)) {
-                                        doc.getReference().update("isRead", true);
-                                    }
                                 }
 
                                 if (needsCleanup) {
@@ -138,6 +139,14 @@ public class NotificationActivity extends AppCompatActivity {
                                         notificationList.isEmpty() ? View.GONE : View.VISIBLE);
                                 btnClearAll.setVisibility(
                                         notificationList.isEmpty() ? View.GONE : View.VISIBLE);
+
+                                int unreadCount = 0;
+                                for (NotificationItem item : notificationList) {
+                                    if (!item.isRead) {
+                                        unreadCount++;
+                                    }
+                                }
+                                updateMarkAllAsReadUI(unreadCount);
                             })
                             .addOnFailureListener(e -> {
                                 Toast.makeText(this, "Failed to load: " + e.getMessage(),
@@ -147,6 +156,62 @@ public class NotificationActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to sync reports: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void updateMarkAllAsReadUI(int unreadCount) {
+        btnMarkRead.setText("Mark All as Read (" + unreadCount + ")");
+        if (unreadCount > 0) {
+            btnMarkRead.setEnabled(true);
+            btnMarkRead.setTextColor(Color.parseColor("#1B2559"));
+            cardMarkRead.setAlpha(1.0f);
+            cardMarkRead.setVisibility(View.VISIBLE);
+        } else {
+            btnMarkRead.setEnabled(false);
+            btnMarkRead.setTextColor(Color.parseColor("#888888"));
+            cardMarkRead.setAlpha(0.6f);
+            cardMarkRead.setVisibility(notificationList.isEmpty() ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    private void markAllAsRead() {
+        if (notificationList.isEmpty()) return;
+
+        String uid = mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getUid() : null;
+        if (uid == null) return;
+
+        db.collection("notifications")
+                .whereEqualTo("userId", uid)
+                .whereEqualTo("isRead", false)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots.isEmpty()) {
+                        for (NotificationItem item : notificationList) {
+                            item.isRead = true;
+                        }
+                        adapter.notifyDataSetChanged();
+                        updateMarkAllAsReadUI(0);
+                        return;
+                    }
+
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        batch.update(doc.getReference(), "isRead", true);
+                    }
+
+                    batch.commit().addOnSuccessListener(unused -> {
+                        for (NotificationItem item : notificationList) {
+                            item.isRead = true;
+                        }
+                        adapter.notifyDataSetChanged();
+                        updateMarkAllAsReadUI(0);
+                        Toast.makeText(this, "All notifications marked as read", Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to mark as read: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error fetching unread notifications: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -177,6 +242,7 @@ public class NotificationActivity extends AppCompatActivity {
                                     tvEmpty.setVisibility(View.VISIBLE);
                                     rvNotifications.setVisibility(View.GONE);
                                     btnClearAll.setVisibility(View.GONE);
+                                    btnMarkRead.setVisibility(View.GONE);
                                     Toast.makeText(this, "All notifications cleared", Toast.LENGTH_SHORT).show();
                                 }).addOnFailureListener(e -> {
                                     Toast.makeText(this, "Failed to clear: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -255,6 +321,12 @@ public class NotificationActivity extends AppCompatActivity {
             }
 
             h.itemView.setOnClickListener(v -> {
+                if (!item.isRead) {
+                    FirebaseFirestore.getInstance().collection("notifications")
+                            .document(item.id).update("isRead", true);
+                    item.isRead = true;
+                }
+
                 android.content.Intent intent = new android.content.Intent(v.getContext(), com.mobileapplication.streetassist.ui.resident.ResidentMainActivity.class);
                 intent.putExtra("nav_to_report", true);
                 intent.setFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);

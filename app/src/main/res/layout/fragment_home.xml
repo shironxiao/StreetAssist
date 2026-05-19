@@ -20,7 +20,7 @@
             <View
                 android:id="@+id/headerBackground"
                 android:layout_width="0dp"
-                android:layout_height="240dp"
+                android:layout_height="280dp"
                 android:background="#4169E1"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -53,33 +53,33 @@
                 <!-- Avatar Frame -->
                 <FrameLayout
                     android:id="@+id/avatarFrame"
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <de.hdodenhof.circleimageview.CircleImageView
                         android:id="@+id/ivAvatar"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
                         android:clickable="true"
                         android:focusable="true"
                         android:src="@drawable/ic_default_avatar"
                         app:civ_border_color="#FFFFFF"
-                        app:civ_border_width="2dp" />
+                        app:civ_border_width="2.5dp" />
 
                     <TextView
                         android:id="@+id/tvInitialsAvatar"
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
                         android:background="@drawable/circle_bg_light_blue"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
                         android:text="U"
                         android:textColor="@android:color/white"
-                        android:textSize="22sp"
+                        android:textSize="28sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
                 </FrameLayout>
@@ -88,7 +88,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginStart="18dp"
                     android:orientation="vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -102,17 +102,17 @@
                         android:fontFamily="sans-serif-black"
                         android:text="Welcome, User!"
                         android:textColor="@android:color/white"
-                        android:textSize="22sp"
+                        android:textSize="26sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="4dp"
                         android:alpha="0.8"
                         android:text="Making our community better together."
                         android:textColor="#FFFFFF"
-                        android:textSize="12sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -129,15 +129,15 @@
 
                 <ImageView
                     android:id="@+id/ivNotification"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
                     android:src="@drawable/notif"
                     app:tint="@android:color/white" />
 
                 <TextView
                     android:id="@+id/tvNotificationBadge"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_alignTop="@id/ivNotification"
                     android:layout_alignEnd="@id/ivNotification"
                     android:layout_marginTop="-4dp"
@@ -146,7 +146,7 @@
                     android:gravity="center"
                     android:text="0"
                     android:textColor="@android:color/white"
-                    android:textSize="10sp"
+                    android:textSize="11sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
             </RelativeLayout>

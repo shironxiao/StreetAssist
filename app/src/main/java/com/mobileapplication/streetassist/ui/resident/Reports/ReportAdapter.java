@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageButton;
+import android.app.Dialog;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +16,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import android.widget.Toast;
 import com.mobileapplication.streetassist.R;
+
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -108,14 +115,14 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         setText(sheetView, R.id.dialogAge,         getString(report, "approximateAge", "—"));
         setText(sheetView, R.id.dialogSex,         getString(report, "sex", "—"));
         setText(sheetView, R.id.dialogDescription, getString(report, "description", "No description provided."));
-        setText(sheetView, R.id.dialogLocation,    getString(report, "locationAddress", "No address available."));
-
+        
+        TextView tvLocation = sheetView.findViewById(R.id.dialogLocation);
+        tvLocation.setText(getString(report, "locationAddress", "No address available."));
         Object lat = report.get("latitude");
         Object lng = report.get("longitude");
-        setText(sheetView, R.id.dialogLatitude,
-                lat != null ? String.format(Locale.getDefault(), "%.5f", toDouble(lat)) : "—");
-        setText(sheetView, R.id.dialogLongitude,
-                lng != null ? String.format(Locale.getDefault(), "%.5f", toDouble(lng)) : "—");
+        if (lat != null && lng != null) {
+            tvLocation.setOnClickListener(v -> showLocationOnMap(toDouble(lat), toDouble(lng)));
+        }
 
         setText(sheetView, R.id.dialogAssistance,  getString(report, "assistanceDescription", "Not specified."));
 
@@ -143,6 +150,25 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
             btnRemove.setVisibility(View.GONE);
         }
 
+        dialog.show();
+    }
+
+    private void showLocationOnMap(double lat, double lng) {
+        Dialog dialog = new Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_map_view);
+        MapView map = dialog.findViewById(R.id.mapViewOnly);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseMap);
+        map.setTileSource(TileSourceFactory.MAPNIK);
+        map.setMultiTouchControls(true);
+        GeoPoint point = new GeoPoint(lat, lng);
+        map.getController().setZoom(17.0);
+        map.getController().setCenter(point);
+        Marker marker = new Marker(map);
+        marker.setPosition(point);
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+        marker.setTitle("Sighting Location");
+        map.getOverlays().add(marker);
+        btnClose.setOnClickListener(va -> dialog.dismiss());
         dialog.show();
     }
 

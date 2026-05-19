@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -67,10 +68,33 @@ public class SubmitReportStep1Fragment extends Fragment {
     // Date & Time
     private Calendar selectedDateTime = null;
 
+    // Static local locations for instant, offline suggestions
+    private static final String[] LOCAL_LOCATIONS = {
+        "Quezon City", "Manila", "Caloocan", "Las Piñas", "Makati", "Malabon", 
+        "Mandaluyong", "Marikina", "Muntinlupa", "Navotas", "Parañaque", "Pasay", 
+        "Pasig", "Pateros", "San Juan", "Taguig", "Valenzuela", 
+        "Commonwealth, Quezon City", "Diliman, Quezon City", "Cubao, Quezon City", 
+        "Katipunan, Quezon City", "Fairview, Quezon City", "Novaliches, Quezon City", 
+        "Batasan Hills, Quezon City", "Loyola Heights, Quezon City", 
+        "Tondo, Manila", "Sampaloc, Manila", "Ermita, Manila", "Malate, Manila", 
+        "Binondo, Manila", "Quiapo, Manila", "Intramuros, Manila", 
+        "Bonifacio Global City, Taguig", "Ortigas Center, Pasig", "Ayala Avenue, Makati", 
+        "Greenhills, San Juan", "Eastwood City, Quezon City", "Araneta Center, Quezon City", 
+        "UP Diliman, Quezon City", "Ateneo de Manila, Quezon City"
+    };
+
+    // Search Autocomplete Suggestion fields
+    private android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable searchRunnable;
+    private NoFilterAdapter<String> searchSuggestionsAdapter;
+    private final java.util.List<Address> currentSuggestionAddresses = new java.util.ArrayList<>();
+    private boolean isSelectingSuggestion = false;
+
     // Views
     private MaterialButton btnUseMyLocation;
     private TextView tvSelectedLocation;
-    private TextInputEditText etSearch, etAge, etDescription, etDateTimePicker;
+    private AutoCompleteTextView etSearch;
+    private TextInputEditText etAge, etDescription, etDateTimePicker;
     private AutoCompleteTextView actvSex;
     private MaterialCardView mapCard;
 
@@ -112,6 +136,14 @@ public class SubmitReportStep1Fragment extends Fragment {
         setupSearch();
         setupDateTimePicker();
         setupButtons();
+
+        View nestedScrollView = view.findViewById(R.id.nestedScrollView);
+        if (nestedScrollView != null) {
+            nestedScrollView.setOnTouchListener((v, event) -> {
+                hideKeyboardAndClearFocus();
+                return false;
+            });
+        }
     }
 
     // ─── DATE & TIME ──────────────────────────────────────────────────────────
@@ -165,6 +197,29 @@ public class SubmitReportStep1Fragment extends Fragment {
     private void setupMap() {
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
+        mapView.setBuiltInZoomControls(true);
+        if (mapView.getZoomController() != null) {
+            mapView.getZoomController().setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.ALWAYS);
+        }
+
+        // Prevent NestedScrollView from stealing touch events while interacting with the MapView
+        mapView.setOnTouchListener((v, event) -> {
+            int action = event.getAction();
+            switch (action) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    hideKeyboardAndClearFocus();
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                    break;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.getParent().requestDisallowInterceptTouchEvent(false);
+                    break;
+            }
+            return false;
+        });
 
         GeoPoint defaultPoint = new GeoPoint(14.6760, 121.0437);
         mapView.getController().setZoom(15.0);
@@ -205,16 +260,6 @@ public class SubmitReportStep1Fragment extends Fragment {
         mapView.invalidate();
 
         requireView().findViewById(R.id.tvMapHint).setVisibility(View.GONE);
-
-        if (isManual) {
-            btnUseMyLocation.setText("Use this location");
-            btnUseMyLocation.setIcon(
-                    ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_add));
-        } else {
-            btnUseMyLocation.setText("Use my location");
-            btnUseMyLocation.setIcon(
-                    ContextCompat.getDrawable(requireContext(), android.R.drawable.ic_menu_mylocation));
-        }
 
         reverseGeocode(point);
     }
@@ -270,7 +315,24 @@ public class SubmitReportStep1Fragment extends Fragment {
         new Thread(() -> {
             try {
                 Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
-                List<Address> results = geocoder.getFromLocationName(query, 1);
+                List<Address> results = null;
+
+                if (selectedPoint != null) {
+                    double lowerLeftLat = selectedPoint.getLatitude() - 1.0;
+                    double lowerLeftLng = selectedPoint.getLongitude() - 1.0;
+                    double upperRightLat = selectedPoint.getLatitude() + 1.0;
+                    double upperRightLng = selectedPoint.getLongitude() + 1.0;
+                    try {
+                        results = geocoder.getFromLocationName(query, 1, lowerLeftLat, lowerLeftLng, upperRightLat, upperRightLng);
+                    } catch (Exception e) {
+                        // ignore and try fallback
+                    }
+                }
+
+                if (results == null || results.isEmpty()) {
+                    results = geocoder.getFromLocationName(query, 1);
+                }
+
                 if (results != null && !results.isEmpty()) {
                     Address address = results.get(0);
                     GeoPoint point = new GeoPoint(address.getLatitude(), address.getLongitude());
@@ -322,7 +384,93 @@ public class SubmitReportStep1Fragment extends Fragment {
         actvSex.setAdapter(adapter);
     }
 
+    private List<String> getLocalSuggestions(String query) {
+        List<String> matches = new ArrayList<>();
+        String lowerQuery = query.toLowerCase(Locale.getDefault());
+        for (String loc : LOCAL_LOCATIONS) {
+            if (loc.toLowerCase(Locale.getDefault()).contains(lowerQuery)) {
+                matches.add(loc);
+            }
+        }
+        return matches;
+    }
+
+    private String getAddressString(Address addr) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i <= addr.getMaxAddressLineIndex(); i++) {
+            sb.append(addr.getAddressLine(i));
+            if (i < addr.getMaxAddressLineIndex()) sb.append(", ");
+        }
+        if (sb.length() > 0) {
+            return sb.toString();
+        } else {
+            return String.format(Locale.getDefault(), "Lat: %.5f, Lng: %.5f",
+                    addr.getLatitude(), addr.getLongitude());
+        }
+    }
+
     private void setupSearch() {
+        searchSuggestionsAdapter = new NoFilterAdapter<>(requireContext(),
+                android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
+        etSearch.setAdapter(searchSuggestionsAdapter);
+        etSearch.setThreshold(1); // Start showing suggestions after 1 character
+
+        etSearch.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (isSelectingSuggestion) {
+                    return;
+                }
+                String query = s.toString().trim();
+                if (query.isEmpty()) {
+                    currentSuggestionAddresses.clear();
+                    searchSuggestionsAdapter.clear();
+                    return;
+                }
+
+                searchRunnable = () -> fetchSearchSuggestions(query);
+                searchHandler.postDelayed(searchRunnable, 300); // 300ms debounce
+            }
+        });
+
+        // When a suggestion is clicked
+        etSearch.setOnItemClickListener((parent, view1, position, id) -> {
+            if (position < searchSuggestionsAdapter.getCount()) {
+                isSelectingSuggestion = true;
+                String selectedText = parent.getItemAtPosition(position).toString();
+                Address address = null;
+                for (Address addr : currentSuggestionAddresses) {
+                    if (getAddressString(addr).equalsIgnoreCase(selectedText)) {
+                        address = addr;
+                        break;
+                    }
+                }
+
+                if (address != null) {
+                    GeoPoint point = new GeoPoint(address.getLatitude(), address.getLongitude());
+                    dropMarker(point, true);
+                    mapView.getController().setZoom(17.0);
+                    etSearch.setText(selectedText, false);
+                } else {
+                    // For static local suggestions, perform geocoded lookup to pan/pin
+                    searchLocation(selectedText);
+                    etSearch.setText(selectedText, false);
+                }
+                etSearch.dismissDropDown();
+                isSelectingSuggestion = false;
+            }
+        });
+
         etSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
@@ -335,13 +483,82 @@ public class SubmitReportStep1Fragment extends Fragment {
         });
     }
 
+    private void fetchSearchSuggestions(String query) {
+        // 1. Get instant offline suggestions from static LOCAL_LOCATIONS list
+        List<String> localMatches = getLocalSuggestions(query);
+
+        requireActivity().runOnUiThread(() -> {
+            if (isAdded() && etSearch != null) {
+                searchSuggestionsAdapter.clear();
+                searchSuggestionsAdapter.addAll(localMatches);
+                searchSuggestionsAdapter.notifyDataSetChanged();
+                if (etSearch.hasFocus() && !localMatches.isEmpty()) {
+                    etSearch.showDropDown();
+                }
+            }
+        });
+
+        // 2. Query Geocoder in background for additional dynamic suggestions
+        new Thread(() -> {
+            try {
+                Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+                List<Address> results = null;
+
+                if (selectedPoint != null) {
+                    double lowerLeftLat = selectedPoint.getLatitude() - 1.0;
+                    double lowerLeftLng = selectedPoint.getLongitude() - 1.0;
+                    double upperRightLat = selectedPoint.getLatitude() + 1.0;
+                    double upperRightLng = selectedPoint.getLongitude() + 1.0;
+                    try {
+                        results = geocoder.getFromLocationName(query, 5, lowerLeftLat, lowerLeftLng, upperRightLat, upperRightLng);
+                    } catch (Exception e) {
+                        // ignore and try fallback
+                    }
+                }
+
+                if (results == null || results.isEmpty()) {
+                    results = geocoder.getFromLocationName(query, 5);
+                }
+
+                if (results != null) {
+                    final List<Address> finalResults = results;
+                    List<String> geocodedTexts = new ArrayList<>();
+                    for (Address addr : finalResults) {
+                        geocodedTexts.add(getAddressString(addr));
+                    }
+
+                    requireActivity().runOnUiThread(() -> {
+                        if (isAdded() && etSearch != null) {
+                            currentSuggestionAddresses.clear();
+                            currentSuggestionAddresses.addAll(finalResults);
+
+                            // Combine local matches and geocoded results, avoiding duplicates
+                            List<String> combined = new ArrayList<>(localMatches);
+                            for (String geoText : geocodedTexts) {
+                                if (!combined.contains(geoText)) {
+                                    combined.add(geoText);
+                                }
+                            }
+
+                            searchSuggestionsAdapter.clear();
+                            searchSuggestionsAdapter.addAll(combined);
+                            searchSuggestionsAdapter.notifyDataSetChanged();
+
+                            if (etSearch.hasFocus() && !combined.isEmpty()) {
+                                etSearch.showDropDown();
+                            }
+                        }
+                    });
+                }
+            } catch (IOException e) {
+                // Ignore background suggestion errors
+            }
+        }).start();
+    }
+
     private void setupButtons() {
         btnUseMyLocation.setOnClickListener(v -> {
-            if (isManualPin && selectedPoint != null) {
-                saveAndProceed();
-            } else {
-                getCurrentLocation(true);
-            }
+            getCurrentLocation(true);
         });
 
         MaterialButton btnNext = requireView().findViewById(R.id.btnNext);
@@ -430,5 +647,49 @@ public class SubmitReportStep1Fragment extends Fragment {
 
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void hideKeyboardAndClearFocus() {
+        if (etSearch != null) {
+            etSearch.clearFocus();
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager)
+                    requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+            }
+        }
+    }
+
+    public static class NoFilterAdapter<T> extends ArrayAdapter<T> {
+        private final List<T> items;
+
+        public NoFilterAdapter(android.content.Context context, int resource, List<T> objects) {
+            super(context, resource, objects);
+            this.items = objects;
+        }
+
+        @NonNull
+        @Override
+        public android.widget.Filter getFilter() {
+            return new android.widget.Filter() {
+                @Override
+                protected FilterResults performFiltering(CharSequence constraint) {
+                    FilterResults results = new FilterResults();
+                    results.values = items;
+                    results.count = items.size();
+                    return results;
+                }
+
+                @Override
+                protected void publishResults(CharSequence constraint, FilterResults results) {
+                    notifyDataSetChanged();
+                }
+
+                @Override
+                public CharSequence convertResultToString(Object resultValue) {
+                    return resultValue == null ? "" : resultValue.toString();
+                }
+            };
+        }
     }
 }

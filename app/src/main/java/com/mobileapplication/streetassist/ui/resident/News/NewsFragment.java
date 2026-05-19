@@ -397,7 +397,7 @@ public class NewsFragment extends Fragment {
         }
 
         class AnnouncementVH extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvName, tvSubtitle, tvDate, tvContact, tvToggleComments, tvCommentCount, tvNoComments;
+            TextView tvTitle, tvSubtitle, tvDate, tvContact, tvToggleComments, tvCommentCount, tvNoComments;
             ImageView ivBanner;
             androidx.recyclerview.widget.RecyclerView rvComments;
             EditText etComment;
@@ -421,7 +421,6 @@ public class NewsFragment extends Fragment {
             AnnouncementVH(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTitle);
-                tvName = itemView.findViewById(R.id.tvName);
                 tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
                 tvContact = itemView.findViewById(R.id.tvContact);
                 tvDate = itemView.findViewById(R.id.tvDate);
@@ -460,14 +459,6 @@ public class NewsFragment extends Fragment {
                 tvToggleComments.setText("💬 View Comments");
 
                 tvTitle.setText(announcement.title != null ? announcement.title : "");
-
-                if (announcement.name != null && !announcement.name.isEmpty()
-                        && (announcement.title == null || !announcement.title.equalsIgnoreCase(announcement.name))) {
-                    tvName.setVisibility(View.VISIBLE);
-                    tvName.setText("Subject: " + announcement.name);
-                } else {
-                    tvName.setVisibility(View.GONE);
-                }
 
                 tvSubtitle.setText(announcement.subtitle != null ? announcement.subtitle : "");
                 tvDate.setText(announcement.date != null ? announcement.date : "");
