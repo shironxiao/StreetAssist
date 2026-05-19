@@ -733,7 +733,14 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             if (lat != null && lon != null) startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:" + lat + "," + lon + "?q=" + lat + "," + lon)));
         });
         view.findViewById(R.id.btnDelete).setOnClickListener(v -> {
-            db.collection("reports").document(docId).update("deletedAt", FieldValue.serverTimestamp()).addOnSuccessListener(unused -> dialog.dismiss());
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Move to Trash")
+                    .setMessage("Are you sure you want to move this report to Trash?")
+                    .setPositiveButton("Move to Trash", (confirmDialog, which) -> {
+                        db.collection("reports").document(docId).update("deletedAt", FieldValue.serverTimestamp()).addOnSuccessListener(unused -> dialog.dismiss());
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
         dialog.show();
     }
@@ -809,14 +816,19 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         view.findViewById(R.id.btnCancel).setOnClickListener(v -> resolveDialog.dismiss());
         view.findViewById(R.id.btnSubmitResolution).setOnClickListener(v -> {
             String notes = etNotes != null && etNotes.getText() != null ? etNotes.getText().toString().trim() : "";
-            
-            Toast.makeText(this, "Resolving report...", Toast.LENGTH_SHORT).show();
-            
-            if (!selectedProofImageUris.isEmpty()) {
-                uploadProofAndResolve(docId, selectedProofImageUris, notes, resolveDialog, detailsDialog);
-            } else {
-                saveResolutionToFirestore(docId, new ArrayList<>(), notes, resolveDialog, detailsDialog);
-            }
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Confirm Resolution")
+                    .setMessage("Are you sure you want to mark this report as Resolved?")
+                    .setPositiveButton("Resolve", (confirmDialog, which) -> {
+                        Toast.makeText(this, "Resolving report...", Toast.LENGTH_SHORT).show();
+                        if (!selectedProofImageUris.isEmpty()) {
+                            uploadProofAndResolve(docId, selectedProofImageUris, notes, resolveDialog, detailsDialog);
+                        } else {
+                            saveResolutionToFirestore(docId, new ArrayList<>(), notes, resolveDialog, detailsDialog);
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
         resolveDialog.show();
