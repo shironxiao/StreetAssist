@@ -458,6 +458,18 @@ public class NewsFragment extends Fragment {
                 commentSection.setVisibility(View.GONE);
                 tvToggleComments.setText("💬 View Comments");
 
+                // Fetch comments count dynamically to show indicator on load
+                db.collection("announcements")
+                        .document(announcement.id)
+                        .collection("comments")
+                        .get()
+                        .addOnSuccessListener(querySnapshot -> {
+                            if (!commentsVisible) {
+                                int count = querySnapshot.size();
+                                tvToggleComments.setText("💬 View Comments (" + count + ")");
+                            }
+                        });
+
                 tvTitle.setText(announcement.title != null ? announcement.title : "");
 
                 tvSubtitle.setText(announcement.subtitle != null ? announcement.subtitle : "");
@@ -493,7 +505,7 @@ public class NewsFragment extends Fragment {
 
                         if (announcement.latitude != null && announcement.longitude != null) {
                             tvLocation.setOnClickListener(
-                                    v -> showLocationOnMap(announcement.latitude, announcement.longitude));
+                                     v -> showLocationOnMap(announcement.latitude, announcement.longitude));
                         } else {
                             tvLocation.setOnClickListener(null);
                         }
@@ -539,14 +551,16 @@ public class NewsFragment extends Fragment {
                 tvToggleComments.setOnClickListener(v -> {
                     if (!commentsVisible) {
                         commentSection.setVisibility(View.VISIBLE);
-                        tvToggleComments.setText("➖ Hide Comments");
                         commentsVisible = true;
-                        if (!commentsLoaded)
+                        if (!commentsLoaded) {
                             loadComments(announcement.id);
+                        } else {
+                            updateToggleCommentsText(comments.size());
+                        }
                     } else {
                         commentSection.setVisibility(View.GONE);
-                        tvToggleComments.setText("💬 View Comments");
                         commentsVisible = false;
+                        updateToggleCommentsText(comments.size());
                     }
                 });
 
@@ -733,6 +747,7 @@ public class NewsFragment extends Fragment {
                             }
                             commentAdapter.notifyDataSetChanged();
                             updateCommentCount(comments.size());
+                            updateToggleCommentsText(comments.size());
                             tvNoComments.setVisibility(comments.isEmpty() ? View.VISIBLE : View.GONE);
                         })
                         .addOnFailureListener(e -> {
@@ -812,6 +827,7 @@ public class NewsFragment extends Fragment {
                                         commentAdapter.notifyItemInserted(comments.size() - 1);
                                         rvComments.scrollToPosition(comments.size() - 1);
                                         updateCommentCount(comments.size());
+                                        updateToggleCommentsText(comments.size());
                                         tvNoComments.setVisibility(View.GONE);
 
                                         // Send notification to Admin
@@ -838,6 +854,14 @@ public class NewsFragment extends Fragment {
                             Toast.makeText(itemView.getContext(),
                                     "Could not fetch user info", Toast.LENGTH_SHORT).show();
                         });
+            }
+
+            private void updateToggleCommentsText(int count) {
+                if (commentsVisible) {
+                    tvToggleComments.setText("➖ Hide Comments (" + count + ")");
+                } else {
+                    tvToggleComments.setText("💬 View Comments (" + count + ")");
+                }
             }
 
             private void updateCommentCount(int count) {

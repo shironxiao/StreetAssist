@@ -502,8 +502,7 @@ public class RegisterActivity extends AppCompatActivity {
                                 "1. We collect: Name, Email, Location, Reports.\n" +
                                 "2. Used for identification and reporting.\n" +
                                 "3. Not shared with third parties.\n" +
-                                "4. Location used only during report submission.\n" +
-                                "5. Questions? streetassist.support@example.com")
+                                "4. Location used only during report submission.\n")
                 .setPositiveButton("I Have Read & Understand", (d, w) -> {
                     hasReadTerms = true;
                     cbTerms.setEnabled(true);
