@@ -49,6 +49,10 @@
         <activity android:name=".admin.AdminAnnouncementsActivity"/>
         <activity android:name=".admin.AdminNotificationActivity"/>
         <activity android:name=".admin.AdminTrashActivity"/>
+        <activity android:name=".admin.AdminProfileActivity"
+            android:exported="false" />
+        <activity android:name=".admin.AdminRegisterActivity"
+            android:exported="false" />
 
         <service
             android:name=".services.StreetAssistMessagingService"

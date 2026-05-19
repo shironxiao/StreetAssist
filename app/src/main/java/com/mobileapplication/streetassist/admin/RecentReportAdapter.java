@@ -99,7 +99,24 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 if (headerListener != null) headerListener.onSortClick();
             });
 
+            // Set up context-dependent texts and export visibility
+            if (context instanceof AdminTrashActivity) {
+                h.btnExportPdf.setVisibility(View.GONE);
+                if (h.tvTitle != null) h.tvTitle.setText("Trash Bin");
+                if (h.tvSubtitle != null) h.tvSubtitle.setText("Restore or permanently delete reports");
+            } else {
+                if (isSelectionMode) {
+                    h.btnExportPdf.setVisibility(View.GONE);
+                } else {
+                    h.btnExportPdf.setVisibility(View.VISIBLE);
+                }
+            }
+
             if (isSelectionMode) {
+                // Hide title and subtitle to allow full width for selection actions (preventing squishing)
+                if (h.tvTitle != null) h.tvTitle.setVisibility(View.GONE);
+                if (h.tvSubtitle != null) h.tvSubtitle.setVisibility(View.GONE);
+
                 h.btnCancelSelection.setVisibility(View.VISIBLE);
                 h.btnCancelSelection.setOnClickListener(v -> {
                     if (headerListener != null) headerListener.onCancelSelection();
@@ -115,6 +132,8 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
                     if (context instanceof AdminTrashActivity) {
                         h.btnRestoreSelected.setVisibility(View.VISIBLE);
+                        ((com.google.android.material.button.MaterialButton) h.btnRestoreSelected).setText(
+                                "Restore (" + selectedReportIds.size() + ")");
                         h.btnRestoreSelected.setOnClickListener(v -> {
                             if (headerListener != null) headerListener.onRestoreSelected(new HashSet<>(selectedReportIds));
                         });
@@ -126,6 +145,10 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     h.btnRestoreSelected.setVisibility(View.GONE);
                 }
             } else {
+                // Show title and subtitle in normal mode
+                if (h.tvTitle != null) h.tvTitle.setVisibility(View.VISIBLE);
+                if (h.tvSubtitle != null) h.tvSubtitle.setVisibility(View.VISIBLE);
+
                 h.btnCancelSelection.setVisibility(View.GONE);
                 h.btnDeleteSelected.setVisibility(View.GONE);
                 h.btnRestoreSelected.setVisibility(View.GONE);
@@ -305,7 +328,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
         View btnExportPdf, btnFilter, btnMunicipality, btnBarangay, btnSort, btnDeleteSelected, btnCancelSelection, btnRestoreSelected;
         android.widget.EditText etSearch;
-        TextView tvShowingResults;
+        TextView tvShowingResults, tvTitle, tvSubtitle;
 
         public HeaderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -319,6 +342,8 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             btnRestoreSelected = itemView.findViewById(R.id.btnRestoreSelected);
             etSearch = itemView.findViewById(R.id.etSearch);
             tvShowingResults = itemView.findViewById(R.id.tvShowingResults);
+            tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvSubtitle = itemView.findViewById(R.id.tvSubtitle);
         }
     }
 

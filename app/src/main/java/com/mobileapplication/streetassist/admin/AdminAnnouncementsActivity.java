@@ -80,6 +80,11 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
     private double selectedLat = 0, selectedLng = 0;
     private String selectedAddress = "";
 
+    private android.view.View layoutSelectionActions;
+    private com.google.android.material.button.MaterialButton btnCancelSelection;
+    private com.google.android.material.button.MaterialButton btnDeleteSelected;
+    private android.view.View layoutHeaderSection;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -135,6 +140,48 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         adapter = new com.mobileapplication.streetassist.admin.AnnouncementAdapter(this, announcementList);
         rvAnnouncements.setAdapter(adapter);
 
+        layoutSelectionActions = findViewById(R.id.layoutSelectionActions);
+        btnCancelSelection = findViewById(R.id.btnCancelSelection);
+        btnDeleteSelected = findViewById(R.id.btnDeleteSelected);
+        layoutHeaderSection = findViewById(R.id.layoutHeaderSection);
+
+        adapter.setSelectionListener(new com.mobileapplication.streetassist.admin.AnnouncementAdapter.OnSelectionListener() {
+            @Override
+            public void onSelectionChanged(int count) {
+                if (btnDeleteSelected != null) {
+                    btnDeleteSelected.setText("Delete (" + count + ")");
+                }
+            }
+
+            @Override
+            public void onSelectionModeStarted() {
+                if (layoutSelectionActions != null) {
+                    layoutSelectionActions.setVisibility(android.view.View.VISIBLE);
+                }
+                if (layoutHeaderSection != null) {
+                    layoutHeaderSection.setVisibility(android.view.View.GONE);
+                }
+            }
+
+            @Override
+            public void onSelectionModeEnded() {
+                if (layoutSelectionActions != null) {
+                    layoutSelectionActions.setVisibility(android.view.View.GONE);
+                }
+                if (layoutHeaderSection != null) {
+                    layoutHeaderSection.setVisibility(android.view.View.VISIBLE);
+                }
+            }
+        });
+
+        if (btnCancelSelection != null) {
+            btnCancelSelection.setOnClickListener(v -> adapter.clearSelection());
+        }
+
+        if (btnDeleteSelected != null) {
+            btnDeleteSelected.setOnClickListener(v -> deleteMultipleAnnouncements(adapter.getSelectedAnnouncementIds()));
+        }
+
         MaterialButton btnAdd = findViewById(R.id.btnAddAnnouncement);
         btnAdd.setOnClickListener(v -> showAddAnnouncementDialog());
 
@@ -150,6 +197,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             public void handleOnBackPressed() {
                 if (drawerLayout != null && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
                     drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                } else if (adapter.getSelectedAnnouncementIds().size() > 0) {
+                    adapter.clearSelection();
                 } else {
                     startActivity(new Intent(AdminAnnouncementsActivity.this, AdminDashboardActivity.class));
                     finish();
@@ -182,6 +231,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             finish();
         } else if (id == R.id.nav_announcements) {
             // Already here
+        } else if (id == R.id.nav_profile) {
+            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminProfileActivity.class));
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();
@@ -277,6 +328,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             String contact = etContact.getText().toString();
 
             if (!name.isEmpty()) {
+                btnPost.setEnabled(false);
+                btnPost.setText("Posting...");
                 if (selectedImageUri != null) {
                     uploadToCloudinary(selectedImageUri, title, name, age, sex, category, subtitle, contact, dialog);
                 } else {
@@ -458,10 +511,24 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     runOnUiThread(() -> postToFirestore(title, name, age, sex, category, subtitle, contact, imageUrl, dialog));
                 } else {
                     String error = json.optString("error", "Upload failed");
-                    runOnUiThread(() -> Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show();
+                        android.widget.Button btnPost = dialog.findViewById(R.id.btnPost);
+                        if (btnPost != null) {
+                            btnPost.setEnabled(true);
+                            btnPost.setText("Post Announcement");
+                        }
+                    });
                 }
             } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    android.widget.Button btnPost = dialog.findViewById(R.id.btnPost);
+                    if (btnPost != null) {
+                        btnPost.setEnabled(true);
+                        btnPost.setText("Post Announcement");
+                    }
+                });
             }
         });
     }
@@ -495,6 +562,11 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to post announcement", e);
                     Toast.makeText(this, "Failed to post: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    android.widget.Button btnPost = dialog.findViewById(R.id.btnPost);
+                    if (btnPost != null) {
+                        btnPost.setEnabled(true);
+                        btnPost.setText("Post Announcement");
+                    }
                 });
     }
 
@@ -668,6 +740,30 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     db.collection("announcements").document(id).delete()
                             .addOnSuccessListener(aVoid -> Toast.makeText(this, "Deleted successfully", Toast.LENGTH_SHORT).show())
                             .addOnFailureListener(e -> Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    public void deleteMultipleAnnouncements(java.util.Set<String> selectedIds) {
+        if (selectedIds == null || selectedIds.isEmpty()) return;
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Announcements")
+                .setMessage("Are you sure you want to delete the " + selectedIds.size() + " selected announcements?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    for (String id : selectedIds) {
+                        batch.delete(db.collection("announcements").document(id));
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                Toast.makeText(this, "Announcements deleted successfully", Toast.LENGTH_SHORT).show();
+                                adapter.clearSelection();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed to delete announcements: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

@@ -18,6 +18,10 @@
             android:icon="@drawable/ic_nav_notifications"
             android:title="Notifications" />
         <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_person"
+            android:title="Profile" />
+        <item
             android:id="@+id/nav_trash"
             android:icon="@drawable/ic_nav_trash"
             android:title="Trash" />

@@ -280,6 +280,8 @@ public class AdminDashboardActivity extends AppCompatActivity
             finish();
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminAnnouncementsActivity.class));
+        } else if (id == R.id.nav_profile) {
+            startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminProfileActivity.class));
         } else if (id == R.id.nav_trash) {
             startActivity(new Intent(this, com.mobileapplication.streetassist.admin.AdminTrashActivity.class));
             finish();

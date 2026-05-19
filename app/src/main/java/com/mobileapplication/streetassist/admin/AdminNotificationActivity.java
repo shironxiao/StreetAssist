@@ -75,9 +75,8 @@ public class AdminNotificationActivity extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBack);
         btnClearAll = findViewById(R.id.btnClearAll);
 
-        // Hide "Clear All" for Admin as requested ("dont add this")
         if (btnClearAll != null) {
-            btnClearAll.setVisibility(View.GONE);
+            btnClearAll.setOnClickListener(v -> clearAllNotifications());
         }
 
         btnBack.setOnClickListener(v -> {
@@ -145,6 +144,9 @@ public class AdminNotificationActivity extends AppCompatActivity {
                     boolean isEmpty = notificationList.isEmpty();
                     tvEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
                     rvNotifications.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+                    if (btnClearAll != null) {
+                        btnClearAll.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+                    }
                 });
     }
 
@@ -281,6 +283,44 @@ public class AdminNotificationActivity extends AppCompatActivity {
                 btnDelete = view.findViewById(R.id.btnDeleteNotif);
             }
         }
+    }
+
+    private void clearAllNotifications() {
+        if (notificationList.isEmpty()) return;
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Clear Notifications")
+                .setMessage("Are you sure you want to delete all notifications?")
+                .setPositiveButton("Clear All", (dialog, which) -> {
+                    db.collection("admin_notifications")
+                            .get()
+                            .addOnSuccessListener(snapshots -> {
+                                if (snapshots.isEmpty()) return;
+
+                                com.google.firebase.firestore.WriteBatch batch = db.batch();
+                                for (com.google.firebase.firestore.QueryDocumentSnapshot doc : snapshots) {
+                                    batch.delete(doc.getReference());
+                                }
+
+                                batch.commit().addOnSuccessListener(unused -> {
+                                    notificationList.clear();
+                                    adapter.notifyDataSetChanged();
+                                    tvEmpty.setVisibility(View.VISIBLE);
+                                    rvNotifications.setVisibility(View.GONE);
+                                    if (btnClearAll != null) {
+                                        btnClearAll.setVisibility(View.GONE);
+                                    }
+                                    Toast.makeText(this, "All notifications cleared", Toast.LENGTH_SHORT).show();
+                                }).addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Failed to clear: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed to fetch notifications: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void logout() {

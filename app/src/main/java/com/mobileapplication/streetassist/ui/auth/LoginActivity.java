@@ -193,39 +193,39 @@ public class LoginActivity extends AppCompatActivity {
                         String role     = doc.getString("role");
                         String fullName = doc.getString("fullName");
 
-                        // Greet the user
-                        Toast.makeText(this,
-                                "Welcome back, " + (fullName != null ? fullName : "User") + "!",
-                                Toast.LENGTH_SHORT).show();
-
-                        // Route by role
-                        Intent intent;
                         if ("admin".equals(role)) {
-                            // TODO: swap for your AdminMainActivity when ready
-                            // intent = new Intent(this, AdminMainActivity.class);
-                            intent = new Intent(this, ResidentMainActivity.class);
+                            mAuth.signOut();
+                            btnGetStarted.setEnabled(true);
+                            btnGetStarted.setText("Login");
+                            Toast.makeText(this, "Access denied. Resident account required.", Toast.LENGTH_LONG).show();
                         } else {
-                            intent = new Intent(this, ResidentMainActivity.class);
+                            // Greet the user
+                            Toast.makeText(this,
+                                    "Welcome back, " + (fullName != null ? fullName : "User") + "!",
+                                    Toast.LENGTH_SHORT).show();
+
+                            // Route to resident main
+                            Intent intent = new Intent(this, ResidentMainActivity.class);
+
+                            // Pass useful user data to the next screen via Intent extras
+                            intent.putExtra("uid",      uid);
+                            intent.putExtra("fullName", fullName);
+                            intent.putExtra("email",    doc.getString("email"));
+                            intent.putExtra("role",     role);
+
+                            // Pass address fields
+                            if (doc.contains("address")) {
+                                intent.putExtra("region",   doc.getString("address.region"));
+                                intent.putExtra("province", doc.getString("address.province"));
+                                intent.putExtra("city",     doc.getString("address.city"));
+                                intent.putExtra("barangay", doc.getString("address.barangay"));
+                            }
+
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                    | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(intent);
+                            finish();
                         }
-
-                        // Pass useful user data to the next screen via Intent extras
-                        intent.putExtra("uid",      uid);
-                        intent.putExtra("fullName", fullName);
-                        intent.putExtra("email",    doc.getString("email"));
-                        intent.putExtra("role",     role);
-
-                        // Pass address fields
-                        if (doc.contains("address")) {
-                            intent.putExtra("region",   doc.getString("address.region"));
-                            intent.putExtra("province", doc.getString("address.province"));
-                            intent.putExtra("city",     doc.getString("address.city"));
-                            intent.putExtra("barangay", doc.getString("address.barangay"));
-                        }
-
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        finish();
 
                     } else {
                         // Auth account exists but Firestore doc is missing

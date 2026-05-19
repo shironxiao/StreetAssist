@@ -212,35 +212,47 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
     private void restoreSelectedReports(Set<String> selectedIds) {
         if (selectedIds == null || selectedIds.isEmpty()) return;
 
-        com.google.firebase.firestore.WriteBatch batch = db.batch();
-        for (String id : selectedIds) {
-            batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.delete());
-        }
-
-        batch.commit()
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(this, "Selected reports restored", Toast.LENGTH_SHORT).show();
-                    adapter.clearSelection();
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Restore Reports")
+                .setMessage("Are you sure you want to restore the " + selectedIds.size() + " selected reports?")
+                .setPositiveButton("Restore", (dialog, which) -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    for (String id : selectedIds) {
+                        batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.delete());
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                Toast.makeText(this, "Selected reports restored", Toast.LENGTH_SHORT).show();
+                                adapter.clearSelection();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Failed to restore reports: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to restore reports: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void permanentlyDeleteSelected(Set<String> selectedIds) {
         if (selectedIds == null || selectedIds.isEmpty()) return;
 
-        com.google.firebase.firestore.WriteBatch batch = db.batch();
-        for (String id : selectedIds) {
-            batch.delete(db.collection("reports").document(id));
-        }
-
-        batch.commit()
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(this, "Selected reports deleted permanently", Toast.LENGTH_SHORT).show();
-                    adapter.clearSelection();
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Permanently Delete Reports")
+                .setMessage("Are you sure you want to permanently delete the " + selectedIds.size() + " selected reports? This action cannot be undone.")
+                .setPositiveButton("Delete Permanently", (dialog, which) -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    for (String id : selectedIds) {
+                        batch.delete(db.collection("reports").document(id));
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                Toast.makeText(this, "Selected reports deleted permanently", Toast.LENGTH_SHORT).show();
+                                adapter.clearSelection();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Failed to delete reports: " + e.getMessage(), Toast.LENGTH_SHORT).show());
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to delete reports: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
@@ -255,6 +267,8 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
             finish();
         } else if (id == R.id.nav_announcements) {
             startActivity(new Intent(this, AdminAnnouncementsActivity.class));
+        } else if (id == R.id.nav_profile) {
+            startActivity(new Intent(this, AdminProfileActivity.class));
         } else if (id == R.id.nav_trash) {
             // Already here
         } else if (id == R.id.nav_notifications) {

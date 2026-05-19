@@ -16,12 +16,42 @@ import com.mobileapplication.streetassist.R;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapter.ViewHolder> {
 
     private static final String TAG = "AnnouncementAdapter";
     private final Context context;
     private final List<Map<String, Object>> announcementList;
+
+    private final Set<String> selectedAnnouncementIds = new HashSet<>();
+    private boolean isSelectionMode = false;
+
+    public interface OnSelectionListener {
+        void onSelectionChanged(int count);
+        void onSelectionModeStarted();
+        void onSelectionModeEnded();
+    }
+
+    private OnSelectionListener selectionListener;
+
+    public void setSelectionListener(OnSelectionListener listener) {
+        this.selectionListener = listener;
+    }
+
+    public void clearSelection() {
+        isSelectionMode = false;
+        selectedAnnouncementIds.clear();
+        notifyDataSetChanged();
+        if (selectionListener != null) {
+            selectionListener.onSelectionModeEnded();
+        }
+    }
+
+    public Set<String> getSelectedAnnouncementIds() {
+        return selectedAnnouncementIds;
+    }
 
     public AnnouncementAdapter(Context context, List<Map<String, Object>> announcementList) {
         this.context = context;
@@ -49,7 +79,9 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         holder.tvDate.setText("Posted " + announcement.get("date"));
 
         String name = (String) announcement.get("name");
-        if (name != null && !name.isEmpty()) {
+        String title = (String) announcement.get("title");
+        if (name != null && !name.isEmpty()
+                && (title == null || !title.equalsIgnoreCase(name))) {
             holder.tvName.setVisibility(View.VISIBLE);
             holder.tvName.setText("Subject: " + name);
         } else {
@@ -110,15 +142,58 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
             holder.ivImage.setImageResource(R.drawable.ic_image_placeholder);
         }
 
-        // Make the whole item clickable to open comments
+        // Selection UI State
+        if (isSelectionMode) {
+            holder.cbSelect.setVisibility(View.VISIBLE);
+            holder.cbSelect.setChecked(selectedAnnouncementIds.contains(id));
+        } else {
+            holder.cbSelect.setVisibility(View.GONE);
+        }
+
+        holder.cbSelect.setOnClickListener(v -> {
+            if (id != null) {
+                if (holder.cbSelect.isChecked()) {
+                    selectedAnnouncementIds.add(id);
+                } else {
+                    selectedAnnouncementIds.remove(id);
+                }
+                if (selectionListener != null) {
+                    selectionListener.onSelectionChanged(selectedAnnouncementIds.size());
+                }
+            }
+        });
+
+        // Make the whole item clickable to open comments or select
         holder.itemView.setOnClickListener(v -> {
+            if (isSelectionMode) {
+                holder.cbSelect.performClick();
+                return;
+            }
             Log.d(TAG, "Item clicked: " + id);
             if (context instanceof AdminAnnouncementsActivity) {
                 ((AdminAnnouncementsActivity) context).showCommentsDialog(id);
             }
         });
 
+        holder.itemView.setOnLongClickListener(v -> {
+            if (!isSelectionMode) {
+                isSelectionMode = true;
+                if (id != null) selectedAnnouncementIds.add(id);
+                notifyDataSetChanged();
+                if (selectionListener != null) {
+                    selectionListener.onSelectionModeStarted();
+                    selectionListener.onSelectionChanged(selectedAnnouncementIds.size());
+                }
+                return true;
+            }
+            return false;
+        });
+
         holder.btnViewComments.setOnClickListener(v -> {
+            if (isSelectionMode) {
+                holder.cbSelect.performClick();
+                return;
+            }
             Log.d(TAG, "View Comments clicked: " + id);
             if (context instanceof AdminAnnouncementsActivity) {
                 ((AdminAnnouncementsActivity) context).showCommentsDialog(id);
@@ -126,6 +201,10 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         });
 
         holder.btnUpdateStatus.setOnClickListener(v -> {
+            if (isSelectionMode) {
+                holder.cbSelect.performClick();
+                return;
+            }
             Log.d(TAG, "Update Status clicked: " + id);
             if (context instanceof AdminAnnouncementsActivity) {
                 ((AdminAnnouncementsActivity) context).showUpdateStatusDialog(id, status);
@@ -133,6 +212,10 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         });
 
         holder.btnDelete.setOnClickListener(v -> {
+            if (isSelectionMode) {
+                holder.cbSelect.performClick();
+                return;
+            }
             Log.d(TAG, "Delete clicked: " + id);
             if (context instanceof AdminAnnouncementsActivity) {
                 ((AdminAnnouncementsActivity) context).deleteAnnouncement(id);
@@ -149,6 +232,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
         ImageView ivImage;
         TextView tvCategory, tvStatusBadge, tvTitle, tvName, tvAgeSex, tvSubtitle, tvContact, tvDate, tvIncidentDateTime, tvLocation;
         View btnViewComments, btnUpdateStatus, btnDelete, containerIncidentInfo;
+        android.widget.CheckBox cbSelect;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -167,6 +251,7 @@ public class AnnouncementAdapter extends RecyclerView.Adapter<AnnouncementAdapte
             btnViewComments = itemView.findViewById(R.id.btnViewComments);
             btnUpdateStatus = itemView.findViewById(R.id.btnUpdateStatus);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+            cbSelect = itemView.findViewById(R.id.cbSelectAnnouncement);
         }
     }
 }

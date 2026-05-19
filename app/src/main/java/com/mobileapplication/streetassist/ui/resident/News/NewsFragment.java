@@ -461,7 +461,8 @@ public class NewsFragment extends Fragment {
 
                 tvTitle.setText(announcement.title != null ? announcement.title : "");
 
-                if (announcement.name != null && !announcement.name.isEmpty()) {
+                if (announcement.name != null && !announcement.name.isEmpty()
+                        && (announcement.title == null || !announcement.title.equalsIgnoreCase(announcement.name))) {
                     tvName.setVisibility(View.VISIBLE);
                     tvName.setText("Subject: " + announcement.name);
                 } else {

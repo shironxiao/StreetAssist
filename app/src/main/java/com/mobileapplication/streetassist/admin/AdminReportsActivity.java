@@ -560,7 +560,11 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
                 y += 30; canvas.drawLine(40, y - 10, 555, y - 10, paint); y += 10;
             }
             document.finishPage(page);
-            java.io.File file = new java.io.File(getCacheDir(), "reports_" + System.currentTimeMillis() + ".pdf");
+            java.io.File exportsDir = new java.io.File(getCacheDir(), "exports");
+            if (!exportsDir.exists()) {
+                exportsDir.mkdirs();
+            }
+            java.io.File file = new java.io.File(exportsDir, "reports_" + System.currentTimeMillis() + ".pdf");
             document.writeTo(new java.io.FileOutputStream(file));
             document.close();
             android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
@@ -573,12 +577,25 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
     private void deleteMultipleReports(java.util.Set<String> selectedIds) {
         if (selectedIds.isEmpty()) return;
-        com.google.firebase.firestore.WriteBatch batch = db.batch();
-        for (String id : selectedIds) batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.serverTimestamp());
-        batch.commit().addOnSuccessListener(unused -> {
-            Toast.makeText(this, "Reports moved to trash", Toast.LENGTH_SHORT).show();
-            adapter.clearSelection();
-        });
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Move Reports to Trash")
+                .setMessage("Are you sure you want to move the " + selectedIds.size() + " selected reports to Trash?")
+                .setPositiveButton("Move to Trash", (dialog, which) -> {
+                    com.google.firebase.firestore.WriteBatch batch = db.batch();
+                    for (String id : selectedIds) {
+                        batch.update(db.collection("reports").document(id), "deletedAt", FieldValue.serverTimestamp());
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> {
+                                Toast.makeText(this, "Reports moved to trash", Toast.LENGTH_SHORT).show();
+                                adapter.clearSelection();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Failed to move reports: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     public void showReportDetails(Map<String, Object> report) {
@@ -632,6 +649,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         int id = item.getItemId();
         if (id == R.id.nav_dashboard) { startActivity(new Intent(this, AdminDashboardActivity.class)); finish(); }
         else if (id == R.id.nav_announcements) startActivity(new Intent(this, AdminAnnouncementsActivity.class));
+        else if (id == R.id.nav_profile) startActivity(new Intent(this, AdminProfileActivity.class));
         else if (id == R.id.nav_trash) startActivity(new Intent(this, AdminTrashActivity.class));
         else if (id == R.id.nav_logout) logout();
         drawerLayout.closeDrawer(GravityCompat.START);
