@@ -50,11 +50,14 @@ public class ResidentMainActivity extends AppCompatActivity {
             // Clear the extra so it doesn't trigger again (e.g. on rotation)
             intent.putExtra("nav_to_report", false);
 
+            String filterStatus = intent.getStringExtra("filter_status");
+            if (filterStatus != null) {
+                com.mobileapplication.streetassist.ui.resident.Reports.ReportFragment.targetFilterStatus = filterStatus;
+            }
+
             if (binding.bottomNavigation != null) {
-                binding.bottomNavigation.post(() -> {
-                    // Switch to the report tab programmatically
-                    binding.bottomNavigation.setSelectedItemId(R.id.report);
-                });
+                // Switch to the report tab programmatically
+                binding.bottomNavigation.setSelectedItemId(R.id.report);
             }
         }
     }
