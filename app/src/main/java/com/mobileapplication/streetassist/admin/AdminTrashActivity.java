@@ -36,6 +36,7 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
     private List<Map<String, Object>> trashList = new ArrayList<>();
     private FirebaseFirestore db;
     private com.google.firebase.firestore.ListenerRegistration trashListener;
+    private AdminNotificationBadgeHelper badgeHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +44,7 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         setContentView(R.layout.admin_trash);
 
         db = FirebaseFirestore.getInstance();
+        badgeHelper = new AdminNotificationBadgeHelper(this);
 
         // Security Guard
         com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -153,6 +155,9 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         if (trashListener == null) {
             trashListener = fetchTrashReports();
         }
+        if (badgeHelper != null) {
+            badgeHelper.startListening();
+        }
     }
 
     @Override
@@ -161,6 +166,9 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         if (trashListener != null) {
             trashListener.remove();
             trashListener = null;
+        }
+        if (badgeHelper != null) {
+            badgeHelper.stopListening();
         }
     }
 
@@ -294,5 +302,23 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent) {
+        super.startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent, android.os.Bundle options) {
+        super.startActivity(intent, options);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

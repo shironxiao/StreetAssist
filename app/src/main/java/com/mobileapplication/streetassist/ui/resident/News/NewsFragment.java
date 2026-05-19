@@ -4,11 +4,13 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -80,6 +82,7 @@ public class NewsFragment extends Fragment {
     private boolean isLastItemReached = false;
     private boolean isLoadingMore = false;
     private static final int PAGE_SIZE = 10;
+    private com.google.firebase.firestore.ListenerRegistration announcementsListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -105,6 +108,15 @@ public class NewsFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (announcementsListener != null) {
+            announcementsListener.remove();
+            announcementsListener = null;
+        }
     }
 
     @Override
@@ -257,27 +269,25 @@ public class NewsFragment extends Fragment {
             isLastItemReached = false;
             lastVisible = null;
             showLoading(true);
-        } else {
-            isLoadingMore = true;
-        }
 
-        Query query = db.collection("announcements")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(PAGE_SIZE);
+            if (announcementsListener != null) {
+                announcementsListener.remove();
+                announcementsListener = null;
+            }
 
-        if (lastVisible != null) {
-            query = query.startAfter(lastVisible);
-        }
+            Query query = db.collection("announcements")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .limit(PAGE_SIZE);
 
-        query.get()
-                .addOnSuccessListener(querySnapshot -> {
-                    swipeRefresh.setRefreshing(false);
-                    if (isInitial) {
-                        showLoading(false);
-                        allAnnouncements.clear();
-                    }
-                    isLoadingMore = false;
-
+            announcementsListener = query.addSnapshotListener((querySnapshot, error) -> {
+                swipeRefresh.setRefreshing(false);
+                showLoading(false);
+                if (error != null) {
+                    Log.e("NewsFragment", "Listen failed.", error);
+                    return;
+                }
+                if (querySnapshot != null) {
+                    allAnnouncements.clear();
                     List<DocumentSnapshot> docs = querySnapshot.getDocuments();
                     for (DocumentSnapshot doc : docs) {
                         Announcement a = new Announcement();
@@ -296,6 +306,8 @@ public class NewsFragment extends Fragment {
                         a.latitude = doc.getDouble("latitude");
                         a.longitude = doc.getDouble("longitude");
                         a.timestamp = doc.getTimestamp("timestamp");
+                        a.caseClosedImages = (List<String>) doc.get("caseClosedImages");
+                        a.announcementImages = (List<String>) doc.get("announcementImages");
                         allAnnouncements.add(a);
                     }
 
@@ -309,15 +321,111 @@ public class NewsFragment extends Fragment {
                     }
 
                     filterList(etSearchNews.getText().toString());
-                })
-                .addOnFailureListener(e -> {
-                    swipeRefresh.setRefreshing(false);
-                    showLoading(false);
-                    isLoadingMore = false;
-                    Toast.makeText(requireContext(),
-                            "Failed to load: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
+                }
+            });
+        } else {
+            isLoadingMore = true;
+
+            Query query = db.collection("announcements")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .limit(PAGE_SIZE);
+
+            if (lastVisible != null) {
+                query = query.startAfter(lastVisible);
+            }
+
+            query.get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        isLoadingMore = false;
+                        List<DocumentSnapshot> docs = querySnapshot.getDocuments();
+                        if (docs.isEmpty()) {
+                            isLastItemReached = true;
+                            return;
+                        }
+
+                        // Temporarily add these to allAnnouncements so we know the new size
+                        for (DocumentSnapshot doc : docs) {
+                            Announcement a = new Announcement();
+                            a.id = doc.getId();
+                            a.title = doc.getString("title");
+                            a.subtitle = doc.getString("subtitle");
+                            a.category = doc.getString("category");
+                            a.contact = doc.getString("contact");
+                            a.date = doc.getString("date");
+                            a.imageUrl = doc.getString("imageUrl");
+                            a.status = doc.getString("status");
+                            a.name = doc.getString("name");
+                            a.incidentDate = doc.getString("incidentDate");
+                            a.incidentTime = doc.getString("incidentTime");
+                            a.locationAddress = doc.getString("locationAddress");
+                            a.latitude = doc.getDouble("latitude");
+                            a.longitude = doc.getDouble("longitude");
+                            a.timestamp = doc.getTimestamp("timestamp");
+                            a.caseClosedImages = (List<String>) doc.get("caseClosedImages");
+                            a.announcementImages = (List<String>) doc.get("announcementImages");
+                            allAnnouncements.add(a);
+                        }
+
+                        if (docs.size() < PAGE_SIZE) {
+                            isLastItemReached = true;
+                        }
+
+                        lastVisible = docs.get(docs.size() - 1);
+
+                        // Re-register the snapshot listener for the entire new loaded size!
+                        if (announcementsListener != null) {
+                            announcementsListener.remove();
+                        }
+
+                        Query syncQuery = db.collection("announcements")
+                                .orderBy("timestamp", Query.Direction.DESCENDING)
+                                .limit(allAnnouncements.size());
+
+                        announcementsListener = syncQuery.addSnapshotListener((newSnapshot, error) -> {
+                            if (error != null) {
+                                Log.e("NewsFragment", "Listen failed.", error);
+                                return;
+                            }
+                            if (newSnapshot != null) {
+                                allAnnouncements.clear();
+                                List<DocumentSnapshot> newDocs = newSnapshot.getDocuments();
+                                for (DocumentSnapshot doc : newDocs) {
+                                    Announcement a = new Announcement();
+                                    a.id = doc.getId();
+                                    a.title = doc.getString("title");
+                                    a.subtitle = doc.getString("subtitle");
+                                    a.category = doc.getString("category");
+                                    a.contact = doc.getString("contact");
+                                    a.date = doc.getString("date");
+                                    a.imageUrl = doc.getString("imageUrl");
+                                    a.status = doc.getString("status");
+                                    a.name = doc.getString("name");
+                                    a.incidentDate = doc.getString("incidentDate");
+                                    a.incidentTime = doc.getString("incidentTime");
+                                    a.locationAddress = doc.getString("locationAddress");
+                                    a.latitude = doc.getDouble("latitude");
+                                    a.longitude = doc.getDouble("longitude");
+                                    a.timestamp = doc.getTimestamp("timestamp");
+                                    a.caseClosedImages = (List<String>) doc.get("caseClosedImages");
+                                    a.announcementImages = (List<String>) doc.get("announcementImages");
+                                    allAnnouncements.add(a);
+                                }
+
+                                if (!newDocs.isEmpty()) {
+                                    lastVisible = newDocs.get(newDocs.size() - 1);
+                                }
+
+                                filterList(etSearchNews.getText().toString());
+                            }
+                        });
+                    })
+                    .addOnFailureListener(e -> {
+                        isLoadingMore = false;
+                        Toast.makeText(requireContext(),
+                                "Failed to load: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    });
+        }
     }
 
     private void showLoading(boolean loading) {
@@ -363,6 +471,8 @@ public class NewsFragment extends Fragment {
         public String incidentDate, incidentTime, locationAddress;
         public Double latitude, longitude;
         public Timestamp timestamp;
+        public List<String> caseClosedImages;
+        public List<String> announcementImages;
     }
 
     public static class Comment {
@@ -392,6 +502,19 @@ public class NewsFragment extends Fragment {
         }
 
         @Override
+        public void onViewRecycled(@NonNull AnnouncementVH holder) {
+            super.onViewRecycled(holder);
+            if (holder.commentsListener != null) {
+                holder.commentsListener.remove();
+                holder.commentsListener = null;
+            }
+            if (holder.commentsCountListener != null) {
+                holder.commentsCountListener.remove();
+                holder.commentsCountListener = null;
+            }
+        }
+
+        @Override
         public int getItemCount() {
             return items.size();
         }
@@ -406,6 +529,13 @@ public class NewsFragment extends Fragment {
             ProgressBar commentsProgress;
             TextView tvAttachedLocation, tvCategory, tvStatusBadge, tvIncidentDateTime, tvLocation;
             LinearLayout containerIncidentInfo;
+            
+            View layoutCaseClosedProof;
+            LinearLayout layoutCaseClosedImages;
+            MaterialButton btnViewCaseClosedProof;
+
+            androidx.viewpager2.widget.ViewPager2 vpAnnouncementSlider;
+            TextView tvImageSliderIndicator;
 
             private Double attachedLat = null, attachedLng = null;
             private String attachedAddress = null;
@@ -417,6 +547,8 @@ public class NewsFragment extends Fragment {
 
             private String currentAnnouncementId;
             private String currentAnnouncementStatus;
+            private com.google.firebase.firestore.ListenerRegistration commentsListener;
+            private com.google.firebase.firestore.ListenerRegistration commentsCountListener;
 
             AnnouncementVH(@NonNull View itemView) {
                 super(itemView);
@@ -441,6 +573,13 @@ public class NewsFragment extends Fragment {
                 containerAddComment = itemView.findViewById(R.id.containerAddComment);
                 tvToggleComments = itemView.findViewById(R.id.tvToggleComments);
                 commentsProgress = itemView.findViewById(R.id.commentsProgress);
+                
+                layoutCaseClosedProof = itemView.findViewById(R.id.layoutCaseClosedProof);
+                layoutCaseClosedImages = itemView.findViewById(R.id.layoutCaseClosedImages);
+                btnViewCaseClosedProof = itemView.findViewById(R.id.btnViewCaseClosedProof);
+
+                vpAnnouncementSlider = itemView.findViewById(R.id.vpAnnouncementSlider);
+                tvImageSliderIndicator = itemView.findViewById(R.id.tvImageSliderIndicator);
 
                 commentAdapter = new CommentAdapter(comments);
                 rvComments.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
@@ -458,13 +597,21 @@ public class NewsFragment extends Fragment {
                 commentSection.setVisibility(View.GONE);
                 tvToggleComments.setText("💬 View Comments");
 
-                // Fetch comments count dynamically to show indicator on load
-                db.collection("announcements")
+                if (commentsListener != null) {
+                    commentsListener.remove();
+                    commentsListener = null;
+                }
+                if (commentsCountListener != null) {
+                    commentsCountListener.remove();
+                    commentsCountListener = null;
+                }
+
+                // Listen to comments count dynamically to show indicator on load
+                commentsCountListener = db.collection("announcements")
                         .document(announcement.id)
                         .collection("comments")
-                        .get()
-                        .addOnSuccessListener(querySnapshot -> {
-                            if (!commentsVisible) {
+                        .addSnapshotListener((querySnapshot, error) -> {
+                            if (querySnapshot != null && !commentsVisible) {
                                 int count = querySnapshot.size();
                                 tvToggleComments.setText("💬 View Comments (" + count + ")");
                             }
@@ -529,23 +676,107 @@ public class NewsFragment extends Fragment {
                 // Handle Case Closed - Disable new comments
                 if ("Case Closed".equalsIgnoreCase(announcement.status)) {
                     containerAddComment.setVisibility(View.GONE);
+                    if (layoutCaseClosedProof != null) {
+                        layoutCaseClosedProof.setVisibility(View.VISIBLE);
+                    }
+                    if (layoutCaseClosedImages != null) {
+                        layoutCaseClosedImages.setVisibility(View.GONE);
+                    }
+                    if (announcement.caseClosedImages != null && !announcement.caseClosedImages.isEmpty()) {
+                        if (btnViewCaseClosedProof != null) {
+                            btnViewCaseClosedProof.setVisibility(View.VISIBLE);
+                            btnViewCaseClosedProof.setOnClickListener(v -> showCaseClosedProofDialog(announcement.caseClosedImages));
+                        }
+                    } else {
+                        if (btnViewCaseClosedProof != null) {
+                            btnViewCaseClosedProof.setVisibility(View.GONE);
+                        }
+                    }
                 } else {
                     containerAddComment.setVisibility(View.VISIBLE);
+                    if (layoutCaseClosedProof != null) {
+                        layoutCaseClosedProof.setVisibility(View.GONE);
+                    }
+                    if (btnViewCaseClosedProof != null) {
+                        btnViewCaseClosedProof.setVisibility(View.GONE);
+                    }
                 }
 
+                // Construct carousel images list
+                List<String> sliderImages = new java.util.ArrayList<>();
                 if (announcement.imageUrl != null && !announcement.imageUrl.isEmpty()
                         && announcement.imageUrl.startsWith("http")) {
-                    ivBanner.setVisibility(View.VISIBLE);
-                    Glide.with(itemView.getContext())
-                            .load(announcement.imageUrl)
-                            .placeholder(R.drawable.ic_image_placeholder)
-                            .centerCrop()
-                            .into(ivBanner);
-                    ivBanner.setOnClickListener(v -> showFullImageDialog(announcement.imageUrl));
+                    sliderImages.add(announcement.imageUrl);
+                }
+                if (announcement.announcementImages != null && !announcement.announcementImages.isEmpty()) {
+                    for (String extraUrl : announcement.announcementImages) {
+                        if (extraUrl != null && !extraUrl.isEmpty() && extraUrl.startsWith("http")) {
+                            sliderImages.add(extraUrl);
+                        }
+                    }
+                }
+
+                if (sliderImages.size() > 1) {
+                    // Setup multiple image swiping slider/carousel
+                    if (ivBanner != null) {
+                        ivBanner.setVisibility(View.GONE);
+                    }
+                    if (vpAnnouncementSlider != null) {
+                        vpAnnouncementSlider.setVisibility(View.VISIBLE);
+                        AnnouncementImageAdapter sliderAdapter = new AnnouncementImageAdapter(
+                                itemView.getContext(),
+                                sliderImages,
+                                url -> showFullImageDialog(url)
+                        );
+                        vpAnnouncementSlider.setAdapter(sliderAdapter);
+                        
+                        // Prevent parent RecyclerView from intercepting horizontal swiping touch events
+                        vpAnnouncementSlider.setOnTouchListener((v, event) -> {
+                            v.getParent().requestDisallowInterceptTouchEvent(true);
+                            return false;
+                        });
+                        if (vpAnnouncementSlider.getChildAt(0) != null) {
+                            vpAnnouncementSlider.getChildAt(0).setOnTouchListener((v, event) -> {
+                                v.getParent().requestDisallowInterceptTouchEvent(true);
+                                return false;
+                            });
+                        }
+
+                        if (tvImageSliderIndicator != null) {
+                            tvImageSliderIndicator.setVisibility(View.VISIBLE);
+                            tvImageSliderIndicator.setText("1 / " + sliderImages.size());
+                            vpAnnouncementSlider.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                                @Override
+                                public void onPageSelected(int position) {
+                                    super.onPageSelected(position);
+                                    tvImageSliderIndicator.setText((position + 1) + " / " + sliderImages.size());
+                                }
+                            });
+                        }
+                    }
                 } else {
-                    ivBanner.setImageResource(R.drawable.ic_image_placeholder);
-                    ivBanner.setVisibility(View.VISIBLE); // Keep visible to show placeholder with badges
-                    ivBanner.setOnClickListener(null);
+                    // Statically show single image or placeholder
+                    if (vpAnnouncementSlider != null) {
+                        vpAnnouncementSlider.setVisibility(View.GONE);
+                    }
+                    if (tvImageSliderIndicator != null) {
+                        tvImageSliderIndicator.setVisibility(View.GONE);
+                    }
+                    if (ivBanner != null) {
+                        ivBanner.setVisibility(View.VISIBLE);
+                        if (!sliderImages.isEmpty()) {
+                            String singleUrl = sliderImages.get(0);
+                            Glide.with(itemView.getContext())
+                                    .load(singleUrl)
+                                    .placeholder(R.drawable.ic_image_placeholder)
+                                    .centerCrop()
+                                    .into(ivBanner);
+                            ivBanner.setOnClickListener(v -> showFullImageDialog(singleUrl));
+                        } else {
+                            ivBanner.setImageResource(R.drawable.ic_image_placeholder);
+                            ivBanner.setOnClickListener(null);
+                        }
+                    }
                 }
 
                 tvToggleComments.setOnClickListener(v -> {
@@ -723,37 +954,43 @@ public class NewsFragment extends Fragment {
             private void loadComments(String announcementId) {
                 commentsProgress.setVisibility(View.VISIBLE);
                 tvNoComments.setVisibility(View.GONE);
-                db.collection("announcements")
+
+                if (commentsListener != null) {
+                    commentsListener.remove();
+                    commentsListener = null;
+                }
+
+                commentsListener = db.collection("announcements")
                         .document(announcementId)
                         .collection("comments")
                         .orderBy("timestamp", Query.Direction.ASCENDING)
-                        .get()
-                        .addOnSuccessListener(querySnapshot -> {
-                            commentsLoaded = true;
+                        .addSnapshotListener((querySnapshot, error) -> {
                             commentsProgress.setVisibility(View.GONE);
-                            comments.clear();
-                            for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                                Comment c = new Comment();
-                                c.id = doc.getId();
-                                c.userId = doc.getString("userId");
-                                c.userName = doc.getString("userName");
-                                c.userAvatarUrl = doc.getString("userAvatarUrl");
-                                c.text = doc.getString("text");
-                                c.latitude = doc.getDouble("latitude");
-                                c.longitude = doc.getDouble("longitude");
-                                c.locationAddress = doc.getString("locationAddress");
-                                c.timestamp = doc.getTimestamp("timestamp");
-                                comments.add(c);
+                            if (error != null) {
+                                Log.e("NewsFragment", "Listen failed.", error);
+                                return;
                             }
-                            commentAdapter.notifyDataSetChanged();
-                            updateCommentCount(comments.size());
-                            updateToggleCommentsText(comments.size());
-                            tvNoComments.setVisibility(comments.isEmpty() ? View.VISIBLE : View.GONE);
-                        })
-                        .addOnFailureListener(e -> {
-                            commentsProgress.setVisibility(View.GONE);
-                            Toast.makeText(itemView.getContext(),
-                                    "Could not load comments", Toast.LENGTH_SHORT).show();
+                            if (querySnapshot != null) {
+                                commentsLoaded = true;
+                                comments.clear();
+                                for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                                    Comment c = new Comment();
+                                    c.id = doc.getId();
+                                    c.userId = doc.getString("userId");
+                                    c.userName = doc.getString("userName");
+                                    c.userAvatarUrl = doc.getString("userAvatarUrl");
+                                    c.text = doc.getString("text");
+                                    c.latitude = doc.getDouble("latitude");
+                                    c.longitude = doc.getDouble("longitude");
+                                    c.locationAddress = doc.getString("locationAddress");
+                                    c.timestamp = doc.getTimestamp("timestamp");
+                                    comments.add(c);
+                                }
+                                commentAdapter.notifyDataSetChanged();
+                                updateCommentCount(comments.size());
+                                updateToggleCommentsText(comments.size());
+                                tvNoComments.setVisibility(comments.isEmpty() ? View.VISIBLE : View.GONE);
+                            }
                         });
             }
 
@@ -805,16 +1042,6 @@ public class NewsFragment extends Fragment {
                                     .addOnSuccessListener(docRef -> {
                                         btnSend.setEnabled(true);
                                         etComment.setText("");
-                                        Comment newComment = new Comment();
-                                        newComment.id = docRef.getId();
-                                        newComment.userId = user.getUid();
-                                        newComment.userName = finalUserName;
-                                        newComment.userAvatarUrl = finalUserAvatarUrl;
-                                        newComment.text = text;
-                                        newComment.latitude = attachedLat;
-                                        newComment.longitude = attachedLng;
-                                        newComment.locationAddress = attachedAddress;
-                                        newComment.timestamp = Timestamp.now();
 
                                         // Reset attached location after post
                                         attachedLat = null;
@@ -822,13 +1049,6 @@ public class NewsFragment extends Fragment {
                                         attachedAddress = null;
                                         tvAttachedLocation.setVisibility(View.GONE);
                                         btnCommentLocation.setColorFilter(null);
-
-                                        comments.add(newComment);
-                                        commentAdapter.notifyItemInserted(comments.size() - 1);
-                                        rvComments.scrollToPosition(comments.size() - 1);
-                                        updateCommentCount(comments.size());
-                                        updateToggleCommentsText(comments.size());
-                                        tvNoComments.setVisibility(View.GONE);
 
                                         // Send notification to Admin
                                         Map<String, Object> notification = new HashMap<>();
@@ -866,6 +1086,57 @@ public class NewsFragment extends Fragment {
 
             private void updateCommentCount(int count) {
                 tvCommentCount.setText(count + (count == 1 ? " Comment" : " Comments"));
+            }
+
+            private void showCaseClosedProofDialog(List<String> images) {
+                if (images == null || images.isEmpty()) return;
+
+                Dialog dialog = new Dialog(requireContext());
+                dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+                dialog.setContentView(R.layout.dialog_case_closed_proof_gallery);
+                
+                if (dialog.getWindow() != null) {
+                    dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                    dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                }
+
+                LinearLayout layoutImages = dialog.findViewById(R.id.layoutCaseClosedImagesDialog);
+                ImageButton btnClose = dialog.findViewById(R.id.btnCloseProofDialog);
+
+                float density = requireContext().getResources().getDisplayMetrics().density;
+                int thumbW = (int) (120 * density);
+                int thumbH = (int) (120 * density);
+                int margin = (int) (10 * density);
+                int radius = (int) (12 * density);
+
+                layoutImages.removeAllViews();
+                for (String proofUrl : images) {
+                    com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(requireContext());
+                    LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(thumbW, thumbH);
+                    cardParams.setMargins(0, 0, margin, 0);
+                    card.setLayoutParams(cardParams);
+                    card.setRadius(radius);
+                    card.setCardElevation(2 * density);
+                    card.setStrokeWidth((int) (1 * density));
+                    card.setStrokeColor(0xFFE2E8F0);
+                    card.setClickable(true);
+                    card.setFocusable(true);
+
+                    ImageView iv = new ImageView(requireContext());
+                    iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                    iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    Glide.with(requireContext()).load(proofUrl).placeholder(R.drawable.ic_image_placeholder).into(iv);
+                    card.addView(iv);
+
+                    iv.setOnClickListener(v -> {
+                        showFullImageDialog(proofUrl);
+                    });
+
+                    layoutImages.addView(card);
+                }
+
+                btnClose.setOnClickListener(v -> dialog.dismiss());
+                dialog.show();
             }
 
             private void showFullImageDialog(String imageUrl) {
@@ -1036,6 +1307,62 @@ public class NewsFragment extends Fragment {
                     }
 
                 }
+            }
+        }
+    }
+
+    private interface OnImageClickListener {
+        void onImageClick(String url);
+    }
+
+    private static class AnnouncementImageAdapter extends RecyclerView.Adapter<AnnouncementImageAdapter.SliderVH> {
+        private final android.content.Context context;
+        private final List<String> imageUrls;
+        private final OnImageClickListener clickListener;
+
+        AnnouncementImageAdapter(android.content.Context context, List<String> imageUrls, OnImageClickListener clickListener) {
+            this.context = context;
+            this.imageUrls = imageUrls;
+            this.clickListener = clickListener;
+        }
+
+        @NonNull
+        @Override
+        public SliderVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            ImageView imageView = new ImageView(context);
+            imageView.setLayoutParams(new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            return new SliderVH(imageView);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull SliderVH holder, int position) {
+            String url = imageUrls.get(position);
+            Glide.with(context)
+                    .load(url)
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .error(R.drawable.ic_image_placeholder)
+                    .into(holder.imageView);
+            
+            holder.imageView.setOnClickListener(v -> {
+                if (clickListener != null) {
+                    clickListener.onImageClick(url);
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return imageUrls.size();
+        }
+
+        static class SliderVH extends RecyclerView.ViewHolder {
+            ImageView imageView;
+            SliderVH(@NonNull View itemView) {
+                super(itemView);
+                imageView = (ImageView) itemView;
             }
         }
     }

@@ -6,7 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import java.util.ArrayList;
+import android.widget.Toast;
 import android.app.Dialog;
 
 import androidx.annotation.NonNull;
@@ -135,6 +139,46 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         // Submitted timestamp
         setText(sheetView, R.id.dialogTimestamp,   formatTimestamp(report.get("timestamp")));
 
+        View layoutProof = sheetView.findViewById(R.id.layoutResidentResolutionProof);
+        if ("Resolved".equals(status)) {
+            layoutProof.setVisibility(View.VISIBLE);
+            String notes = getString(report, "resolutionNotes", "").trim();
+            TextView tvNotes = sheetView.findViewById(R.id.tvResidentResolutionNotes);
+            tvNotes.setText(notes.isEmpty() ? "Resolved by Administrator." : notes);
+
+            String proofUrl = getString(report, "resolutionImageUrl", "");
+            View cardPhoto = sheetView.findViewById(R.id.cardResidentProofPhoto);
+            MaterialButton btnViewProof = sheetView.findViewById(R.id.btnViewResidentProof);
+
+            List<String> proofImages = new ArrayList<>();
+            if (report.get("resolutionImages") instanceof List) {
+                List<?> rawList = (List<?>) report.get("resolutionImages");
+                for (Object item : rawList) {
+                    if (item instanceof String) {
+                        proofImages.add((String) item);
+                    }
+                }
+            }
+            if (proofImages.isEmpty() && !proofUrl.isEmpty()) {
+                proofImages.add(proofUrl);
+            }
+
+            if (!proofImages.isEmpty()) {
+                cardPhoto.setVisibility(View.GONE);
+                if (btnViewProof != null) {
+                    btnViewProof.setVisibility(View.VISIBLE);
+                    btnViewProof.setOnClickListener(v -> showResolutionProofDialog(proofImages));
+                }
+            } else {
+                cardPhoto.setVisibility(View.GONE);
+                if (btnViewProof != null) {
+                    btnViewProof.setVisibility(View.GONE);
+                }
+            }
+        } else {
+            layoutProof.setVisibility(View.GONE);
+        }
+
         MaterialButton btnClose = sheetView.findViewById(R.id.dialogBtnClose);
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
@@ -179,6 +223,82 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 .setPositiveButton("Remove", (dialog, which) -> removeReport(report))
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void showResolutionProofDialog(List<String> images) {
+        if (images == null || images.isEmpty()) return;
+        
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_case_closed_proof_gallery);
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView tvTitle = dialog.findViewById(R.id.tvGalleryTitle);
+        if (tvTitle != null) {
+            tvTitle.setText("Resolution Proof Photos");
+            tvTitle.setTextColor(android.graphics.Color.parseColor("#3B6D11"));
+        }
+
+        LinearLayout layoutImages = dialog.findViewById(R.id.layoutCaseClosedImagesDialog);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseProofDialog);
+
+        float density = context.getResources().getDisplayMetrics().density;
+        int thumbW = (int) (120 * density);
+        int thumbH = (int) (120 * density);
+        int margin = (int) (10 * density);
+        int radius = (int) (12 * density);
+
+        layoutImages.removeAllViews();
+        for (String proofUrl : images) {
+            com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(context);
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(thumbW, thumbH);
+            cardParams.setMargins(0, 0, margin, 0);
+            card.setLayoutParams(cardParams);
+            card.setRadius(radius);
+            card.setCardElevation(2 * density);
+            card.setStrokeWidth((int) (1 * density));
+            card.setStrokeColor(0xFFE2E8F0);
+            card.setClickable(true);
+            card.setFocusable(true);
+
+            ImageView iv = new ImageView(context);
+            iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            com.bumptech.glide.Glide.with(context).load(proofUrl).placeholder(R.drawable.ic_image_placeholder).into(iv);
+            card.addView(iv);
+
+            iv.setOnClickListener(v -> {
+                showFullImageDialog(proofUrl);
+            });
+
+            layoutImages.addView(card);
+        }
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void showFullImageDialog(String imageUrl) {
+        Dialog dialog = new Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_fullscreen_image);
+
+        ImageView ivFullscreen = dialog.findViewById(R.id.ivFullscreenImage);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseImage);
+
+        com.bumptech.glide.Glide.with(context)
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .fitCenter()
+                .into(ivFullscreen);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        ivFullscreen.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void removeReport(Map<String, Object> report) {

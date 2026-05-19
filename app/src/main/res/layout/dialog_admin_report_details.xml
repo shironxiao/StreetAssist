@@ -151,53 +151,126 @@
             android:textSize="14sp" />
 
         <!-- UPDATE STATUS SECTION -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="20dp"
-            android:background="#F4F7FE" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/update_status"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"/>
-
         <LinearLayout
+            android:id="@+id/layoutUpdateStatusSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:orientation="vertical">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="20dp"
+                android:background="#F4F7FE" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/update_status"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
+
+                <Button
+                    android:id="@+id/btnSetInProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/in_progress"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:backgroundTint="@color/status_inprogress_bg"
+                    android:textColor="@color/status_inprogress_text"
+                    app:cornerRadius="12dp"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+
+                <Button
+                    android:id="@+id/btnSetResolved"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/resolved"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:backgroundTint="@color/status_resolved_bg"
+                    android:textColor="@color/status_resolved_text"
+                    app:cornerRadius="12dp"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- RESOLUTION PROOF SECTION (VISIBLE ONLY WHEN RESOLVED) -->
+        <LinearLayout
+            android:id="@+id/layoutResolutionProof"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
             android:layout_marginBottom="24dp">
 
-            <Button
-                android:id="@+id/btnSetInProgress"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="@string/in_progress"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                android:backgroundTint="@color/status_inprogress_bg"
-                android:textColor="@color/status_inprogress_text"
-                app:cornerRadius="12dp"
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="20dp"
+                android:background="#F4F7FE" />
 
-            <Button
-                android:id="@+id/btnSetResolved"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="@string/resolved"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RESOLUTION PROOF"
+                android:textColor="#3B6D11"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardProofPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                app:cardCornerRadius="16dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#D1FAE5"
+                app:cardBackgroundColor="#F0FDF4"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/ivProofPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Resolution Proof Photo" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- View Proof Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewProof"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginBottom="12dp"
+                android:text="🔍 View Proof Photo"
                 android:textAllCaps="false"
-                android:textSize="13sp"
-                android:backgroundTint="@color/status_resolved_bg"
-                android:textColor="@color/status_resolved_text"
-                app:cornerRadius="12dp"
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+                android:textColor="#3B6D11"
+                app:strokeColor="#3B6D11"
+                app:cornerRadius="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvResolutionNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#1B2559"
+                android:textSize="14sp"
+                android:text="No resolution details provided." />
         </LinearLayout>
 
         <!-- Reporter Info -->

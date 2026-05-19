@@ -63,6 +63,7 @@ public class AdminProfileActivity extends AppCompatActivity
     private FloatingActionButton fabEditPhoto;
     private MaterialButton btnLogout;
     private View rowFullName, rowContact, rowCreateAdmin;
+    private AdminNotificationBadgeHelper badgeHelper;
 
     // Firebase
     private FirebaseAuth mAuth;
@@ -83,6 +84,7 @@ public class AdminProfileActivity extends AppCompatActivity
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        badgeHelper = new AdminNotificationBadgeHelper(this);
 
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
@@ -169,6 +171,22 @@ public class AdminProfileActivity extends AppCompatActivity
 
         // Load profile data
         loadAdminProfile();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (badgeHelper != null) {
+            badgeHelper.startListening();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (badgeHelper != null) {
+            badgeHelper.stopListening();
+        }
     }
 
     private void loadAdminProfile() {
@@ -422,5 +440,23 @@ public class AdminProfileActivity extends AppCompatActivity
     protected void onDestroy() {
         executor.shutdown();
         super.onDestroy();
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent) {
+        super.startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent, android.os.Bundle options) {
+        super.startActivity(intent, options);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

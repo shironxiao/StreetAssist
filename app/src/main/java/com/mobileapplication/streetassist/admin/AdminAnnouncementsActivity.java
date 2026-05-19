@@ -60,14 +60,21 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
     private static final String TAG = "AdminAnnouncements";
     private DrawerLayout drawerLayout;
+    private AdminNotificationBadgeHelper badgeHelper;
     private androidx.recyclerview.widget.RecyclerView rvAnnouncements;
     private com.mobileapplication.streetassist.admin.AnnouncementAdapter adapter;
     private List<Map<String, Object>> announcementList = new ArrayList<>();
     private FirebaseFirestore db;
 
     private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private ActivityResultLauncher<Intent> proofImagePickerLauncher;
     private Uri selectedImageUri;
+    private List<Uri> selectedImageUris = new ArrayList<>();
     private TextView tvUploadStatus;
+    private android.widget.LinearLayout currentDialogImagesLayout;
+    private android.widget.HorizontalScrollView currentDialogImagesScroll;
+    private String uploadingProofAnnouncementId;
+    private boolean shouldAutoSetCaseClosed = false;
 
     // Cloudinary Config
     private static final String CLOUD_NAME = "durqaiei1";
@@ -91,6 +98,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         setContentView(R.layout.admin_announcements);
 
         drawerLayout = findViewById(R.id.drawer_layout);
+        badgeHelper = new AdminNotificationBadgeHelper(this);
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.setCheckedItem(R.id.nav_announcements);
@@ -125,12 +133,34 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        selectedImageUri = result.getData().getData();
-                        if (tvUploadStatus != null) {
-                            tvUploadStatus.setText("Image selected!");
-                            tvUploadStatus.setTextColor(getResources().getColor(R.color.green_primary, getTheme()));
+                        selectedImageUris.clear();
+                        if (result.getData().getClipData() != null) {
+                            int count = result.getData().getClipData().getItemCount();
+                            for (int i = 0; i < count; i++) {
+                                selectedImageUris.add(result.getData().getClipData().getItemAt(i).getUri());
+                            }
+                        } else if (result.getData().getData() != null) {
+                            selectedImageUris.add(result.getData().getData());
                         }
-                        Toast.makeText(this, "Image selected", Toast.LENGTH_SHORT).show();
+
+                        selectedImageUri = selectedImageUris.isEmpty() ? null : selectedImageUris.get(0);
+
+                        updateDialogSelectedImagesText();
+                        updateDialogSelectedImagesPreview();
+
+                        Toast.makeText(this, selectedImageUris.size() + " image(s) selected", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
+        proofImagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri imageUri = result.getData().getData();
+                        if (imageUri != null && uploadingProofAnnouncementId != null) {
+                            uploadProofToCloudinary(uploadingProofAnnouncementId, imageUri);
+                        }
                     }
                 }
         );
@@ -219,6 +249,172 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         });
     }
 
+    private void updateDialogSelectedImagesText() {
+        if (tvUploadStatus != null) {
+            if (selectedImageUris.size() > 1) {
+                tvUploadStatus.setText(selectedImageUris.size() + " images selected!");
+                tvUploadStatus.setTextColor(getResources().getColor(R.color.green_primary, getTheme()));
+            } else if (selectedImageUris.size() == 1) {
+                tvUploadStatus.setText("1 image selected!");
+                tvUploadStatus.setTextColor(getResources().getColor(R.color.green_primary, getTheme()));
+            } else {
+                tvUploadStatus.setText("Upload Images");
+                tvUploadStatus.setTextColor(getResources().getColor(R.color.text_primary, getTheme()));
+            }
+        }
+    }
+
+    private void updateDialogSelectedImagesPreview() {
+        if (currentDialogImagesLayout == null) return;
+        currentDialogImagesLayout.removeAllViews();
+
+        if (selectedImageUris.isEmpty()) {
+            if (currentDialogImagesScroll != null) {
+                currentDialogImagesScroll.setVisibility(android.view.View.GONE);
+            }
+            return;
+        }
+
+        if (currentDialogImagesScroll != null) {
+            currentDialogImagesScroll.setVisibility(android.view.View.VISIBLE);
+        }
+
+        float density = getResources().getDisplayMetrics().density;
+        int size = (int) (80 * density);
+        int margin = (int) (8 * density);
+        int corner = (int) (12 * density);
+
+        for (int i = 0; i < selectedImageUris.size(); i++) {
+            final Uri uri = selectedImageUris.get(i);
+
+            // Container frame layout to allow delete icon overlay
+            android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+            android.widget.LinearLayout.LayoutParams containerParams = 
+                    new android.widget.LinearLayout.LayoutParams(size + (int)(10 * density), size + (int)(10 * density));
+            containerParams.setMargins(0, 0, margin, 0);
+            container.setLayoutParams(containerParams);
+
+            // Card view for rounded image
+            com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(this);
+            android.widget.FrameLayout.LayoutParams cardParams = 
+                    new android.widget.FrameLayout.LayoutParams(size, size);
+            cardParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.START;
+            card.setLayoutParams(cardParams);
+            card.setRadius(corner);
+            card.setCardElevation(1 * density);
+            card.setStrokeWidth(0);
+
+            android.widget.ImageView iv = new android.widget.ImageView(this);
+            iv.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+            iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            
+            com.bumptech.glide.Glide.with(this)
+                    .load(uri)
+                    .centerCrop()
+                    .into(iv);
+
+            card.addView(iv);
+            container.addView(card);
+
+            // Delete / Remove button overlay
+            android.widget.ImageView btnDelete = new android.widget.ImageView(this);
+            android.widget.FrameLayout.LayoutParams deleteParams = 
+                    new android.widget.FrameLayout.LayoutParams((int)(20 * density), (int)(20 * density));
+            deleteParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+            btnDelete.setLayoutParams(deleteParams);
+            btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            btnDelete.setBackgroundResource(R.drawable.bg_status_badge);
+            btnDelete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFEF4444)); // red
+            btnDelete.setColorFilter(android.graphics.Color.WHITE);
+            btnDelete.setPadding((int)(3 * density), (int)(3 * density), (int)(3 * density), (int)(3 * density));
+            btnDelete.setElevation(4 * density);
+            btnDelete.setClickable(true);
+            btnDelete.setFocusable(true);
+
+            final int index = i;
+            btnDelete.setOnClickListener(v -> {
+                selectedImageUris.remove(index);
+                if (selectedImageUris.isEmpty()) {
+                    selectedImageUri = null;
+                } else {
+                    selectedImageUri = selectedImageUris.get(0);
+                }
+                updateDialogSelectedImagesText();
+                updateDialogSelectedImagesPreview();
+            });
+
+            container.addView(btnDelete);
+            currentDialogImagesLayout.addView(container);
+        }
+    }
+
+    private void showExistingImagesPreview(List<String> urls) {
+        if (currentDialogImagesLayout == null) return;
+        currentDialogImagesLayout.removeAllViews();
+
+        if (urls == null || urls.isEmpty()) {
+            if (currentDialogScrollShowOrHide(false)) return;
+            return;
+        }
+
+        currentDialogScrollShowOrHide(true);
+
+        float density = getResources().getDisplayMetrics().density;
+        int size = (int) (80 * density);
+        int margin = (int) (8 * density);
+        int corner = (int) (12 * density);
+
+        for (String url : urls) {
+            com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(this);
+            android.widget.LinearLayout.LayoutParams cardParams = 
+                    new android.widget.LinearLayout.LayoutParams(size, size);
+            cardParams.setMargins(0, 0, margin, 0);
+            card.setLayoutParams(cardParams);
+            card.setRadius(corner);
+            card.setCardElevation(1 * density);
+            card.setStrokeWidth(0);
+
+            android.widget.ImageView iv = new android.widget.ImageView(this);
+            iv.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+            iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            
+            com.bumptech.glide.Glide.with(this)
+                    .load(url)
+                    .centerCrop()
+                    .into(iv);
+
+            card.addView(iv);
+            currentDialogImagesLayout.addView(card);
+        }
+    }
+
+    private boolean currentDialogScrollShowOrHide(boolean show) {
+        if (currentDialogImagesScroll != null) {
+            currentDialogImagesScroll.setVisibility(show ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
+        return !show;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (badgeHelper != null) {
+            badgeHelper.startListening();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (badgeHelper != null) {
+            badgeHelper.stopListening();
+        }
+    }
+
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
@@ -282,11 +478,15 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         etSex.setText("Male", false); // Default
         android.view.View containerUpload = dialogView.findViewById(R.id.containerUpload);
         tvUploadStatus = dialogView.findViewById(R.id.tvUploadStatus);
+        currentDialogImagesLayout = dialogView.findViewById(R.id.layoutSelectedImages);
+        currentDialogImagesScroll = dialogView.findViewById(R.id.scrollSelectedImages);
         android.view.View btnClose = dialogView.findViewById(R.id.btnClose);
         android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         android.widget.Button btnPost = dialogView.findViewById(R.id.btnPost);
 
         selectedImageUri = null;
+        selectedImageUris.clear();
+        updateDialogSelectedImagesPreview();
         selectedDate = "";
         selectedTime = "";
         selectedLat = 0;
@@ -315,6 +515,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         containerUpload.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             imagePickerLauncher.launch(intent);
         });
 
@@ -330,10 +531,10 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             if (!name.isEmpty()) {
                 btnPost.setEnabled(false);
                 btnPost.setText("Posting...");
-                if (selectedImageUri != null) {
-                    uploadToCloudinary(selectedImageUri, title, name, age, sex, category, subtitle, contact, dialog);
+                if (!selectedImageUris.isEmpty()) {
+                    uploadMultipleImagesToCloudinary(selectedImageUris, title, name, age, sex, category, subtitle, contact, dialog);
                 } else {
-                    postToFirestore(title, name, age, sex, category, subtitle, contact, "", dialog);
+                    postToFirestoreWithImages(title, name, age, sex, category, subtitle, contact, "", new ArrayList<>(), dialog);
                 }
             } else {
                 Toast.makeText(this, "Name is required", Toast.LENGTH_SHORT).show();
@@ -570,6 +771,404 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 });
     }
 
+    private void uploadMultipleImagesToCloudinary(List<Uri> uris, String title, String name, String age, String sex, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
+        if (uris == null || uris.isEmpty()) {
+            postToFirestoreWithImages(title, name, age, sex, category, subtitle, contact, "", new ArrayList<>(), dialog);
+            return;
+        }
+
+        Toast.makeText(this, "Uploading 1 of " + uris.size() + " images...", Toast.LENGTH_SHORT).show();
+        List<String> uploadedUrls = new java.util.ArrayList<>();
+        uploadNextImage(0, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+    }
+
+    private void uploadNextImage(int index, List<Uri> uris, List<String> uploadedUrls, String title, String name, String age, String sex, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
+        if (index >= uris.size()) {
+            String primaryUrl = uploadedUrls.isEmpty() ? "" : uploadedUrls.get(0);
+            runOnUiThread(() -> postToFirestoreWithImages(title, name, age, sex, category, subtitle, contact, primaryUrl, uploadedUrls, dialog));
+            return;
+        }
+
+        Uri imageUri = uris.get(index);
+        executor.execute(() -> {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Failed to read image at index " + index, Toast.LENGTH_SHORT).show();
+                        uploadNextImage(index + 1, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+                    });
+                    return;
+                }
+                byte[] imageBytes = readAllBytes(inputStream);
+                inputStream.close();
+
+                String boundary = "----FormBoundary" + System.currentTimeMillis();
+                String uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
+
+                HttpURLConnection conn = (HttpURLConnection) new URL(uploadUrl).openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n");
+                dos.writeBytes(UPLOAD_PRESET + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"api_key\"\r\n\r\n");
+                dos.writeBytes(API_KEY + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"announcement_" + index + ".jpg\"\r\n");
+                dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
+                dos.write(imageBytes);
+                dos.writeBytes("\r\n");
+                dos.writeBytes("--" + boundary + "--\r\n");
+                dos.flush();
+                dos.close();
+
+                int status = conn.getResponseCode();
+                InputStream responseStream = (status == 200) ? conn.getInputStream() : conn.getErrorStream();
+                byte[] responseBytes = readAllBytes(responseStream);
+                responseStream.close();
+                conn.disconnect();
+
+                JSONObject json = new JSONObject(new String(responseBytes));
+                if (status == 200 && json.has("secure_url")) {
+                    String imageUrl = json.getString("secure_url");
+                    uploadedUrls.add(imageUrl);
+                }
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Uploaded " + (index + 1) + " of " + uris.size() + " images", Toast.LENGTH_SHORT).show();
+                    uploadNextImage(index + 1, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Failed to upload image " + index + ": " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    uploadNextImage(index + 1, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+                });
+            }
+        });
+    }
+
+    private void postToFirestoreWithImages(String title, String name, String age, String sex, String category, String subtitle, String contact, String imageUrl, List<String> imageUrls, androidx.appcompat.app.AlertDialog dialog) {
+        java.util.Map<String, Object> post = new java.util.HashMap<>();
+        post.put("title", title);
+        post.put("name", name);
+        post.put("age", age);
+        post.put("sex", sex);
+        post.put("category", category);
+        post.put("subtitle", subtitle);
+        post.put("contact", contact);
+        post.put("imageUrl", imageUrl);
+        post.put("announcementImages", imageUrls);
+        post.put("status", "Verified by Police"); // Default status
+        post.put("date", new java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(new java.util.Date()));
+        post.put("timestamp", com.google.firebase.Timestamp.now());
+
+        // New fields from pickers
+        post.put("incidentDate", selectedDate);
+        post.put("incidentTime", selectedTime);
+        post.put("locationAddress", selectedAddress);
+        post.put("latitude", selectedLat);
+        post.put("longitude", selectedLng);
+
+        db.collection("announcements").add(post)
+                .addOnSuccessListener(doc -> {
+                    Toast.makeText(this, "Posted successfully!", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to post announcement", e);
+                    Toast.makeText(this, "Failed to post: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    android.widget.Button btnPost = dialog.findViewById(R.id.btnPost);
+                    if (btnPost != null) {
+                        btnPost.setEnabled(true);
+                        btnPost.setText("Post Announcement");
+                    }
+                });
+    }
+
+    private Double parseDoubleSafely(Object obj) {
+        if (obj instanceof Number) {
+            return ((Number) obj).doubleValue();
+        } else if (obj instanceof String) {
+            try {
+                return Double.parseDouble((String) obj);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public void showEditAnnouncementDialog(String id, Map<String, Object> announcement) {
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_announcement, null);
+
+        android.widget.TextView tvDialogTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        if (tvDialogTitle != null) {
+            tvDialogTitle.setText("Edit Announcement");
+        }
+
+        android.widget.EditText etName = dialogView.findViewById(R.id.etName);
+        android.widget.EditText etAge = dialogView.findViewById(R.id.etAge);
+        android.widget.AutoCompleteTextView etSex = dialogView.findViewById(R.id.etSex);
+        android.widget.EditText etSubtitle = dialogView.findViewById(R.id.etSubtitle);
+        android.widget.EditText etContact = dialogView.findViewById(R.id.etContact);
+        android.widget.EditText etDate = dialogView.findViewById(R.id.etDate);
+        android.widget.EditText etTime = dialogView.findViewById(R.id.etTime);
+        android.widget.EditText etLocation = dialogView.findViewById(R.id.etLocation);
+
+        // Prepopulate
+        if (etName != null) etName.setText((String) announcement.get("name"));
+        if (etAge != null) etAge.setText((String) announcement.get("age"));
+        if (etSex != null) {
+            String[] sexOptions = {"Male", "Female"};
+            android.widget.ArrayAdapter<String> adapterSex = new android.widget.ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, sexOptions);
+            etSex.setAdapter(adapterSex);
+            String sexVal = (String) announcement.get("sex");
+            etSex.setText(sexVal != null ? sexVal : "Male", false);
+        }
+        if (etSubtitle != null) etSubtitle.setText((String) announcement.get("subtitle"));
+        if (etContact != null) etContact.setText((String) announcement.get("contact"));
+        if (etDate != null) etDate.setText((String) announcement.get("incidentDate"));
+        if (etTime != null) etTime.setText((String) announcement.get("incidentTime"));
+        if (etLocation != null) etLocation.setText((String) announcement.get("locationAddress"));
+
+        // Setup Pickers using existing state
+        selectedDate = (String) announcement.get("incidentDate");
+        if (selectedDate == null) selectedDate = "";
+        selectedTime = (String) announcement.get("incidentTime");
+        if (selectedTime == null) selectedTime = "";
+        selectedAddress = (String) announcement.get("locationAddress");
+        if (selectedAddress == null) selectedAddress = "";
+
+        Double latObj = parseDoubleSafely(announcement.get("latitude"));
+        selectedLat = latObj != null ? latObj : 0.0;
+        Double lngObj = parseDoubleSafely(announcement.get("longitude"));
+        selectedLng = lngObj != null ? lngObj : 0.0;
+
+        android.view.View containerUpload = dialogView.findViewById(R.id.containerUpload);
+        tvUploadStatus = dialogView.findViewById(R.id.tvUploadStatus);
+        currentDialogImagesLayout = dialogView.findViewById(R.id.layoutSelectedImages);
+        currentDialogImagesScroll = dialogView.findViewById(R.id.scrollSelectedImages);
+
+        // Show current image upload state
+        List<String> existingUrls = new ArrayList<>();
+        if (tvUploadStatus != null) {
+            Object imgs = announcement.get("announcementImages");
+            if (imgs instanceof List && !((List) imgs).isEmpty()) {
+                tvUploadStatus.setText(((List) imgs).size() + " existing images loaded");
+                for (Object o : (List<?>) imgs) {
+                    if (o instanceof String) {
+                        existingUrls.add((String) o);
+                    }
+                }
+            } else {
+                String singleImg = (String) announcement.get("imageUrl");
+                if (singleImg != null && !singleImg.isEmpty()) {
+                    tvUploadStatus.setText("Existing image loaded");
+                    existingUrls.add(singleImg);
+                }
+            }
+        }
+        showExistingImagesPreview(existingUrls);
+
+        selectedImageUris.clear();
+
+        android.view.View btnClose = dialogView.findViewById(R.id.btnClose);
+        android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+        android.widget.Button btnPost = dialogView.findViewById(R.id.btnPost);
+        if (btnPost != null) {
+            btnPost.setText("Save Changes");
+        }
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this, R.style.Theme_StreetAssist)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        // Pickers
+        if (etDate != null) etDate.setOnClickListener(v -> showDatePicker(etDate));
+        if (etTime != null) etTime.setOnClickListener(v -> showTimePicker(etTime));
+        if (etLocation != null) etLocation.setOnClickListener(v -> showMapPicker(etLocation));
+
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
+        if (btnCancel != null) btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        if (containerUpload != null) {
+            containerUpload.setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                imagePickerLauncher.launch(intent);
+            });
+        }
+
+        if (btnPost != null) {
+            btnPost.setOnClickListener(v -> {
+                String name = etName != null ? etName.getText().toString() : "";
+                String age = etAge != null ? etAge.getText().toString() : "";
+                String sex = etSex != null ? etSex.getText().toString() : "Male";
+                String title = name;
+                String category = "MISSING PERSON";
+                String subtitle = etSubtitle != null ? etSubtitle.getText().toString() : "";
+                String contact = etContact != null ? etContact.getText().toString() : "";
+
+                if (!name.isEmpty()) {
+                    btnPost.setEnabled(false);
+                    btnPost.setText("Saving...");
+                    if (!selectedImageUris.isEmpty()) {
+                        // Upload new images to Cloudinary, then update Firestore
+                        uploadMultipleImagesForEdit(id, selectedImageUris, title, name, age, sex, category, subtitle, contact, dialog);
+                    } else {
+                        // Keep existing images, update other fields
+                        Object existingImages = announcement.get("announcementImages");
+                        List<String> imagesList = (existingImages instanceof List) ? (List<String>) existingImages : new java.util.ArrayList<>();
+                        String existingPrimary = (String) announcement.get("imageUrl");
+                        updateFirestoreAnnouncement(id, title, name, age, sex, category, subtitle, contact, existingPrimary, imagesList, dialog);
+                    }
+                } else {
+                    Toast.makeText(this, "Name is required", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+            getWindowManager().getDefaultDisplay().getMetrics(dm);
+            int dialogWidth = (int) (dm.widthPixels * 0.94f);
+            dialog.getWindow().setLayout(dialogWidth, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+    private void uploadMultipleImagesForEdit(String id, List<Uri> uris, String title, String name, String age, String sex, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
+        Toast.makeText(this, "Uploading 1 of " + uris.size() + " images...", Toast.LENGTH_SHORT).show();
+        List<String> uploadedUrls = new java.util.ArrayList<>();
+        uploadNextImageForEdit(0, id, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+    }
+
+    private void uploadNextImageForEdit(int index, String id, List<Uri> uris, List<String> uploadedUrls, String title, String name, String age, String sex, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
+        if (index >= uris.size()) {
+            String primaryUrl = uploadedUrls.isEmpty() ? "" : uploadedUrls.get(0);
+            runOnUiThread(() -> updateFirestoreAnnouncement(id, title, name, age, sex, category, subtitle, contact, primaryUrl, uploadedUrls, dialog));
+            return;
+        }
+
+        Uri imageUri = uris.get(index);
+        executor.execute(() -> {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Failed to read image at index " + index, Toast.LENGTH_SHORT).show();
+                        uploadNextImageForEdit(index + 1, id, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+                    });
+                    return;
+                }
+                byte[] imageBytes = readAllBytes(inputStream);
+                inputStream.close();
+
+                String boundary = "----FormBoundary" + System.currentTimeMillis();
+                String uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
+
+                HttpURLConnection conn = (HttpURLConnection) new URL(uploadUrl).openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n");
+                dos.writeBytes(UPLOAD_PRESET + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"api_key\"\r\n\r\n");
+                dos.writeBytes(API_KEY + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"announcement_edit_" + index + ".jpg\"\r\n");
+                dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
+                dos.write(imageBytes);
+                dos.writeBytes("\r\n");
+                dos.writeBytes("--" + boundary + "--\r\n");
+                dos.flush();
+                dos.close();
+
+                int status = conn.getResponseCode();
+                InputStream responseStream = (status == 200) ? conn.getInputStream() : conn.getErrorStream();
+                byte[] responseBytes = readAllBytes(responseStream);
+                responseStream.close();
+                conn.disconnect();
+
+                JSONObject json = new JSONObject(new String(responseBytes));
+                if (status == 200 && json.has("secure_url")) {
+                    String imageUrl = json.getString("secure_url");
+                    uploadedUrls.add(imageUrl);
+                }
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Uploaded " + (index + 1) + " of " + uris.size() + " images", Toast.LENGTH_SHORT).show();
+                    uploadNextImageForEdit(index + 1, id, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Failed to upload image " + index + ": " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    uploadNextImageForEdit(index + 1, id, uris, uploadedUrls, title, name, age, sex, category, subtitle, contact, dialog);
+                });
+            }
+        });
+    }
+
+    private void updateFirestoreAnnouncement(String id, String title, String name, String age, String sex, String category, String subtitle, String contact, String imageUrl, List<String> imageUrls, androidx.appcompat.app.AlertDialog dialog) {
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("title", title);
+        updates.put("name", name);
+        updates.put("age", age);
+        updates.put("sex", sex);
+        updates.put("category", category);
+        updates.put("subtitle", subtitle);
+        updates.put("contact", contact);
+
+        // Only update image fields if new images were uploaded/supplied
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            updates.put("imageUrl", imageUrl);
+        }
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            updates.put("announcementImages", imageUrls);
+        }
+
+        // New fields from pickers
+        updates.put("incidentDate", selectedDate);
+        updates.put("incidentTime", selectedTime);
+        updates.put("locationAddress", selectedAddress);
+        updates.put("latitude", selectedLat);
+        updates.put("longitude", selectedLng);
+
+        db.collection("announcements").document(id).update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Announcement updated successfully!", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update announcement", e);
+                    Toast.makeText(this, "Failed to update: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    android.widget.Button btnPost = dialog.findViewById(R.id.btnPost);
+                    if (btnPost != null) {
+                        btnPost.setEnabled(true);
+                        btnPost.setText("Save Changes");
+                    }
+                });
+    }
+
     private byte[] readAllBytes(InputStream inputStream) throws Exception {
         java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
         byte[] chunk = new byte[8192];
@@ -646,14 +1245,16 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 }
 
                 String address = (String) comment.get("locationAddress");
-                Double lat = (Double) comment.get("latitude");
-                Double lng = (Double) comment.get("longitude");
+                Double lat = parseDoubleSafely(comment.get("latitude"));
+                Double lng = parseDoubleSafely(comment.get("longitude"));
 
                 if (address != null && !address.isEmpty()) {
                     tvLocation.setVisibility(android.view.View.VISIBLE);
-                    tvLocation.setText("📍 Sighting: " + address);
+                    tvLocation.setText("Sighting: " + address);
                     if (lat != null && lng != null) {
-                        tvLocation.setOnClickListener(v -> showLocationOnMap(lat, lng));
+                        Double finalLat = lat;
+                        Double finalLng = lng;
+                        tvLocation.setOnClickListener(v -> launchGoogleMaps(finalLat, finalLng, address));
                         tvLocation.setTextColor(getResources().getColor(R.color.blue_primary, getTheme()));
                     }
                 } else {
@@ -703,31 +1304,50 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         progressBar.setVisibility(android.view.View.VISIBLE);
-        db.collection("announcements")
+        final com.google.firebase.firestore.ListenerRegistration commentsListener = db.collection("announcements")
                 .document(announcementId)
                 .collection("comments")
                 .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.ASCENDING)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addSnapshotListener((querySnapshot, error) -> {
                     progressBar.setVisibility(android.view.View.GONE);
-                    commentList.clear();
-                    for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        commentList.add(doc.getData());
+                    if (error != null) {
+                        Toast.makeText(this, "Failed to load comments", Toast.LENGTH_SHORT).show();
+                        return;
                     }
-                    // Sort by newest initially
-                    commentList.sort((c1, c2) -> {
-                        com.google.firebase.Timestamp t1 = (com.google.firebase.Timestamp) c1.get("timestamp");
-                        com.google.firebase.Timestamp t2 = (com.google.firebase.Timestamp) c2.get("timestamp");
-                        if (t1 == null || t2 == null) return 0;
-                        return t2.compareTo(t1);
-                    });
-                    commentAdapter.notifyDataSetChanged();
-                    tvNoComments.setVisibility(commentList.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
-                })
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(android.view.View.GONE);
-                    Toast.makeText(this, "Failed to load comments", Toast.LENGTH_SHORT).show();
+                    if (querySnapshot != null) {
+                        commentList.clear();
+                        for (com.google.firebase.firestore.DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                            commentList.add(doc.getData());
+                        }
+                        
+                        // Sort by current selected chip
+                        int checkedId = cgSort.getCheckedChipId();
+                        if (checkedId == R.id.chipOldest) {
+                            commentList.sort((c1, c2) -> {
+                                com.google.firebase.Timestamp t1 = (com.google.firebase.Timestamp) c1.get("timestamp");
+                                com.google.firebase.Timestamp t2 = (com.google.firebase.Timestamp) c2.get("timestamp");
+                                if (t1 == null || t2 == null) return 0;
+                                return t1.compareTo(t2); // Ascending
+                            });
+                        } else {
+                            commentList.sort((c1, c2) -> {
+                                com.google.firebase.Timestamp t1 = (com.google.firebase.Timestamp) c1.get("timestamp");
+                                com.google.firebase.Timestamp t2 = (com.google.firebase.Timestamp) c2.get("timestamp");
+                                if (t1 == null || t2 == null) return 0;
+                                return t2.compareTo(t1); // Descending
+                            });
+                        }
+                        
+                        commentAdapter.notifyDataSetChanged();
+                        tvNoComments.setVisibility(commentList.isEmpty() ? android.view.View.VISIBLE : android.view.View.GONE);
+                    }
                 });
+
+        dialog.setOnDismissListener(dialogInterface -> {
+            if (commentsListener != null) {
+                commentsListener.remove();
+            }
+        });
 
         dialog.show();
     }
@@ -783,19 +1403,55 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 .setTitle("Update Status")
                 .setSingleChoiceItems(statuses, checkedItem, (dialog, which) -> {
                     String newStatus = statuses[which];
-                    db.collection("announcements").document(id)
-                            .update("status", newStatus)
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(this, "Status updated to: " + newStatus, Toast.LENGTH_SHORT).show();
-                                dialog.dismiss();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to update status", e);
-                                Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                            });
+                    if ("Case Closed".equalsIgnoreCase(newStatus)) {
+                        db.collection("announcements").document(id).get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if (documentSnapshot.exists()) {
+                                        List<String> proofImages = (List<String>) documentSnapshot.get("caseClosedImages");
+                                        if (proofImages != null && !proofImages.isEmpty()) {
+                                            updateStatusDirectly(id, newStatus, dialog);
+                                        } else {
+                                            new androidx.appcompat.app.AlertDialog.Builder(this)
+                                                    .setTitle("Proof Required")
+                                                    .setMessage("You must upload a proof image (e.g. proof of safety or resolution) to close this case. Would you like to pick and upload a proof image now?")
+                                                    .setPositiveButton("Upload Proof", (uploadDialog, uploadWhich) -> {
+                                                        dialog.dismiss();
+                                                        startProofImagePickerAndSetCaseClosed(id);
+                                                    })
+                                                    .setNegativeButton("Cancel", null)
+                                                    .show();
+                                        }
+                                    } else {
+                                        updateStatusDirectly(id, newStatus, dialog);
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    updateStatusDirectly(id, newStatus, dialog);
+                                });
+                    } else {
+                        updateStatusDirectly(id, newStatus, dialog);
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void updateStatusDirectly(String id, String newStatus, android.content.DialogInterface dialog) {
+        db.collection("announcements").document(id)
+                .update("status", newStatus)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Status updated to: " + newStatus, Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update status", e);
+                    Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void startProofImagePickerAndSetCaseClosed(String announcementId) {
+        this.shouldAutoSetCaseClosed = true;
+        startProofImagePicker(announcementId);
     }
 
     private void showLocationOnMap(double lat, double lng) {
@@ -819,5 +1475,127 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+
+    private void launchGoogleMaps(double lat, double lng, String label) {
+        try {
+            String uri = String.format(java.util.Locale.US, "geo:%f,%f?q=%f,%f(%s)", lat, lng, lat, lng, android.net.Uri.encode(label));
+            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri));
+            intent.setPackage("com.google.android.apps.maps");
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Intent fallbackIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("geo:" + lat + "," + lng + "?q=" + lat + "," + lng));
+                startActivity(fallbackIntent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error launching Google Maps", e);
+            Toast.makeText(this, "Could not open Google Maps", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void startProofImagePicker(String announcementId) {
+        this.uploadingProofAnnouncementId = announcementId;
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        proofImagePickerLauncher.launch(intent);
+    }
+
+    private void uploadProofToCloudinary(String id, Uri imageUri) {
+        Toast.makeText(this, "Uploading proof image...", Toast.LENGTH_SHORT).show();
+        executor.execute(() -> {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Failed to open image", Toast.LENGTH_SHORT).show());
+                    return;
+                }
+                byte[] imageBytes = readAllBytes(inputStream);
+                inputStream.close();
+
+                String boundary = "----FormBoundary" + System.currentTimeMillis();
+                String uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
+
+                HttpURLConnection conn = (HttpURLConnection) new URL(uploadUrl).openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n");
+                dos.writeBytes(UPLOAD_PRESET + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"api_key\"\r\n\r\n");
+                dos.writeBytes(API_KEY + "\r\n");
+
+                dos.writeBytes("--" + boundary + "\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"proof.jpg\"\r\n");
+                dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
+                dos.write(imageBytes);
+                dos.writeBytes("\r\n");
+                dos.writeBytes("--" + boundary + "--\r\n");
+                dos.flush();
+                dos.close();
+
+                int status = conn.getResponseCode();
+                InputStream responseStream = (status == 200) ? conn.getInputStream() : conn.getErrorStream();
+                byte[] responseBytes = readAllBytes(responseStream);
+                responseStream.close();
+                conn.disconnect();
+
+                JSONObject json = new JSONObject(new String(responseBytes));
+                if (status == 200 && json.has("secure_url")) {
+                    String imageUrl = json.getString("secure_url");
+                    runOnUiThread(() -> {
+                        Map<String, Object> updates = new java.util.HashMap<>();
+                        updates.put("caseClosedImages", com.google.firebase.firestore.FieldValue.arrayUnion(imageUrl));
+                        if (shouldAutoSetCaseClosed) {
+                            updates.put("status", "Case Closed");
+                        }
+
+                        db.collection("announcements").document(id)
+                                .update(updates)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(this, "Proof image uploaded successfully!", Toast.LENGTH_SHORT).show();
+                                    if (shouldAutoSetCaseClosed) {
+                                        Toast.makeText(this, "Status updated to: Case Closed", Toast.LENGTH_SHORT).show();
+                                    }
+                                    shouldAutoSetCaseClosed = false;
+                                    // Snapshot listener will update automatically
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Failed to update database: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    shouldAutoSetCaseClosed = false;
+                                });
+                    });
+                } else {
+                    String error = json.optString("error", "Upload failed");
+                    runOnUiThread(() -> Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Cloudinary upload failed", e);
+                runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent) {
+        super.startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent, android.os.Bundle options) {
+        super.startActivity(intent, options);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
     }
 }

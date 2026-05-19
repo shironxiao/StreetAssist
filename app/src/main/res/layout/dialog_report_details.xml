@@ -351,6 +351,75 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- ── RESOLUTION PROOF ── -->
+            <LinearLayout
+                android:id="@+id/layoutResidentResolutionProof"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#F0F0F0"
+                    android:layout_marginBottom="14dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RESOLUTION PROOF"
+                    android:textColor="#3B6D11"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:layout_marginBottom="10dp" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardResidentProofPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    app:cardCornerRadius="16dp"
+                    app:strokeWidth="1dp"
+                    app:strokeColor="#D1FAE5"
+                    app:cardBackgroundColor="#F0FDF4"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:id="@+id/ivResidentProofPhoto"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="Resolution Proof Photo" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- View Proof Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnViewResidentProof"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="12dp"
+                    android:text="🔍 View Proof Photo"
+                    android:textAllCaps="false"
+                    android:textColor="#3B6D11"
+                    app:strokeColor="#3B6D11"
+                    app:cornerRadius="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvResidentResolutionNotes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#F0FDF4"
+                    android:padding="12dp"
+                    android:textColor="#1B2559"
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.4" />
+            </LinearLayout>
+
             <!-- Delete Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dialogBtnDelete"

@@ -10,9 +10,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.view.ViewGroup;
+import android.widget.HorizontalScrollView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -35,6 +40,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
 
+import android.net.Uri;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -47,12 +57,24 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
     private static final String TAG = "AdminReports";
     private DrawerLayout drawerLayout;
+    private AdminNotificationBadgeHelper badgeHelper;
     private RecyclerView rvReports;
     private RecentReportAdapter adapter;
     private List<Map<String, Object>> reportList = new ArrayList<>();
     private List<Map<String, Object>> filteredList = new ArrayList<>();
     private FirebaseFirestore db;
     private String currentSearchQuery = "";
+
+    // Cloudinary & Resolution Proof Config
+    private static final String CLOUD_NAME = "durqaiei1";
+    private static final String UPLOAD_PRESET = "streetassist_unsigned";
+    private static final String API_KEY = "938268411726485";
+    private static final int PROOF_IMAGE_PICKER_REQUEST = 2001;
+    private final List<Uri> selectedProofImageUris = new ArrayList<>();
+    private HorizontalScrollView scrollSelectedProofImages;
+    private LinearLayout layoutSelectedProofImages;
+    private final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+
     private String currentStatusFilter = "All";
     private String currentMunicipalityFilter = "All";
     private String currentBarangayFilter = "All";
@@ -207,6 +229,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
         db = FirebaseFirestore.getInstance();
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        badgeHelper = new AdminNotificationBadgeHelper(this);
 
         // Security Guard
         com.google.firebase.auth.FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -318,6 +341,9 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         if (reportsListener == null) {
             reportsListener = fetchAllReports();
         }
+        if (badgeHelper != null) {
+            badgeHelper.startListening();
+        }
     }
 
     @Override
@@ -326,6 +352,9 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         if (reportsListener != null) {
             reportsListener.remove();
             reportsListener = null;
+        }
+        if (badgeHelper != null) {
+            badgeHelper.stopListening();
         }
     }
 
@@ -348,7 +377,45 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
                             }
                         }
                         applyFilters();
+                        checkAndShowTargetReport();
                     }
+                });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        checkAndShowTargetReport();
+    }
+
+    private void checkAndShowTargetReport() {
+        String targetReportId = getIntent().getStringExtra("reportId");
+        if (targetReportId == null || targetReportId.isEmpty()) return;
+
+        getIntent().removeExtra("reportId");
+
+        for (Map<String, Object> report : reportList) {
+            if (targetReportId.equals(report.get("documentId"))) {
+                showReportDetails(report);
+                return;
+            }
+        }
+
+        db.collection("reports").document(targetReportId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Map<String, Object> data = documentSnapshot.getData();
+                        if (data != null) {
+                            data.put("documentId", documentSnapshot.getId());
+                            showReportDetails(data);
+                        }
+                    } else {
+                        Toast.makeText(this, "Report not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error loading report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
@@ -611,8 +678,55 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         ((TextView) view.findViewById(R.id.tvDetailLocation)).setText(String.valueOf(report.get("locationAddress")));
         ((TextView) view.findViewById(R.id.tvDetailStatus)).setText(String.valueOf(report.get("status")).toUpperCase());
         updateReporterInfo(report, view.findViewById(R.id.tvReporterName), view.findViewById(R.id.tvReporterContact), view.findViewById(R.id.tvReporterAddress));
+
+        String status = String.valueOf(report.get("status"));
+        View layoutUpdateStatusSection = view.findViewById(R.id.layoutUpdateStatusSection);
+        View layoutResolutionProof = view.findViewById(R.id.layoutResolutionProof);
+
+        if ("Resolved".equalsIgnoreCase(status)) {
+            if (layoutUpdateStatusSection != null) layoutUpdateStatusSection.setVisibility(View.GONE);
+            if (layoutResolutionProof != null) {
+                layoutResolutionProof.setVisibility(View.VISIBLE);
+                String notes = String.valueOf(report.getOrDefault("resolutionNotes", "")).trim();
+                TextView tvNotes = view.findViewById(R.id.tvResolutionNotes);
+                if (tvNotes != null) {
+                    tvNotes.setText(notes.isEmpty() ? "Resolved by Administrator." : notes);
+                }
+                List<String> proofImages = new java.util.ArrayList<>();
+                if (report.get("resolutionImages") instanceof List) {
+                    List<?> rawList = (List<?>) report.get("resolutionImages");
+                    for (Object item : rawList) {
+                        if (item instanceof String) {
+                            proofImages.add((String) item);
+                        }
+                    }
+                }
+                String proofUrl = String.valueOf(report.getOrDefault("resolutionImageUrl", ""));
+                if (proofImages.isEmpty() && !proofUrl.isEmpty()) {
+                    proofImages.add(proofUrl);
+                }
+
+                View cardPhoto = view.findViewById(R.id.cardProofPhoto);
+                com.google.android.material.button.MaterialButton btnViewProof = view.findViewById(R.id.btnViewProof);
+
+                if (!proofImages.isEmpty()) {
+                    if (cardPhoto != null) cardPhoto.setVisibility(View.GONE);
+                    if (btnViewProof != null) {
+                        btnViewProof.setVisibility(View.VISIBLE);
+                        btnViewProof.setOnClickListener(v -> showResolutionProofDialog(proofImages));
+                    }
+                } else {
+                    if (cardPhoto != null) cardPhoto.setVisibility(View.GONE);
+                    if (btnViewProof != null) btnViewProof.setVisibility(View.GONE);
+                }
+            }
+        } else {
+            if (layoutUpdateStatusSection != null) layoutUpdateStatusSection.setVisibility(View.VISIBLE);
+            if (layoutResolutionProof != null) layoutResolutionProof.setVisibility(View.GONE);
+        }
+
         view.findViewById(R.id.btnSetInProgress).setOnClickListener(v -> updateReportStatus(docId, "In Progress", dialog));
-        view.findViewById(R.id.btnSetResolved).setOnClickListener(v -> updateReportStatus(docId, "Resolved", dialog));
+        view.findViewById(R.id.btnSetResolved).setOnClickListener(v -> showResolveReportDialog(docId, dialog));
         view.findViewById(R.id.btnClose).setOnClickListener(v -> dialog.dismiss());
         view.findViewById(R.id.btnViewLocation).setOnClickListener(v -> {
             Object lat = report.get("latitude"), lon = report.get("longitude");
@@ -649,10 +763,339 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         int id = item.getItemId();
         if (id == R.id.nav_dashboard) { startActivity(new Intent(this, AdminDashboardActivity.class)); finish(); }
         else if (id == R.id.nav_announcements) startActivity(new Intent(this, AdminAnnouncementsActivity.class));
+        else if (id == R.id.nav_notifications) startActivity(new Intent(this, AdminNotificationActivity.class));
         else if (id == R.id.nav_profile) startActivity(new Intent(this, AdminProfileActivity.class));
         else if (id == R.id.nav_trash) startActivity(new Intent(this, AdminTrashActivity.class));
         else if (id == R.id.nav_logout) logout();
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent) {
+        super.startActivity(intent);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent, android.os.Bundle options) {
+        super.startActivity(intent, options);
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left);
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right);
+    }
+
+    private void showResolveReportDialog(String docId, android.app.AlertDialog detailsDialog) {
+        selectedProofImageUris.clear(); // reset
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_resolve_report, null);
+        builder.setView(view);
+        android.app.AlertDialog resolveDialog = builder.create();
+        if (resolveDialog.getWindow() != null) {
+            resolveDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        scrollSelectedProofImages = view.findViewById(R.id.scrollSelectedProofImages);
+        layoutSelectedProofImages = view.findViewById(R.id.layoutSelectedProofImages);
+
+        view.findViewById(R.id.cardProofImage).setOnClickListener(v -> openProofImagePicker());
+
+        com.google.android.material.textfield.TextInputEditText etNotes = view.findViewById(R.id.etResolutionNotes);
+
+        view.findViewById(R.id.btnCancel).setOnClickListener(v -> resolveDialog.dismiss());
+        view.findViewById(R.id.btnSubmitResolution).setOnClickListener(v -> {
+            String notes = etNotes != null && etNotes.getText() != null ? etNotes.getText().toString().trim() : "";
+            
+            Toast.makeText(this, "Resolving report...", Toast.LENGTH_SHORT).show();
+            
+            if (!selectedProofImageUris.isEmpty()) {
+                uploadProofAndResolve(docId, selectedProofImageUris, notes, resolveDialog, detailsDialog);
+            } else {
+                saveResolutionToFirestore(docId, new ArrayList<>(), notes, resolveDialog, detailsDialog);
+            }
+        });
+
+        resolveDialog.show();
+    }
+
+    private void openProofImagePicker() {
+        Intent intent = new Intent();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
+            intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
+        } else {
+            intent.setAction(Intent.ACTION_PICK);
+            intent.setDataAndType(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
+        try {
+            startActivityForResult(intent, PROOF_IMAGE_PICKER_REQUEST);
+        } catch (Exception e) {
+            try {
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.setType("image/*");
+                fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                startActivityForResult(Intent.createChooser(fallback, "Select Proof Images"), PROOF_IMAGE_PICKER_REQUEST);
+            } catch (Exception ex) {
+                Toast.makeText(this, "No image picker available", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void updateProofImagePreview() {
+        if (layoutSelectedProofImages == null || scrollSelectedProofImages == null) return;
+
+        layoutSelectedProofImages.removeAllViews();
+        if (selectedProofImageUris.isEmpty()) {
+            scrollSelectedProofImages.setVisibility(View.GONE);
+        } else {
+            scrollSelectedProofImages.setVisibility(View.VISIBLE);
+            float density = getResources().getDisplayMetrics().density;
+            int thumbW = (int) (80 * density);
+            int thumbH = (int) (80 * density);
+            int margin = (int) (6 * density);
+            int radius = (int) (8 * density);
+
+            for (Uri uri : selectedProofImageUris) {
+                com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(thumbW, thumbH);
+                params.setMargins(0, 0, margin, 0);
+                card.setLayoutParams(params);
+                card.setRadius(radius);
+                card.setCardElevation(1 * density);
+                card.setStrokeWidth((int) (1 * density));
+                card.setStrokeColor(0xFFE2E8F0);
+
+                FrameLayout fl = new FrameLayout(this);
+                fl.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+                ImageView iv = new ImageView(this);
+                iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                iv.setImageURI(uri);
+                fl.addView(iv);
+
+                ImageButton btnDel = new ImageButton(this);
+                FrameLayout.LayoutParams delParams = new FrameLayout.LayoutParams((int) (20 * density), (int) (20 * density));
+                delParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+                delParams.setMargins(0, (int) (2 * density), (int) (2 * density), 0);
+                btnDel.setLayoutParams(delParams);
+                btnDel.setBackgroundResource(R.drawable.bg_delete_circle);
+                btnDel.setImageResource(R.drawable.ic_close);
+                btnDel.setPadding(0, 0, 0, 0);
+                btnDel.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    btnDel.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFF4444));
+                }
+                btnDel.setOnClickListener(v -> {
+                    selectedProofImageUris.remove(uri);
+                    updateProofImagePreview();
+                });
+                fl.addView(btnDel);
+
+                card.addView(fl);
+                layoutSelectedProofImages.addView(card);
+            }
+        }
+    }
+
+    private void uploadProofAndResolve(String docId, List<Uri> imageUris, String notes, android.app.AlertDialog resolveDialog, android.app.AlertDialog detailsDialog) {
+        executor.execute(() -> {
+            try {
+                List<String> uploadedUrls = new java.util.ArrayList<>();
+                for (Uri imageUri : imageUris) {
+                    InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                    if (inputStream == null) {
+                        continue;
+                    }
+                    byte[] imageBytes = readAllBytes(inputStream);
+                    inputStream.close();
+
+                    String boundary = "----FormBoundary" + System.currentTimeMillis();
+                    String uploadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/image/upload";
+
+                    HttpURLConnection conn = (HttpURLConnection) new URL(uploadUrl).openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setDoOutput(true);
+                    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+                    java.io.DataOutputStream dos = new java.io.DataOutputStream(conn.getOutputStream());
+                    dos.writeBytes("--" + boundary + "\r\n");
+                    dos.writeBytes("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n");
+                    dos.writeBytes(UPLOAD_PRESET + "\r\n");
+
+                    dos.writeBytes("--" + boundary + "\r\n");
+                    dos.writeBytes("Content-Disposition: form-data; name=\"api_key\"\r\n\r\n");
+                    dos.writeBytes(API_KEY + "\r\n");
+
+                    dos.writeBytes("--" + boundary + "\r\n");
+                    dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"proof.jpg\"\r\n");
+                    dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
+                    dos.write(imageBytes);
+                    dos.writeBytes("\r\n");
+                    dos.writeBytes("--" + boundary + "--\r\n");
+                    dos.flush();
+                    dos.close();
+
+                    int status = conn.getResponseCode();
+                    InputStream responseStream = (status == 200) ? conn.getInputStream() : conn.getErrorStream();
+                    byte[] responseBytes = readAllBytes(responseStream);
+                    responseStream.close();
+                    conn.disconnect();
+
+                    org.json.JSONObject json = new org.json.JSONObject(new String(responseBytes));
+                    if (status == 200 && json.has("secure_url")) {
+                        uploadedUrls.add(json.getString("secure_url"));
+                    } else {
+                        String error = json.optString("error", "Upload failed");
+                        runOnUiThread(() -> Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show());
+                        return;
+                    }
+                }
+
+                runOnUiThread(() -> {
+                    saveResolutionToFirestore(docId, uploadedUrls, notes, resolveDialog, detailsDialog);
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Cloudinary upload failed", e);
+                runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        });
+    }
+
+    private void saveResolutionToFirestore(String docId, List<String> imageUrls, String notes, android.app.AlertDialog resolveDialog, android.app.AlertDialog detailsDialog) {
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("status", "Resolved");
+        updates.put("resolutionNotes", notes);
+        updates.put("resolutionImageUrl", imageUrls.isEmpty() ? "" : imageUrls.get(0));
+        updates.put("resolutionImages", imageUrls);
+        updates.put("resolvedAt", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+        db.collection("reports").document(docId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Report resolved successfully!", Toast.LENGTH_SHORT).show();
+                    if (resolveDialog != null) resolveDialog.dismiss();
+                    if (detailsDialog != null) detailsDialog.dismiss();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to resolve report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private byte[] readAllBytes(InputStream inputStream) throws java.io.IOException {
+        java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[16384];
+        while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+        return buffer.toByteArray();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PROOF_IMAGE_PICKER_REQUEST && resultCode == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                int count = data.getClipData().getItemCount();
+                for (int i = 0; i < count; i++) {
+                    Uri uri = data.getClipData().getItemAt(i).getUri();
+                    if (uri != null) {
+                        selectedProofImageUris.add(uri);
+                    }
+                }
+            } else if (data.getData() != null) {
+                Uri uri = data.getData();
+                selectedProofImageUris.add(uri);
+            }
+            updateProofImagePreview();
+        }
+    }
+
+    private void showResolutionProofDialog(List<String> images) {
+        if (images == null || images.isEmpty()) return;
+
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_case_closed_proof_gallery);
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView tvTitle = dialog.findViewById(R.id.tvGalleryTitle);
+        if (tvTitle != null) {
+            tvTitle.setText("Resolution Proof Photos");
+            tvTitle.setTextColor(android.graphics.Color.parseColor("#3B6D11"));
+        }
+
+        LinearLayout layoutImages = dialog.findViewById(R.id.layoutCaseClosedImagesDialog);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseProofDialog);
+
+        float density = getResources().getDisplayMetrics().density;
+        int thumbW = (int) (120 * density);
+        int thumbH = (int) (120 * density);
+        int margin = (int) (10 * density);
+        int radius = (int) (12 * density);
+
+        layoutImages.removeAllViews();
+        for (String proofUrl : images) {
+            com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(this);
+            LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(thumbW, thumbH);
+            cardParams.setMargins(0, 0, margin, 0);
+            card.setLayoutParams(cardParams);
+            card.setRadius(radius);
+            card.setCardElevation(2 * density);
+            card.setStrokeWidth((int) (1 * density));
+            card.setStrokeColor(0xFFE2E8F0);
+            card.setClickable(true);
+            card.setFocusable(true);
+
+            ImageView iv = new ImageView(this);
+            iv.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            com.bumptech.glide.Glide.with(this).load(proofUrl).placeholder(R.drawable.ic_image_placeholder).into(iv);
+            card.addView(iv);
+
+            iv.setOnClickListener(v -> {
+                showFullImageDialog(proofUrl);
+            });
+
+            layoutImages.addView(card);
+        }
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void showFullImageDialog(String imageUrl) {
+        android.app.Dialog dialog = new android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dialog.setContentView(R.layout.dialog_fullscreen_image);
+
+        ImageView ivFullscreen = dialog.findViewById(R.id.ivFullscreenImage);
+        ImageButton btnClose = dialog.findViewById(R.id.btnCloseImage);
+
+        com.bumptech.glide.Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .fitCenter()
+                .into(ivFullscreen);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        ivFullscreen.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdown();
     }
 }

@@ -8,9 +8,10 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="2dp"
-    app:strokeWidth="0dp">
+    app:cardCornerRadius="20dp"
+    app:cardElevation="0dp"
+    app:strokeColor="#E2E8F0"
+    app:strokeWidth="1dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +21,7 @@
         <!-- Image Container -->
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp">
+            android:layout_height="250dp">
 
             <ImageView
                 android:id="@+id/ivAnnouncementImage"
@@ -43,8 +44,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_status_badge"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="5dp"
                     android:text="CATEGORY"
                     android:textColor="@color/blue_primary"
                     android:textSize="11sp"
@@ -61,8 +62,8 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_status_badge"
                     android:backgroundTint="@color/status_resolved_bg"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="5dp"
                     android:text="Search Ongoing"
                     android:textColor="@color/status_resolved_text"
                     android:textSize="11sp"
@@ -86,7 +87,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <TextView
                 android:id="@+id/tvTitle"
@@ -94,46 +95,84 @@
                 android:layout_height="wrap_content"
                 android:text="Announcement Title"
                 android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Name: Juan Dela Cruz"
-                android:textColor="@color/blue_primary"
-                android:textSize="14sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
-                android:visibility="gone" />
+                android:lineSpacingMultiplier="1.1" />
 
-            <TextView
-                android:id="@+id/tvAgeSex"
+            <!-- Subheading Info Capsules -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Age: 25 | Sex: Male"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp"
-                android:visibility="gone" />
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_status_badge"
+                    android:backgroundTint="@color/blue_bg"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp"
+                    android:text="Subject: Juan Dela Cruz"
+                    android:textColor="@color/blue_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvAgeSex"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_status_badge"
+                    android:backgroundTint="#F4F7FE"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp"
+                    android:text="Age: 25 | Sex: Male"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:lineSpacingExtra="2dp"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="3dp"
                 android:text="Detailed description or subtitle goes here."
-                android:textColor="@color/text_secondary"
+                android:textColor="#4F5D75"
                 android:textSize="14sp" />
+
+            <!-- Announcement Images Gallery (Multiple Images) -->
+            <HorizontalScrollView
+                android:id="@+id/scrollAnnouncementImages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:id="@+id/layoutAnnouncementImages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="95dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+            </HorizontalScrollView>
 
             <!-- Incident Info -->
             <LinearLayout
                 android:id="@+id/containerIncidentInfo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_status_badge"
+                android:backgroundTint="#FAFBFD"
+                android:padding="12dp"
                 android:orientation="vertical"
                 android:visibility="gone">
 
@@ -141,26 +180,141 @@
                     android:id="@+id/tvIncidentDateTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📅 Oct 25, 2023 at 10:00 AM"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
+                    android:text="Incident Date: Oct 25, 2023 at 10:00 AM"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvLocation"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="📍 Location"
+                    android:layout_marginTop="6dp"
+                    android:text="Location: Sighting Location"
                     android:textColor="@color/blue_primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- ╔══════════════════════════════════════╗ -->
+            <!-- ║        CASE CLOSED PROOF SECTION     ║ -->
+            <!-- ╚══════════════════════════════════════╝ -->
+            <LinearLayout
+                android:id="@+id/layoutCaseClosedProof"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp"
+                android:visibility="gone">
+
+                <!-- Header bar with icon + label + proof count -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="#1A22C55E"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp">
+
+                    <!-- Lock icon -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔒"
+                        android:textSize="13sp"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="CASE CLOSED PROOF"
+                        android:textColor="#16A34A"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08" />
+
+                    <!-- Proof count badge -->
+                    <TextView
+                        android:id="@+id/tvProofCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_status_badge"
+                        android:backgroundTint="#16A34A"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="2dp"
+                        android:text="0 photos"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Proof images strip + Add button in a padded container -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="#F0FFF4"
+                    android:paddingHorizontal="12dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="12dp">
+
+                    <!-- Proof image thumbnails (filled dynamically) -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:overScrollMode="never">
+
+                        <LinearLayout
+                            android:id="@+id/layoutCaseClosedImages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="90dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical" />
+                    </HorizontalScrollView>
+
+                    <!-- Divider (only visible when images exist) -->
+                    <View
+                        android:id="@+id/proofDivider"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#D1FAE5"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="8dp"
+                        android:visibility="gone" />
+
+                    <!-- Add Proof Image button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAddProofImage"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="+ Add Proof Photo"
+                        android:textAllCaps="false"
+                        android:textColor="#16A34A"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:strokeColor="#22C55E"
+                        app:strokeWidth="1dp"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_image_placeholder"
+                        app:iconTint="#22C55E"
+                        app:iconSize="16dp"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginVertical="16dp"
-                android:background="@color/divider_color" />
+                android:layout_marginVertical="14dp"
+                android:background="#E2E8F0" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -168,21 +322,33 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_phone"
-                    app:tint="@color/text_secondary"
-                    android:contentDescription="Phone Icon" />
-
-                <TextView
-                    android:id="@+id/tvContact"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="09123456789"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_status_badge"
+                    android:backgroundTint="#F8FAFC"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:src="@drawable/ic_phone"
+                        app:tint="@color/text_secondary"
+                        android:contentDescription="Phone Icon" />
+
+                    <TextView
+                        android:id="@+id/tvContact"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="09123456789"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <View
                     android:layout_width="0dp"
@@ -210,7 +376,7 @@
                     android:id="@+id/btnViewComments"
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="38dp"
                     android:layout_weight="1"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
@@ -219,38 +385,52 @@
                     android:text="Comments"
                     android:textAllCaps="false"
                     android:textColor="@color/blue_primary"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     app:icon="@drawable/ic_comment"
                     app:iconPadding="4dp"
-                    app:iconSize="18dp"
+                    app:iconSize="16dp"
                     app:iconTint="@color/blue_primary" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnUpdateStatus"
                     style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="38dp"
                     android:layout_weight="1.3"
                     android:layout_marginHorizontal="8dp"
                     android:insetTop="0dp"
                     android:insetBottom="0dp"
                     android:text="Update Status"
                     android:textAllCaps="false"
-                    android:textSize="13sp"
+                    android:textSize="12sp"
                     android:backgroundTint="@color/blue_primary"
                     android:textColor="#FFFFFF"
                     app:cornerRadius="8dp" />
 
                 <ImageButton
-                    android:id="@+id/btnDelete"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:id="@+id/btnEdit"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:layout_marginEnd="8dp"
                     android:padding="8dp"
                     android:scaleType="centerInside"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="@drawable/bg_status_badge"
+                    android:backgroundTint="#F4F7FE"
+                    android:contentDescription="Edit Report"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@color/blue_primary" />
+
+                <ImageButton
+                    android:id="@+id/btnDelete"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:padding="8dp"
+                    android:scaleType="centerInside"
+                    android:background="@drawable/bg_status_badge"
+                    android:backgroundTint="#FFF5F5"
                     android:contentDescription="@string/delete_report"
                     android:src="@drawable/ic_delete"
-                    app:tint="#FF4444" />
+                    app:tint="#E53935" />
             </LinearLayout>
 
         </LinearLayout>
