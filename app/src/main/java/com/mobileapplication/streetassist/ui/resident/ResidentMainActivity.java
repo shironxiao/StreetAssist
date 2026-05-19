@@ -56,10 +56,8 @@ public class ResidentMainActivity extends AppCompatActivity {
             }
 
             if (binding.bottomNavigation != null) {
-                binding.bottomNavigation.post(() -> {
-                    // Switch to the report tab programmatically
-                    binding.bottomNavigation.setSelectedItemId(R.id.report);
-                });
+                // Switch to the report tab programmatically
+                binding.bottomNavigation.setSelectedItemId(R.id.report);
             }
         }
     }
