@@ -75,6 +75,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
     private android.widget.HorizontalScrollView currentDialogImagesScroll;
     private String uploadingProofAnnouncementId;
     private boolean shouldAutoSetCaseClosed = false;
+    private List<String> editExistingUrls = new ArrayList<>();
+    private boolean isEditingAnnouncement = false;
 
     // Cloudinary Config
     private static final String CLOUD_NAME = "durqaiei1";
@@ -133,20 +135,29 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        selectedImageUris.clear();
                         if (result.getData().getClipData() != null) {
                             int count = result.getData().getClipData().getItemCount();
                             for (int i = 0; i < count; i++) {
-                                selectedImageUris.add(result.getData().getClipData().getItemAt(i).getUri());
+                                Uri uri = result.getData().getClipData().getItemAt(i).getUri();
+                                if (uri != null && !selectedImageUris.contains(uri)) {
+                                    selectedImageUris.add(uri);
+                                }
                             }
                         } else if (result.getData().getData() != null) {
-                            selectedImageUris.add(result.getData().getData());
+                            Uri uri = result.getData().getData();
+                            if (uri != null && !selectedImageUris.contains(uri)) {
+                                selectedImageUris.add(uri);
+                            }
                         }
 
                         selectedImageUri = selectedImageUris.isEmpty() ? null : selectedImageUris.get(0);
 
-                        updateDialogSelectedImagesText();
-                        updateDialogSelectedImagesPreview();
+                        if (isEditingAnnouncement) {
+                            updateEditImagesPreview();
+                        } else {
+                            updateDialogSelectedImagesText();
+                            updateDialogSelectedImagesPreview();
+                        }
 
                         Toast.makeText(this, selectedImageUris.size() + " image(s) selected", Toast.LENGTH_SHORT).show();
                     }
@@ -157,9 +168,24 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Uri imageUri = result.getData().getData();
-                        if (imageUri != null && uploadingProofAnnouncementId != null) {
-                            uploadProofToCloudinary(uploadingProofAnnouncementId, imageUri);
+                        List<Uri> uris = new ArrayList<>();
+                        if (result.getData().getClipData() != null) {
+                            int count = result.getData().getClipData().getItemCount();
+                            for (int i = 0; i < count; i++) {
+                                Uri uri = result.getData().getClipData().getItemAt(i).getUri();
+                                if (uri != null) {
+                                    uris.add(uri);
+                                }
+                            }
+                        } else if (result.getData().getData() != null) {
+                            Uri uri = result.getData().getData();
+                            if (uri != null) {
+                                uris.add(uri);
+                            }
+                        }
+
+                        if (!uris.isEmpty() && uploadingProofAnnouncementId != null) {
+                            uploadMultipleProofs(uploadingProofAnnouncementId, uris);
                         }
                     }
                 }
@@ -350,27 +376,53 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         }
     }
 
-    private void showExistingImagesPreview(List<String> urls) {
+    private void updateEditImagesPreview() {
         if (currentDialogImagesLayout == null) return;
         currentDialogImagesLayout.removeAllViews();
 
-        if (urls == null || urls.isEmpty()) {
-            if (currentDialogScrollShowOrHide(false)) return;
+        int totalCount = editExistingUrls.size() + selectedImageUris.size();
+
+        if (totalCount == 0) {
+            if (currentDialogImagesScroll != null) {
+                currentDialogImagesScroll.setVisibility(android.view.View.GONE);
+            }
+            if (tvUploadStatus != null) {
+                tvUploadStatus.setText("Add Image");
+                tvUploadStatus.setTextColor(getResources().getColor(R.color.text_primary, getTheme()));
+            }
             return;
         }
 
-        currentDialogScrollShowOrHide(true);
+        if (currentDialogImagesScroll != null) {
+            currentDialogImagesScroll.setVisibility(android.view.View.VISIBLE);
+        }
+
+        if (tvUploadStatus != null) {
+            tvUploadStatus.setText(totalCount + " image(s) loaded/selected");
+            tvUploadStatus.setTextColor(getResources().getColor(R.color.green_primary, getTheme()));
+        }
 
         float density = getResources().getDisplayMetrics().density;
         int size = (int) (80 * density);
         int margin = (int) (8 * density);
         int corner = (int) (12 * density);
 
-        for (String url : urls) {
+        // 1. Show remaining existing URLs
+        for (int i = 0; i < editExistingUrls.size(); i++) {
+            final String url = editExistingUrls.get(i);
+
+            // Container frame layout to allow delete icon overlay
+            android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+            android.widget.LinearLayout.LayoutParams containerParams = 
+                    new android.widget.LinearLayout.LayoutParams(size + (int)(10 * density), size + (int)(10 * density));
+            containerParams.setMargins(0, 0, margin, 0);
+            container.setLayoutParams(containerParams);
+
+            // Card view for rounded image
             com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(this);
-            android.widget.LinearLayout.LayoutParams cardParams = 
-                    new android.widget.LinearLayout.LayoutParams(size, size);
-            cardParams.setMargins(0, 0, margin, 0);
+            android.widget.FrameLayout.LayoutParams cardParams = 
+                    new android.widget.FrameLayout.LayoutParams(size, size);
+            cardParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.START;
             card.setLayoutParams(cardParams);
             card.setRadius(corner);
             card.setCardElevation(1 * density);
@@ -388,7 +440,96 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     .into(iv);
 
             card.addView(iv);
-            currentDialogImagesLayout.addView(card);
+            container.addView(card);
+
+            // Delete button overlay
+            android.widget.ImageView btnDelete = new android.widget.ImageView(this);
+            android.widget.FrameLayout.LayoutParams deleteParams = 
+                    new android.widget.FrameLayout.LayoutParams((int)(20 * density), (int)(20 * density));
+            deleteParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+            btnDelete.setLayoutParams(deleteParams);
+            btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            btnDelete.setBackgroundResource(R.drawable.bg_status_badge);
+            btnDelete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFEF4444)); // red
+            btnDelete.setColorFilter(android.graphics.Color.WHITE);
+            btnDelete.setPadding((int)(3 * density), (int)(3 * density), (int)(3 * density), (int)(3 * density));
+            btnDelete.setElevation(4 * density);
+            btnDelete.setClickable(true);
+            btnDelete.setFocusable(true);
+
+            final int index = i;
+            btnDelete.setOnClickListener(v -> {
+                editExistingUrls.remove(index);
+                updateEditImagesPreview();
+            });
+
+            container.addView(btnDelete);
+            currentDialogImagesLayout.addView(container);
+        }
+
+        // 2. Show new selected Uris
+        for (int i = 0; i < selectedImageUris.size(); i++) {
+            final Uri uri = selectedImageUris.get(i);
+
+            // Container frame layout to allow delete icon overlay
+            android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+            android.widget.LinearLayout.LayoutParams containerParams = 
+                    new android.widget.LinearLayout.LayoutParams(size + (int)(10 * density), size + (int)(10 * density));
+            containerParams.setMargins(0, 0, margin, 0);
+            container.setLayoutParams(containerParams);
+
+            // Card view for rounded image
+            com.google.android.material.card.MaterialCardView card = new com.google.android.material.card.MaterialCardView(this);
+            android.widget.FrameLayout.LayoutParams cardParams = 
+                    new android.widget.FrameLayout.LayoutParams(size, size);
+            cardParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.START;
+            card.setLayoutParams(cardParams);
+            card.setRadius(corner);
+            card.setCardElevation(1 * density);
+            card.setStrokeWidth(0);
+
+            android.widget.ImageView iv = new android.widget.ImageView(this);
+            iv.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, 
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+            iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            
+            com.bumptech.glide.Glide.with(this)
+                    .load(uri)
+                    .centerCrop()
+                    .into(iv);
+
+            card.addView(iv);
+            container.addView(card);
+
+            // Delete button overlay
+            android.widget.ImageView btnDelete = new android.widget.ImageView(this);
+            android.widget.FrameLayout.LayoutParams deleteParams = 
+                    new android.widget.FrameLayout.LayoutParams((int)(20 * density), (int)(20 * density));
+            deleteParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+            btnDelete.setLayoutParams(deleteParams);
+            btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            btnDelete.setBackgroundResource(R.drawable.bg_status_badge);
+            btnDelete.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFEF4444)); // red
+            btnDelete.setColorFilter(android.graphics.Color.WHITE);
+            btnDelete.setPadding((int)(3 * density), (int)(3 * density), (int)(3 * density), (int)(3 * density));
+            btnDelete.setElevation(4 * density);
+            btnDelete.setClickable(true);
+            btnDelete.setFocusable(true);
+
+            final int index = i;
+            btnDelete.setOnClickListener(v -> {
+                selectedImageUris.remove(index);
+                if (selectedImageUris.isEmpty()) {
+                    selectedImageUri = null;
+                } else {
+                    selectedImageUri = selectedImageUris.get(0);
+                }
+                updateEditImagesPreview();
+            });
+
+            container.addView(btnDelete);
+            currentDialogImagesLayout.addView(container);
         }
     }
 
@@ -484,8 +625,10 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         android.widget.Button btnPost = dialogView.findViewById(R.id.btnPost);
 
+        isEditingAnnouncement = false;
         selectedImageUri = null;
         selectedImageUris.clear();
+        editExistingUrls.clear();
         updateDialogSelectedImagesPreview();
         selectedDate = "";
         selectedTime = "";
@@ -513,10 +656,27 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         containerUpload.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-            imagePickerLauncher.launch(intent);
+            Intent intent = new Intent();
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
+                intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
+            } else {
+                intent.setAction(Intent.ACTION_PICK);
+                intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            }
+            try {
+                imagePickerLauncher.launch(intent);
+            } catch (Exception e) {
+                try {
+                    Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                    fallback.setType("image/*");
+                    fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    imagePickerLauncher.launch(Intent.createChooser(fallback, "Select Images"));
+                } catch (Exception ex) {
+                    Toast.makeText(this, "No image picker available", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
 
         btnPost.setOnClickListener(v -> {
@@ -956,28 +1116,26 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         currentDialogImagesLayout = dialogView.findViewById(R.id.layoutSelectedImages);
         currentDialogImagesScroll = dialogView.findViewById(R.id.scrollSelectedImages);
 
+        isEditingAnnouncement = true;
+        selectedImageUri = null;
+        selectedImageUris.clear();
+        editExistingUrls.clear();
+
         // Show current image upload state
-        List<String> existingUrls = new ArrayList<>();
-        if (tvUploadStatus != null) {
-            Object imgs = announcement.get("announcementImages");
-            if (imgs instanceof List && !((List) imgs).isEmpty()) {
-                tvUploadStatus.setText(((List) imgs).size() + " existing images loaded");
-                for (Object o : (List<?>) imgs) {
-                    if (o instanceof String) {
-                        existingUrls.add((String) o);
-                    }
-                }
-            } else {
-                String singleImg = (String) announcement.get("imageUrl");
-                if (singleImg != null && !singleImg.isEmpty()) {
-                    tvUploadStatus.setText("Existing image loaded");
-                    existingUrls.add(singleImg);
+        Object imgs = announcement.get("announcementImages");
+        if (imgs instanceof List && !((List) imgs).isEmpty()) {
+            for (Object o : (List<?>) imgs) {
+                if (o instanceof String) {
+                    editExistingUrls.add((String) o);
                 }
             }
+        } else {
+            String singleImg = (String) announcement.get("imageUrl");
+            if (singleImg != null && !singleImg.isEmpty()) {
+                editExistingUrls.add(singleImg);
+            }
         }
-        showExistingImagesPreview(existingUrls);
-
-        selectedImageUris.clear();
+        updateEditImagesPreview();
 
         android.view.View btnClose = dialogView.findViewById(R.id.btnClose);
         android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
@@ -1005,10 +1163,27 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
         if (containerUpload != null) {
             containerUpload.setOnClickListener(v -> {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                imagePickerLauncher.launch(intent);
+                Intent intent = new Intent();
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
+                    intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
+                } else {
+                    intent.setAction(Intent.ACTION_PICK);
+                    intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
+                try {
+                    imagePickerLauncher.launch(intent);
+                } catch (Exception e) {
+                    try {
+                        Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                        fallback.setType("image/*");
+                        fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        imagePickerLauncher.launch(Intent.createChooser(fallback, "Select Images"));
+                    } catch (Exception ex) {
+                        Toast.makeText(this, "No image picker available", Toast.LENGTH_SHORT).show();
+                    }
+                }
             });
         }
 
@@ -1029,11 +1204,9 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                         // Upload new images to Cloudinary, then update Firestore
                         uploadMultipleImagesForEdit(id, selectedImageUris, title, name, age, sex, category, subtitle, contact, dialog);
                     } else {
-                        // Keep existing images, update other fields
-                        Object existingImages = announcement.get("announcementImages");
-                        List<String> imagesList = (existingImages instanceof List) ? (List<String>) existingImages : new java.util.ArrayList<>();
-                        String existingPrimary = (String) announcement.get("imageUrl");
-                        updateFirestoreAnnouncement(id, title, name, age, sex, category, subtitle, contact, existingPrimary, imagesList, dialog);
+                        // Keep remaining existing images, update other fields
+                        String existingPrimary = editExistingUrls.isEmpty() ? "" : editExistingUrls.get(0);
+                        updateFirestoreAnnouncement(id, title, name, age, sex, category, subtitle, contact, existingPrimary, editExistingUrls, dialog);
                     }
                 } else {
                     Toast.makeText(this, "Name is required", Toast.LENGTH_SHORT).show();
@@ -1058,8 +1231,10 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
     private void uploadNextImageForEdit(int index, String id, List<Uri> uris, List<String> uploadedUrls, String title, String name, String age, String sex, String category, String subtitle, String contact, androidx.appcompat.app.AlertDialog dialog) {
         if (index >= uris.size()) {
-            String primaryUrl = uploadedUrls.isEmpty() ? "" : uploadedUrls.get(0);
-            runOnUiThread(() -> updateFirestoreAnnouncement(id, title, name, age, sex, category, subtitle, contact, primaryUrl, uploadedUrls, dialog));
+            List<String> finalUrls = new ArrayList<>(editExistingUrls);
+            finalUrls.addAll(uploadedUrls);
+            String primaryUrl = finalUrls.isEmpty() ? "" : finalUrls.get(0);
+            runOnUiThread(() -> updateFirestoreAnnouncement(id, title, name, age, sex, category, subtitle, contact, primaryUrl, finalUrls, dialog));
             return;
         }
 
@@ -1496,18 +1671,71 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
 
     public void startProofImagePicker(String announcementId) {
         this.uploadingProofAnnouncementId = announcementId;
-        Intent intent = new Intent(Intent.ACTION_PICK);
-        intent.setType("image/*");
-        proofImagePickerLauncher.launch(intent);
+        Intent intent = new Intent();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
+            intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
+        } else {
+            intent.setAction(Intent.ACTION_PICK);
+            intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
+        try {
+            proofImagePickerLauncher.launch(intent);
+        } catch (Exception e) {
+            try {
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.setType("image/*");
+                fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                proofImagePickerLauncher.launch(Intent.createChooser(fallback, "Select Proof Images"));
+            } catch (Exception ex) {
+                Toast.makeText(this, "No image picker available", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
-    private void uploadProofToCloudinary(String id, Uri imageUri) {
-        Toast.makeText(this, "Uploading proof image...", Toast.LENGTH_SHORT).show();
+    private void uploadMultipleProofs(String id, List<Uri> uris) {
+        if (uris == null || uris.isEmpty()) return;
+        Toast.makeText(this, "Uploading 1 of " + uris.size() + " proof images...", Toast.LENGTH_SHORT).show();
+        List<String> uploadedUrls = new java.util.ArrayList<>();
+        uploadNextProofImage(0, id, uris, uploadedUrls);
+    }
+
+    private void uploadNextProofImage(int index, String id, List<Uri> uris, List<String> uploadedUrls) {
+        if (index >= uris.size()) {
+            runOnUiThread(() -> {
+                Map<String, Object> updates = new java.util.HashMap<>();
+                updates.put("caseClosedImages", com.google.firebase.firestore.FieldValue.arrayUnion(uploadedUrls.toArray()));
+                if (shouldAutoSetCaseClosed) {
+                    updates.put("status", "Case Closed");
+                }
+
+                db.collection("announcements").document(id)
+                        .update(updates)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(this, "All proof images uploaded successfully!", Toast.LENGTH_SHORT).show();
+                            if (shouldAutoSetCaseClosed) {
+                                Toast.makeText(this, "Status updated to: Case Closed", Toast.LENGTH_SHORT).show();
+                            }
+                            shouldAutoSetCaseClosed = false;
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Failed to update database: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            shouldAutoSetCaseClosed = false;
+                        });
+            });
+            return;
+        }
+
+        Uri imageUri = uris.get(index);
         executor.execute(() -> {
             try {
                 InputStream inputStream = getContentResolver().openInputStream(imageUri);
                 if (inputStream == null) {
-                    runOnUiThread(() -> Toast.makeText(this, "Failed to open image", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Failed to open image at index " + index, Toast.LENGTH_SHORT).show();
+                        uploadNextProofImage(index + 1, id, uris, uploadedUrls);
+                    });
                     return;
                 }
                 byte[] imageBytes = readAllBytes(inputStream);
@@ -1531,7 +1759,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 dos.writeBytes(API_KEY + "\r\n");
 
                 dos.writeBytes("--" + boundary + "\r\n");
-                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"proof.jpg\"\r\n");
+                dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"proof_" + index + ".jpg\"\r\n");
                 dos.writeBytes("Content-Type: image/jpeg\r\n\r\n");
                 dos.write(imageBytes);
                 dos.writeBytes("\r\n");
@@ -1548,35 +1776,19 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 JSONObject json = new JSONObject(new String(responseBytes));
                 if (status == 200 && json.has("secure_url")) {
                     String imageUrl = json.getString("secure_url");
-                    runOnUiThread(() -> {
-                        Map<String, Object> updates = new java.util.HashMap<>();
-                        updates.put("caseClosedImages", com.google.firebase.firestore.FieldValue.arrayUnion(imageUrl));
-                        if (shouldAutoSetCaseClosed) {
-                            updates.put("status", "Case Closed");
-                        }
-
-                        db.collection("announcements").document(id)
-                                .update(updates)
-                                .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(this, "Proof image uploaded successfully!", Toast.LENGTH_SHORT).show();
-                                    if (shouldAutoSetCaseClosed) {
-                                        Toast.makeText(this, "Status updated to: Case Closed", Toast.LENGTH_SHORT).show();
-                                    }
-                                    shouldAutoSetCaseClosed = false;
-                                    // Snapshot listener will update automatically
-                                })
-                                .addOnFailureListener(e -> {
-                                    Toast.makeText(this, "Failed to update database: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    shouldAutoSetCaseClosed = false;
-                                });
-                    });
-                } else {
-                    String error = json.optString("error", "Upload failed");
-                    runOnUiThread(() -> Toast.makeText(this, "Upload error: " + error, Toast.LENGTH_LONG).show());
+                    uploadedUrls.add(imageUrl);
                 }
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Uploaded " + (index + 1) + " of " + uris.size() + " proofs", Toast.LENGTH_SHORT).show();
+                    uploadNextProofImage(index + 1, id, uris, uploadedUrls);
+                });
             } catch (Exception e) {
                 Log.e(TAG, "Cloudinary upload failed", e);
-                runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Upload failed at index " + index + ": " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    uploadNextProofImage(index + 1, id, uris, uploadedUrls);
+                });
             }
         });
     }
