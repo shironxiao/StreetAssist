@@ -410,6 +410,14 @@
                     android:visibility="gone" />
 
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Admin Notes"
+                    android:textColor="#888888"
+                    android:textSize="10sp"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
                     android:id="@+id/tvResidentResolutionNotes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
