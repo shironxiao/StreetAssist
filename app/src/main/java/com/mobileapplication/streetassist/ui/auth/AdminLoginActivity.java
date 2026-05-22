@@ -15,17 +15,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.admin.AdminDashboardActivity;
+import com.mobileapplication.streetassist.utils.SessionManager;
+import android.widget.CheckBox;
 
 public class AdminLoginActivity extends AppCompatActivity {
 
     private TextInputEditText etEmail, etPassword;
+    private CheckBox cbRememberMe;
     private MaterialButton btnLogin;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private SessionManager sessionManager;
     private final Handler loginTimeoutHandler = new Handler(Looper.getMainLooper());
     private Runnable loginTimeoutRunnable;
 
@@ -36,9 +41,23 @@ public class AdminLoginActivity extends AppCompatActivity {
 
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
+        cbRememberMe = findViewById(R.id.cbRememberMe);
         btnLogin = findViewById(R.id.btnLogin);
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        sessionManager = new SessionManager(this);
+
+        // Auto-login check
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            verifyAdminRole(currentUser.getUid());
+        }
+
+        // Restore remembered email
+        if (sessionManager.isRememberMeChecked("admin")) {
+            etEmail.setText(sessionManager.getSavedEmail("admin"));
+            cbRememberMe.setChecked(true);
+        }
 
         btnLogin.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
@@ -92,18 +111,42 @@ public class AdminLoginActivity extends AppCompatActivity {
 
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
-                    if (!task.isSuccessful()) {
-                        showErrorAndReset("Invalid credentials.");
-                        return;
-                    }
+                    if (task.isSuccessful()) {
+                        // Save or clear remembered email
+                        sessionManager.setRememberMe("admin", cbRememberMe.isChecked(), email);
 
-                    FirebaseUser user = mAuth.getCurrentUser();
-                    if (user == null) {
-                        showErrorAndReset("Login failed. Please try again.");
-                        return;
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            verifyAdminRole(user.getUid());
+                        }
+                    } else {
+                        String errorMsg = getErrorMessage(task.getException());
+                        showErrorAndReset(errorMsg);
                     }
-                    verifyAdminRole(user.getUid());
                 });
+    }
+
+    private String getErrorMessage(Exception exception) {
+        if (exception instanceof FirebaseAuthException) {
+            String errorCode = ((FirebaseAuthException) exception).getErrorCode();
+            switch (errorCode) {
+                case "ERROR_INVALID_EMAIL":
+                    return "Invalid email address.";
+                case "ERROR_WRONG_PASSWORD":
+                case "ERROR_USER_NOT_FOUND":
+                case "INVALID_LOGIN_CREDENTIALS":
+                    return "Incorrect email or password.";
+                case "ERROR_USER_DISABLED":
+                    return "This account has been disabled.";
+                case "ERROR_TOO_MANY_REQUESTS":
+                    return "Too many attempts. Please try again later.";
+                case "ERROR_NETWORK_REQUEST_FAILED":
+                    return "Network error. Check your connection.";
+                default:
+                    return exception.getMessage();
+            }
+        }
+        return (exception != null) ? exception.getMessage() : "Login failed. Please try again.";
     }
 
     private void verifyAdminRole(String uid) {

@@ -153,6 +153,18 @@
             app:layout_constraintStart_toStartOf="@id/tilPassword"
             app:layout_constraintTop_toBottomOf="@id/tilPassword" />
 
+        <CheckBox
+            android:id="@+id/cbRememberMe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:buttonTint="@color/blue_primary"
+            android:text="Remember Me"
+            android:textColor="#757575"
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="@id/linePassword"
+            app:layout_constraintTop_toBottomOf="@id/linePassword" />
+
         <!-- Login Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
@@ -160,7 +172,7 @@
             android:layout_height="60dp"
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
-            android:layout_marginTop="48dp"
+            android:layout_marginTop="32dp"
             android:backgroundTint="@color/blue_primary"
             android:text="Login as Admin"
             android:textAllCaps="false"
@@ -169,7 +181,7 @@
             app:cornerRadius="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/linePassword" />
+            app:layout_constraintTop_toBottomOf="@id/cbRememberMe" />
 
         <!-- Footer Text -->
         <TextView

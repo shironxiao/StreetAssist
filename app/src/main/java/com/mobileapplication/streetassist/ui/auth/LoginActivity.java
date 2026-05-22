@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -76,8 +77,8 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         // ── Restore remembered email via SessionManager ──────────────────────
-        if (sessionManager.isRememberMeChecked()) {
-            etEmail.setText(sessionManager.getSavedEmail());
+        if (sessionManager.isRememberMeChecked("resident")) {
+            etEmail.setText(sessionManager.getSavedEmail("resident"));
             cbRememberMe.setChecked(true);
         }
 
@@ -152,28 +153,33 @@ public class LoginActivity extends AppCompatActivity {
                         btnGetStarted.setEnabled(true);
                         btnGetStarted.setText("Login");
 
-                        // Map common Firebase errors to friendly messages
-                        String errorMsg = "Login failed. Please try again.";
-                        if (task.getException() != null) {
-                            String raw = task.getException().getMessage();
-                            if (raw != null) {
-                                if (raw.contains("no user record") ||
-                                        raw.contains("identifier")) {
-                                    errorMsg = "No account found with this email.";
-                                } else if (raw.contains("password is invalid") ||
-                                        raw.contains("incorrect")) {
-                                    errorMsg = "Incorrect password. Please try again.";
-                                } else if (raw.contains("blocked") ||
-                                        raw.contains("too many")) {
-                                    errorMsg = "Too many attempts. Please try again later.";
-                                } else if (raw.contains("network")) {
-                                    errorMsg = "Network error. Check your connection.";
-                                }
-                            }
-                        }
+                        String errorMsg = getErrorMessage(task.getException());
                         Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private String getErrorMessage(Exception exception) {
+        if (exception instanceof FirebaseAuthException) {
+            String errorCode = ((FirebaseAuthException) exception).getErrorCode();
+            switch (errorCode) {
+                case "ERROR_INVALID_EMAIL":
+                    return "Invalid email address.";
+                case "ERROR_WRONG_PASSWORD":
+                case "ERROR_USER_NOT_FOUND":
+                case "INVALID_LOGIN_CREDENTIALS":
+                    return "Incorrect email or password.";
+                case "ERROR_USER_DISABLED":
+                    return "This account has been disabled.";
+                case "ERROR_TOO_MANY_REQUESTS":
+                    return "Too many attempts. Please try again later.";
+                case "ERROR_NETWORK_REQUEST_FAILED":
+                    return "Network error. Check your connection.";
+                default:
+                    return exception.getMessage();
+            }
+        }
+        return (exception != null) ? exception.getMessage() : "Login failed. Please try again.";
     }
 
     // =========================================================================
@@ -260,7 +266,7 @@ public class LoginActivity extends AppCompatActivity {
     // =========================================================================
 
     private void saveRememberMe(String email) {
-        sessionManager.setRememberMe(cbRememberMe.isChecked(), email);
+        sessionManager.setRememberMe("resident", cbRememberMe.isChecked(), email);
     }
 
     private void continueAsGuest() {
