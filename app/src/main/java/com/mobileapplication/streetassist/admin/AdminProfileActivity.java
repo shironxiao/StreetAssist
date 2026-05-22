@@ -34,7 +34,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.mobileapplication.streetassist.R;
-import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
+import com.mobileapplication.streetassist.ui.auth.AdminLoginActivity;
 
 import org.json.JSONObject;
 
@@ -62,7 +62,7 @@ public class AdminProfileActivity extends AppCompatActivity
     private TextView tvValFullName, tvValEmail, tvValContact;
     private FloatingActionButton fabEditPhoto;
     private MaterialButton btnLogout;
-    private View rowFullName, rowContact, rowCreateAdmin;
+    private View rowFullName, rowContact, rowCreateAdmin, rowPassword;
     private AdminNotificationBadgeHelper badgeHelper;
 
     // Firebase
@@ -146,6 +146,7 @@ public class AdminProfileActivity extends AppCompatActivity
         rowFullName = findViewById(R.id.rowFullName);
         rowContact = findViewById(R.id.rowContact);
         rowCreateAdmin = findViewById(R.id.rowCreateAdmin);
+        rowPassword = findViewById(R.id.rowPassword);
 
         // Click Listeners
         fabEditPhoto.setOnClickListener(v -> openImagePicker());
@@ -156,6 +157,7 @@ public class AdminProfileActivity extends AppCompatActivity
 
         rowFullName.setOnClickListener(v -> showEditDialog("Edit Full Name", "fullName", tvValFullName.getText().toString(), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS));
         rowContact.setOnClickListener(v -> showEditDialog("Edit Contact Number", "contactNumber", tvValContact.getText().toString(), InputType.TYPE_CLASS_PHONE));
+        rowPassword.setOnClickListener(v -> showPasswordEditDialog());
 
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
@@ -284,6 +286,83 @@ public class AdminProfileActivity extends AppCompatActivity
                 .addOnFailureListener(e -> Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
+    private void showPasswordEditDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Update Password");
+
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int margin = (int) (16 * getResources().getDisplayMetrics().density);
+        container.setPadding(margin, margin, margin, margin);
+
+        final EditText etCurrent = new EditText(this);
+        etCurrent.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etCurrent.setHint("Current password");
+        container.addView(etCurrent);
+
+        final EditText etNew = new EditText(this);
+        etNew.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etNew.setHint("New password (min 6 chars)");
+        container.addView(etNew);
+
+        final EditText etConfirm = new EditText(this);
+        etConfirm.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        etConfirm.setHint("Confirm new password");
+        container.addView(etConfirm);
+
+        builder.setView(container);
+
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            String current = etCurrent.getText().toString().trim();
+            String newPass = etNew.getText().toString().trim();
+            String confirm = etConfirm.getText().toString().trim();
+
+            if (current.isEmpty() || newPass.isEmpty() || confirm.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!newPass.equals(confirm)) {
+                Toast.makeText(this, "New passwords do not match", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (newPass.length() < 6) {
+                Toast.makeText(this, "New password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            reauthenticateAndUpdatePassword(current, newPass);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void reauthenticateAndUpdatePassword(String currentPassword, String newPassword) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null && user.getEmail() != null) {
+            com.google.firebase.auth.AuthCredential credential = com.google.firebase.auth.EmailAuthProvider.getCredential(user.getEmail(), currentPassword);
+            user.reauthenticate(credential).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    updatePassword(newPassword);
+                } else {
+                    Toast.makeText(this, "Authentication failed. Check your current password.", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    }
+
+    private void updatePassword(String newPassword) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            user.updatePassword(newPassword)
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(this, "Password updated successfully!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "Failed to update password: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"), Toast.LENGTH_LONG).show();
+                        }
+                    });
+        }
+    }
+
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
@@ -402,7 +481,7 @@ public class AdminProfileActivity extends AppCompatActivity
                     .update("fcmToken", FieldValue.delete());
         }
         FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(this, IntroductionUserLevel.class);
+        Intent intent = new Intent(this, AdminLoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

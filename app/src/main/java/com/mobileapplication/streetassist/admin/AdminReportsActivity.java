@@ -38,7 +38,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.mobileapplication.streetassist.R;
-import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
+import com.mobileapplication.streetassist.ui.auth.AdminLoginActivity;
 
 import android.net.Uri;
 import java.io.InputStream;
@@ -761,7 +761,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
     private void logout() {
         FirebaseAuth.getInstance().signOut();
-        startActivity(new Intent(this, IntroductionUserLevel.class));
+        startActivity(new Intent(this, AdminLoginActivity.class));
         finish();
     }
 

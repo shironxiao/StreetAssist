@@ -42,7 +42,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.mobileapplication.streetassist.R;
 import com.mobileapplication.streetassist.admin.AdminDashboardActivity;
-import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
+import com.mobileapplication.streetassist.ui.auth.AdminLoginActivity;
 
 import org.json.JSONObject;
 
@@ -595,7 +595,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     .update("fcmToken", com.google.firebase.firestore.FieldValue.delete());
         }
         FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(this, IntroductionUserLevel.class);
+        Intent intent = new Intent(this, AdminLoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
@@ -611,6 +611,17 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
         android.widget.EditText etDate = dialogView.findViewById(R.id.etDate);
         android.widget.EditText etTime = dialogView.findViewById(R.id.etTime);
         android.widget.EditText etLocation = dialogView.findViewById(R.id.etLocation);
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            FirebaseFirestore.getInstance().collection("users").document(currentUser.getUid()).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        String contactNumber = documentSnapshot.getString("contactNumber");
+                        if (contactNumber != null && !contactNumber.isEmpty()) {
+                            etContact.setText(contactNumber);
+                        }
+                    });
+        }
 
         // Set up Sex Dropdown
         String[] sexOptions = {"Male", "Female"};

@@ -21,7 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.mobileapplication.streetassist.R;
-import com.mobileapplication.streetassist.ui.auth.IntroductionUserLevel;
+import com.mobileapplication.streetassist.ui.auth.AdminLoginActivity;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -335,7 +335,7 @@ public class AdminNotificationActivity extends AppCompatActivity {
                     .update("fcmToken", com.google.firebase.firestore.FieldValue.delete());
         }
         FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(this, IntroductionUserLevel.class);
+        Intent intent = new Intent(this, AdminLoginActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

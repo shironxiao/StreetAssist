@@ -94,7 +94,7 @@
                 <!-- HEADER SECTION -->
                 <RelativeLayout
                     android:layout_width="match_parent"
-                    android:layout_height="233dp"
+                    android:layout_height="wrap_content"
                     android:background="#4169E1"
                     android:paddingTop="32dp"
                     android:paddingBottom="48dp">
@@ -315,6 +315,58 @@
                                         android:text="—"
                                         android:textColor="#757575" />
                                 </LinearLayout>
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:background="#F0F0F0"
+                                android:layout_marginHorizontal="16dp" />
+
+                            <!-- Row: Password -->
+                            <LinearLayout
+                                android:id="@+id/rowPassword"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:background="?attr/selectableItemBackground"
+                                android:gravity="center_vertical"
+                                android:padding="16dp">
+
+                                <ImageView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="@drawable/circle_bg_light_blue"
+                                    android:padding="8dp"
+                                    android:src="@android:drawable/ic_lock_lock"
+                                    app:tint="#4169E1" />
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="16dp"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Password"
+                                        android:textColor="#333333"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvValPassword"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="********"
+                                        android:textColor="#757575" />
+                                </LinearLayout>
+
+                                <ImageView
+                                    android:layout_width="24dp"
+                                    android:layout_height="24dp"
+                                    android:src="@android:drawable/ic_menu_edit"
+                                    app:tint="#4169E1" />
                             </LinearLayout>
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>

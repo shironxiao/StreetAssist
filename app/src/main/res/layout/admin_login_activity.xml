@@ -91,7 +91,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
-                android:hint="admin@streetassist.com"
+                android:hint="Enter your email"
                 android:inputType="textEmailAddress"
                 android:paddingStart="0dp" />
         </com.google.android.material.textfield.TextInputLayout>
