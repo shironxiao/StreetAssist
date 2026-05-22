@@ -49,6 +49,7 @@ public class AdminLoginActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.tvBackToSelection).setOnClickListener(v -> {
+            startActivity(new Intent(AdminLoginActivity.this, IntroductionUserLevel.class));
             finish();
         });
     }
