@@ -77,7 +77,6 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
 
     private String currentStatusFilter = "All";
     private String currentMunicipalityFilter = "All";
-    private String currentBarangayFilter = "All";
     private String currentSortOrder = "Newest";
     private ListenerRegistration reportsListener;
 
@@ -291,11 +290,6 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             }
 
             @Override
-            public void onBarangayFilterClick() {
-                showBarangayFilterPopup();
-            }
-
-            @Override
             public void onSortClick() {
                 showSortPopup();
             }
@@ -439,10 +433,7 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             boolean matchesMunicipality = currentMunicipalityFilter.equals("All") || 
                     address.contains(currentMunicipalityFilter.toLowerCase());
 
-            boolean matchesBarangay = currentBarangayFilter.equals("All") || 
-                    address.contains(currentBarangayFilter.toLowerCase());
-
-            if (matchesSearch && matchesStatus && matchesMunicipality && matchesBarangay) {
+            if (matchesSearch && matchesStatus && matchesMunicipality) {
                 filteredList.add(report);
             }
         }
@@ -523,34 +514,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
         for (String m : CITY_BARANGAY_MAP.keySet()) popup.getMenu().add(m);
         popup.setOnMenuItemClickListener(item -> {
             currentMunicipalityFilter = item.getTitle().toString();
-            currentBarangayFilter = "All";
             applyFilters();
             ((TextView) anchor.findViewById(R.id.tvMunicipalityLabel)).setText("Muni: " + currentMunicipalityFilter);
-            View brgyBtn = header.itemView.findViewById(R.id.btnFilterBarangay);
-            ((TextView) brgyBtn.findViewById(R.id.tvBarangayLabel)).setText("Brgy: All");
-            return true;
-        });
-        popup.show();
-    }
-
-    private void showBarangayFilterPopup() {
-        RecyclerView.ViewHolder header = rvReports.findViewHolderForAdapterPosition(0);
-        if (header == null) return;
-        View anchor = header.itemView.findViewById(R.id.btnFilterBarangay);
-        PopupMenu popup = new PopupMenu(this, anchor);
-        popup.getMenu().add("All");
-        if (!currentMunicipalityFilter.equals("All")) {
-            List<String> brgys = CITY_BARANGAY_MAP.get(currentMunicipalityFilter);
-            if (brgys != null) for (String b : brgys) popup.getMenu().add(b);
-        } else {
-            popup.getMenu().add("(Select Municipality First)");
-        }
-        popup.setOnMenuItemClickListener(item -> {
-            String sel = item.getTitle().toString();
-            if (sel.startsWith("(")) return false;
-            currentBarangayFilter = sel;
-            applyFilters();
-            ((TextView) anchor.findViewById(R.id.tvBarangayLabel)).setText("Brgy: " + (sel.length() > 10 ? sel.substring(0, 8) + ".." : sel));
             return true;
         });
         popup.show();
@@ -840,8 +805,8 @@ public class AdminReportsActivity extends AppCompatActivity implements Navigatio
             intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
             intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
         } else {
-            intent.setAction(Intent.ACTION_PICK);
-            intent.setDataAndType(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
         try {

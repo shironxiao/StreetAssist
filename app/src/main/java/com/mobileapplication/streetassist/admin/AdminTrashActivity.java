@@ -116,11 +116,6 @@ public class AdminTrashActivity extends AppCompatActivity implements NavigationV
             }
 
             @Override
-            public void onBarangayFilterClick() {
-                Toast.makeText(AdminTrashActivity.this, "No barangay filters in Trash yet", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
             public void onSortClick() {
                 Toast.makeText(AdminTrashActivity.this, "No sorting options available in Trash yet", Toast.LENGTH_SHORT).show();
             }

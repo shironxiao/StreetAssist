@@ -36,7 +36,6 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         void onSearch(String query);
         void onFilterClick();
         void onMunicipalityFilterClick();
-        void onBarangayFilterClick();
         void onSortClick();
         void onExportPdfClick();
         void onDeleteSelected(Set<String> selectedIds);
@@ -91,9 +90,6 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             });
             h.btnMunicipality.setOnClickListener(v -> {
                 if (headerListener != null) headerListener.onMunicipalityFilterClick();
-            });
-            h.btnBarangay.setOnClickListener(v -> {
-                if (headerListener != null) headerListener.onBarangayFilterClick();
             });
             h.btnSort.setOnClickListener(v -> {
                 if (headerListener != null) headerListener.onSortClick();
@@ -326,7 +322,7 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
-        View btnExportPdf, btnFilter, btnMunicipality, btnBarangay, btnSort, btnDeleteSelected, btnCancelSelection, btnRestoreSelected;
+        View btnExportPdf, btnFilter, btnMunicipality, btnSort, btnDeleteSelected, btnCancelSelection, btnRestoreSelected;
         android.widget.EditText etSearch;
         TextView tvShowingResults, tvTitle, tvSubtitle;
 
@@ -335,7 +331,6 @@ public class RecentReportAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             btnExportPdf = itemView.findViewById(R.id.btnExportPdf);
             btnFilter = itemView.findViewById(R.id.btnFilterStatus);
             btnMunicipality = itemView.findViewById(R.id.btnFilterMunicipality);
-            btnBarangay = itemView.findViewById(R.id.btnFilterBarangay);
             btnSort = itemView.findViewById(R.id.btnSortLocation);
             btnDeleteSelected = itemView.findViewById(R.id.btnDeleteSelected);
             btnCancelSelection = itemView.findViewById(R.id.btnCancelSelection);

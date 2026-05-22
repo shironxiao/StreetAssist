@@ -135,6 +135,7 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        // Preserve existing selections; do not clear the list here
                         if (result.getData().getClipData() != null) {
                             int count = result.getData().getClipData().getItemCount();
                             for (int i = 0; i < count; i++) {
@@ -149,7 +150,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                                 selectedImageUris.add(uri);
                             }
                         }
-
+                        // Remove any accidental duplicates while preserving order
+                        selectedImageUris = new java.util.ArrayList<>(new java.util.LinkedHashSet<>(selectedImageUris));
                         selectedImageUri = selectedImageUris.isEmpty() ? null : selectedImageUris.get(0);
 
                         if (isEditingAnnouncement) {
@@ -185,6 +187,11 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                         }
 
                         if (!uris.isEmpty() && uploadingProofAnnouncementId != null) {
+                            // Add newly selected proof images to the existing list
+                            selectedImageUris.addAll(uris);
+                            // Optionally update UI preview for proof images (reuse existing method)
+                            updateEditImagesPreview();
+                            // Upload the selected proof images
                             uploadMultipleProofs(uploadingProofAnnouncementId, uris);
                         }
                     }
@@ -672,8 +679,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                 intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
                 intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
             } else {
-                intent.setAction(Intent.ACTION_PICK);
-                intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             }
             try {
@@ -1179,8 +1186,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
                     intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
                     intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
                 } else {
-                    intent.setAction(Intent.ACTION_PICK);
-                    intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    intent.setType("image/*");
                     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 }
                 try {
@@ -1687,8 +1694,8 @@ public class AdminAnnouncementsActivity extends AppCompatActivity implements Nav
             intent.setAction(android.provider.MediaStore.ACTION_PICK_IMAGES);
             intent.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, 10);
         } else {
-            intent.setAction(Intent.ACTION_PICK);
-            intent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            intent.setType("image/*");
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
         try {
