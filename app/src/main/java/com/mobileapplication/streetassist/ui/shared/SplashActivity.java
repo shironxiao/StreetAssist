@@ -15,14 +15,6 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        SessionManager sessionManager = new SessionManager(this);
-
-        if (!sessionManager.isIntroSeen()) {
-            startActivity(new Intent(this, AppIntroduction.class));
-            finish();
-            return;
-        }
-
         // Always go to level selection to allow the user to pick their user level
         startActivity(new Intent(this, IntroductionUserLevel.class));
         finish();

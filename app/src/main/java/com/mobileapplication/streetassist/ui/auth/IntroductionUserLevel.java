@@ -7,6 +7,7 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.mobileapplication.streetassist.R;
+import com.mobileapplication.streetassist.utils.SessionManager;
 
 public class IntroductionUserLevel extends AppCompatActivity {
 
@@ -20,8 +21,14 @@ public class IntroductionUserLevel extends AppCompatActivity {
 
         if (btnResident != null) {
             btnResident.setOnClickListener(v -> {
-                Intent intent = new Intent(IntroductionUserLevel.this, LoginActivity.class);
-                startActivity(intent);
+                SessionManager sessionManager = new SessionManager(IntroductionUserLevel.this);
+                if (!sessionManager.isIntroSeen()) {
+                    Intent intent = new Intent(IntroductionUserLevel.this, AppIntroduction.class);
+                    startActivity(intent);
+                } else {
+                    Intent intent = new Intent(IntroductionUserLevel.this, LoginActivity.class);
+                    startActivity(intent);
+                }
             });
         }
 
